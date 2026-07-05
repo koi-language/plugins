@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "braxil-plugins",
+  "version": "1.2.20",
+  "description": "Official plugin marketplace for BRAXIL — agents, skills, and workflows maintained by the Braxil team.",
+  "owner": {
+    "name": "Braxil",
+    "email": "support@braxil.ai"
+  },
+  "plugins": [
+    {
+      "name": "braxil-essentials",
+      "description": "All BRAXIL skills in one plugin: guide, screenwriting, image design, logo creator, infographics, comics, product photography, slide decks, social media carousels, social publishing, and the full video-production suite. Install this single plugin to get everything.",
+      "source": "./plugins/braxil-essentials",
+      "category": "essentials",
+      "autoinstall": true,
+      "actions": [
+        {
+          "name": "discover-braxil",
+          "icon": "sparkles",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/braxil-guide/bg.jpg",
+          "label": {
+            "en": "What can I do with BRAXIL?",
+            "es": "¿Qué puedo hacer con BRAXIL?",
+            "fr": "Que puis-je faire avec BRAXIL ?",
+            "de": "Was kann ich mit BRAXIL machen?",
+            "it": "Cosa posso fare con BRAXIL?",
+            "pt": "O que posso fazer com o BRAXIL?"
+          },
+          "description": {
+            "en": "Discover everything BRAXIL can do — a clickable directory of use cases across content, design, video, audio, social, ads, data and more. Tap one and BRAXIL starts the flow for you.",
+            "es": "Descubre todo lo que BRAXIL puede hacer — un directorio clicable de casos de uso en contenidos, diseño, vídeo, audio, redes, publicidad, datos y más. Pulsa uno y BRAXIL arranca el flujo por ti.",
+            "fr": "Découvre tout ce que BRAXIL peut faire — un répertoire cliquable de cas d'usage en contenu, design, vidéo, audio, social, publicité, données et plus. Clique et BRAXIL lance le flux pour toi.",
+            "de": "Entdecke alles, was BRAXIL kann — ein klickbares Verzeichnis von Anwendungsfällen für Content, Design, Video, Audio, Social, Ads, Daten und mehr. Tippe und BRAXIL startet den Ablauf für dich.",
+            "it": "Scopri tutto ciò che BRAXIL può fare — un elenco cliccabile di casi d'uso per contenuti, design, video, audio, social, advertising, dati e altro. Tocca e BRAXIL avvia il flusso per te.",
+            "pt": "Descobre tudo o que o BRAXIL pode fazer — um diretório clicável de casos de uso em conteúdos, design, vídeo, áudio, redes, publicidade, dados e mais. Toca e o BRAXIL inicia o fluxo por ti."
+          },
+          "prompt": {
+            "en": "What can I do with BRAXIL?",
+            "es": "¿Qué puedo hacer con BRAXIL?",
+            "fr": "Que puis-je faire avec BRAXIL ?",
+            "de": "Was kann ich mit BRAXIL machen?",
+            "it": "Cosa posso fare con BRAXIL?",
+            "pt": "O que posso fazer com o BRAXIL?"
+          }
+        },
+        {
+          "name": "create-logo",
+          "icon": "bluesky",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/logo-creator/bg.jpg",
+          "label": {
+            "en": "Create a logo",
+            "es": "Crear un logo",
+            "fr": "Créer un logo",
+            "de": "Ein Logo erstellen",
+            "it": "Crea un logo",
+            "pt": "Criar um logótipo"
+          },
+          "description": {
+            "en": "Design a professional logo just by describing your brand. Pick a style and aspect ratio, generate variations, refine with your feedback, then crop, remove the background and export as SVG.",
+            "es": "Diseña un logo profesional con sólo describir tu marca. Elige un estilo y una proporción, genera variaciones, refínalas con tu feedback y luego recorta, quita el fondo y expórtalo como SVG.",
+            "fr": "Conçois un logo professionnel en décrivant simplement ta marque. Choisis un style et un format, génère des variations, affine-les avec tes retours, puis recadre, supprime l'arrière-plan et exporte en SVG.",
+            "de": "Gestalte ein professionelles Logo, indem du einfach deine Marke beschreibst. Wähle Stil und Seitenverhältnis, erzeuge Varianten, verfeinere sie mit deinem Feedback, schneide zu, entferne den Hintergrund und exportiere als SVG.",
+            "it": "Progetta un logo professionale descrivendo semplicemente il tuo brand. Scegli uno stile e un formato, genera variazioni, perfezionale con il tuo feedback, poi ritaglia, rimuovi lo sfondo ed esporta come SVG.",
+            "pt": "Cria um logótipo profissional só com descreveres a tua marca. Escolhe um estilo e um formato, gera variações, aperfeiçoa-as com o teu feedback e depois recorta, remove o fundo e exporta como SVG."
+          },
+          "prompt": {
+            "en": "I want to create a logo",
+            "es": "Quiero crear un logo",
+            "fr": "Je veux créer un logo",
+            "de": "Ich möchte ein Logo erstellen",
+            "it": "Voglio creare un logo",
+            "pt": "Quero criar um logótipo"
+          }
+        },
+        {
+          "name": "create-infographic",
+          "icon": "analyticsUp",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/infographic/bg.jpg",
+          "label": {
+            "en": "Create an infographic",
+            "es": "Crear una infografía",
+            "fr": "Créer une infographie",
+            "de": "Eine Infografik erstellen",
+            "it": "Crea un'infografica",
+            "pt": "Criar um infográfico"
+          },
+          "description": {
+            "en": "Turn any topic or your own data into a publication-ready infographic. Pick a layout × style, let it research the facts (with sources) or provide your own content and photos, and get the finished image.",
+            "es": "Convierte cualquier tema o tus propios datos en una infografía lista para publicar. Elige diseño y estilo, deja que investigue los datos (con fuentes) o aporta tú el contenido y las fotos, y obtén la imagen final.",
+            "fr": "Transforme n'importe quel sujet ou tes propres données en une infographie prête à publier. Choisis une mise en page et un style, laisse-le rechercher les faits (avec sources) ou fournis ton contenu et tes photos, et obtiens l'image finale.",
+            "de": "Verwandle ein Thema oder deine eigenen Daten in eine publikationsreife Infografik. Wähle Layout und Stil, lass die Fakten recherchieren (mit Quellen) oder liefere Inhalt und Fotos selbst — und erhalte das fertige Bild.",
+            "it": "Trasforma qualsiasi argomento o i tuoi dati in un'infografica pronta da pubblicare. Scegli layout e stile, lascia che cerchi i dati (con fonti) o fornisci tu contenuto e foto, e ottieni l'immagine finale.",
+            "pt": "Transforma qualquer tema ou os teus dados numa infografia pronta a publicar. Escolhe o layout e o estilo, deixa-o pesquisar os factos (com fontes) ou fornece o teu conteúdo e fotos, e obtém a imagem final."
+          },
+          "prompt": {
+            "en": "I want to create an infographic",
+            "es": "Quiero crear una infografía",
+            "fr": "Je veux créer une infographie",
+            "de": "Ich möchte eine Infografik erstellen",
+            "it": "Voglio creare un'infografica",
+            "pt": "Quero criar um infográfico"
+          }
+        },
+        {
+          "name": "photoshoot",
+          "icon": "camera01",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/product-photography/bg.jpg",
+          "label": {
+            "en": "Create a product photoshoot",
+            "es": "Crear sesión de fotos de producto",
+            "fr": "Créer une séance photo produit",
+            "de": "Produkt-Shooting erstellen",
+            "it": "Crea un servizio fotografico prodotto",
+            "pt": "Criar sessão de fotos de produto"
+          },
+          "description": {
+            "en": "Generate a professional photo shoot of your product just by describing it. The process guides you step by step — from the reference and shot types, through to the final set ready for e-commerce.",
+            "es": "Genera una sesión de fotos profesional de tu producto con sólo describirlo. El proceso te guía paso a paso, desde la referencia y los tipos de toma hasta el set final listo para e-commerce.",
+            "fr": "Génère une séance photo professionnelle de ton produit en le décrivant simplement. Le processus te guide pas à pas — de la référence aux types de prise de vue, jusqu'à la sélection finale prête pour l'e-commerce.",
+            "de": "Erstelle ein professionelles Produkt-Shooting, indem du es einfach beschreibst. Der Prozess führt dich Schritt für Schritt — von der Referenz über die Aufnahmetypen bis zum fertigen Bildersatz für den E-Commerce.",
+            "it": "Genera un servizio fotografico professionale del tuo prodotto descrivendolo soltanto. Il processo ti guida passo a passo, dal riferimento e dai tipi di scatto fino al set finale pronto per l'e-commerce.",
+            "pt": "Gera uma sessão fotográfica profissional do teu produto só com descrevê-lo. O processo guia-te passo a passo, desde a referência e os tipos de captação até ao conjunto final pronto para e-commerce."
+          },
+          "prompt": {
+            "en": "I want to create a product photoshoot",
+            "es": "Quiero crear una sesión de fotos de producto",
+            "fr": "Je veux créer une séance photo produit",
+            "de": "Ich möchte ein Produkt-Shooting erstellen",
+            "it": "Voglio creare un servizio fotografico prodotto",
+            "pt": "Quero criar uma sessão de fotos de produto"
+          }
+        },
+        {
+          "name": "create-video-ad",
+          "icon": "videoAi",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/video-ad-generation/bg.jpg",
+          "label": {
+            "en": "Create a video ad",
+            "es": "Crear anuncio de vídeo",
+            "fr": "Créer une publicité vidéo",
+            "de": "Videospot erstellen",
+            "it": "Crea uno spot video",
+            "pt": "Criar anúncio em vídeo"
+          },
+          "description": {
+            "en": "Generate a 15-second video ad just by sharing the idea. The process guides you step by step — from concept, through the storyboard, all the way to the final ad.",
+            "es": "Genera un videoanuncio de 15 segundos con sólo contar la idea. El proceso te guía paso a paso, desde la concepción y el storyboard hasta el anuncio final.",
+            "fr": "Génère une publicité vidéo de 15 secondes en racontant simplement l'idée. Le processus te guide pas à pas — de la conception au storyboard, jusqu'à la publicité finale.",
+            "de": "Erstelle einen 15-Sekunden-Videospot, indem du einfach die Idee erzählst. Der Prozess führt dich Schritt für Schritt — von der Konzeption über das Storyboard bis zum fertigen Spot.",
+            "it": "Genera uno spot video di 15 secondi raccontando solo l'idea. Il processo ti guida passo a passo, dall'ideazione allo storyboard fino allo spot finale.",
+            "pt": "Gera um anúncio em vídeo de 15 segundos só de contares a ideia. O processo guia-te passo a passo, desde a concepção e o storyboard até ao anúncio final."
+          },
+          "prompt": {
+            "en": "I want to create a video ad",
+            "es": "Quiero crear un anuncio de vídeo",
+            "fr": "Je veux créer une publicité vidéo",
+            "de": "Ich möchte einen Videospot erstellen",
+            "it": "Voglio creare uno spot video",
+            "pt": "Quero criar um anúncio em vídeo"
+          }
+        },
+        {
+          "name": "create-slide-deck",
+          "icon": "presentation01",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/slide-deck/bg.jpg",
+          "label": {
+            "en": "Create a presentation",
+            "es": "Crear una presentación",
+            "fr": "Créer une présentation",
+            "de": "Eine Präsentation erstellen",
+            "it": "Crea una presentazione",
+            "pt": "Criar uma apresentação"
+          },
+          "description": {
+            "en": "Turn any topic or document into a polished slide deck. Pick a style, review the outline, and get every slide generated as an image — merged into a ready-to-share PPTX or PDF.",
+            "es": "Convierte cualquier tema o documento en una presentación profesional. Elige un estilo, revisa el guion y obtén cada diapositiva generada como imagen, unidas en un PPTX o PDF listo para compartir.",
+            "fr": "Transforme n'importe quel sujet ou document en une présentation soignée. Choisis un style, valide le plan et obtiens chaque diapositive générée en image — assemblées en un PPTX ou PDF prêt à partager.",
+            "de": "Verwandle ein Thema oder Dokument in ein professionelles Slide-Deck. Wähle einen Stil, prüfe die Gliederung und erhalte jede Folie als generiertes Bild — zusammengeführt in ein fertiges PPTX oder PDF.",
+            "it": "Trasforma qualsiasi argomento o documento in una presentazione professionale. Scegli uno stile, rivedi la scaletta e ottieni ogni slide generata come immagine, unite in un PPTX o PDF pronto da condividere.",
+            "pt": "Transforma qualquer tema ou documento numa apresentação profissional. Escolhe um estilo, revê o guião e obtém cada diapositivo gerado como imagem, reunidos num PPTX ou PDF pronto a partilhar."
+          },
+          "prompt": {
+            "en": "I want to create a presentation",
+            "es": "Quiero hacer una presentación",
+            "fr": "Je veux créer une présentation",
+            "de": "Ich möchte eine Präsentation erstellen",
+            "it": "Voglio creare una presentazione",
+            "pt": "Quero criar uma apresentação"
+          }
+        },
+        {
+          "name": "create-carousel",
+          "icon": "carouselVertical",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/social-media-carousel/bg.jpg",
+          "label": {
+            "en": "Create a carousel",
+            "es": "Crear un carrusel",
+            "fr": "Créer un carrousel",
+            "de": "Ein Karussell erstellen",
+            "it": "Crea un carosello",
+            "pt": "Criar um carrossel"
+          },
+          "description": {
+            "en": "Turn any topic, newsletter or notes into a scroll-stopping social carousel. Pick the platform and a style, review the hook → value → CTA structure, and get every slide rendered — crisp branded slides ready to upload, or AI-illustrated images.",
+            "es": "Convierte cualquier tema, newsletter o notas en un carrusel para redes que detiene el scroll. Elige plataforma y estilo, revisa la estructura gancho → valor → CTA y obtén cada diapositiva: slides con tu marca listas para subir, o imágenes ilustradas por IA.",
+            "fr": "Transforme un sujet, une newsletter ou des notes en un carrousel social qui stoppe le scroll. Choisis la plateforme et un style, valide la structure accroche → valeur → CTA et obtiens chaque diapositive : des slides à ta marque prêtes à publier, ou des images illustrées par IA.",
+            "de": "Verwandle ein Thema, einen Newsletter oder Notizen in ein scroll-stoppendes Social-Karussell. Wähle Plattform und Stil, prüfe die Struktur Hook → Value → CTA und erhalte jede Folie — gebrandete Slides zum Hochladen oder KI-illustrierte Bilder.",
+            "it": "Trasforma un argomento, una newsletter o degli appunti in un carosello social che ferma lo scroll. Scegli piattaforma e stile, rivedi la struttura hook → valore → CTA e ottieni ogni slide: slide col tuo brand pronte da caricare o immagini illustrate dall'IA.",
+            "pt": "Transforma um tema, newsletter ou notas num carrossel social que trava o scroll. Escolhe a plataforma e um estilo, revê a estrutura gancho → valor → CTA e obtém cada slide: slides com a tua marca prontos a publicar, ou imagens ilustradas por IA."
+          },
+          "prompt": {
+            "en": "I want to create a social media carousel",
+            "es": "Quiero crear un carrusel para redes sociales",
+            "fr": "Je veux créer un carrousel pour les réseaux sociaux",
+            "de": "Ich möchte ein Social-Media-Karussell erstellen",
+            "it": "Voglio creare un carosello per i social",
+            "pt": "Quero criar um carrossel para redes sociais"
+          }
+        },
+        {
+          "name": "publish-to-social",
+          "icon": "instagram",
+          "highlight": true,
+          "background": "https://braxil.ai/marketplace/social-network-publisher/bg.jpg",
+          "label": {
+            "en": "Publish to social networks",
+            "es": "Publicar en redes sociales",
+            "fr": "Publier sur les réseaux sociaux",
+            "de": "In sozialen Netzwerken veröffentlichen",
+            "it": "Pubblica sui social",
+            "pt": "Publicar nas redes sociais"
+          },
+          "description": {
+            "en": "Post to X, LinkedIn, Facebook, Instagram and TikTok from BRAXIL through your own connected accounts. Connect once with one-click OAuth, then publish text and media to one or several networks at once.",
+            "es": "Publica en X, LinkedIn, Facebook, Instagram y TikTok desde BRAXIL con tus propias cuentas conectadas. Conéctate una vez con OAuth de un clic y publica texto y contenido en una o varias redes a la vez.",
+            "fr": "Publie sur X, LinkedIn, Facebook, Instagram et TikTok depuis BRAXIL via tes propres comptes connectés. Connecte-toi une fois en OAuth en un clic, puis publie texte et médias sur un ou plusieurs réseaux à la fois.",
+            "de": "Veröffentliche auf X, LinkedIn, Facebook, Instagram und TikTok aus BRAXIL über deine eigenen verbundenen Konten. Einmal per Ein-Klick-OAuth verbinden und dann Text und Medien in einem oder mehreren Netzwerken gleichzeitig posten.",
+            "it": "Pubblica su X, LinkedIn, Facebook, Instagram e TikTok da BRAXIL con i tuoi account collegati. Collegati una volta con OAuth in un clic, poi pubblica testo e contenuti su una o più reti contemporaneamente.",
+            "pt": "Publica no X, LinkedIn, Facebook, Instagram e TikTok a partir do BRAXIL com as tuas próprias contas ligadas. Liga-te uma vez com OAuth de um clique e publica texto e media numa ou várias redes ao mesmo tempo."
+          },
+          "prompt": {
+            "en": "I want to publish a post to my social networks",
+            "es": "Quiero publicar en mis redes sociales",
+            "fr": "Je veux publier sur mes réseaux sociaux",
+            "de": "Ich möchte einen Beitrag in meinen sozialen Netzwerken veröffentlichen",
+            "it": "Voglio pubblicare un post sui miei social",
+            "pt": "Quero publicar nas minhas redes sociais"
+          }
+        }
+      ]
+    }
+  ]
+}
