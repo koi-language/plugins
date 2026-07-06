@@ -84,6 +84,8 @@ Never auto-compress. Never auto-truncate. A render with dropped shots looks "OK"
 ## STEP B — Render one `generate_video` per GROUP OF PANELS (e.g. panels 4–7 → ONE video; that group is called a "clip") — never one-per-panel, never one-per-sheet — SEQUENTIALLY with frame-chaining
 ## ────────────────────────────────────────
 
+> 🛑 **BEFORE the first `generate_video`: activate `seedance-2.0`.** Your FIRST action in this step is to call the `Skill` tool with `braxil-essentials:seedance-2.0` (it ships in this same plugin; koi backend: `activate_skill({name:"seedance-2.0"})`) and let it write the prompts. Only fall back to the built-in brief if that call fails. See "Per-clip prompt construction → MANDATORY FIRST ACTION" below. Do NOT skip straight to a self-written brief.
+
 One `generate_video` per **clip**, where a **clip is a GROUP of consecutive panels** — its `metadata.clips[].panels` array. Example: `panels: [4,5,6,7]` → **ONE rendered video** that animates panels 4 through 7 as a single continuous clip. So, to be crystal clear:
 
 - **NOT one video per panel.** Panels 4–7 are ONE video, not four. A clip almost always spans several panels.
@@ -135,6 +137,31 @@ For each CLIP (in global `clipIndex` order across all sheets), call `generate_vi
 - **`saveTo: <a directory>`**.
 
 ### Per-clip prompt construction
+
+> ## 🛑 MANDATORY FIRST ACTION of prompt construction — ACTIVATE `seedance-2.0`
+>
+> **Before you compose or send the FIRST clip's `generate_video` prompt, you MUST try to activate the `seedance-2.0` skill. This is not optional and not "when convenient" — it is the first thing you do here.**
+>
+> - **Claude backend:** call the **`Skill`** tool with **`braxil-essentials:seedance-2.0`** — it SHIPS INSIDE this same plugin (`braxil-essentials`), so it is invoked plugin-namespaced exactly like this skill (`braxil-essentials:visual-storyboard-to-video`). It is bundled, not a separate install.
+> - **koi backend:** `activate_skill({ name: "seedance-2.0" })`.
+>
+> **If the call SUCCEEDS →** use `seedance-2.0` to craft EVERY clip's prompt (see the division-of-labour + feed rules below). Do NOT fall back to the built-in brief while it is active.
+> **If the call somehow FAILS →** ONLY THEN compose with the built-in brief below. `seedance-2.0` ships with `braxil-essentials`, so a failure means the plugin isn't fully installed — do not tell the user to install it separately; just proceed with the built-in brief.
+>
+> ⚠️ **Do NOT call `generate_video` for any clip until you have either activated `seedance-2.0` or confirmed it is unavailable.** Skipping this step and writing your own long director's brief when `seedance-2.0` was available is the reported bug.
+>
+> Why: `seedance-2.0` encodes Seedance's own conventions and produces markedly better results:
+> - compact, dense prompts (≈40–110 words) over long briefs;
+> - anti-slop wording (drop "cinematic / beautiful / professional" — use precise production language);
+> - one intention per shot driving camera, light, blocking and performance;
+> - IP-safe rewrites (rephrase brands / real people / franchise props that trip the model's safety filter — the exact failure that returns "Input blocked");
+> - continuation from ACCEPTED footage: anchor each clip to the previous clip's REAL last frame/state, not what you expected.
+>
+> **Division of labour — do NOT let `seedance-2.0` take over the pipeline.** It shapes the WORDING and cinematography of the prompt; THIS skill still owns the STRUCTURE and the tool call: the positional reference convention (`Image 1` / `Video 1`, canonical order below), the panel-range citation, the aspect / duration, the frame-chaining, and the `generate_video` plumbing. Keep the reference citations as `Image N` / `Video N` (what `generate_video`'s auto-legend and the providers expect) even though `seedance-2.0` documents `[Image1]`-style tags — fold its craft INTO this skill's 5-part shape below, per clip.
+>
+> **Feed `seedance-2.0` THIS clip's material — the JSON is the script, `seedance-2.0` is the phrasing.** When you invoke it (per clip, at the exact moment you write that clip's prompt), hand it the clip's authoritative content pulled in STEP 0/A: the shots' `action`, `shot`/framing/angle, `camera` movement, `dialogue` and the **continuity-matrix row(s)** (`continuity` = characters/objects/place) for THIS clip's panels, plus the resolved `duration`, target `aspect`, and the reference plan (which panels on which `Image N`, `prev_clip` as `Video 1`). `seedance-2.0` phrases that material into a compact Seedance prompt; it never invents beats the JSON doesn't have and never drops the continuity/dialogue the JSON carries.
+>
+> **If `seedance-2.0` is somehow NOT available** (the `Skill` call errors), compose the prompt with the built-in brief below — it is fully self-sufficient. Do not tell the user to install anything: `seedance-2.0` is bundled inside `braxil-essentials`, so a miss just means the plugin isn't fully loaded. Never block on it — it is an enhancement, not a dependency.
 
 The prompt is a **director's brief**, not a checklist or compliance form. Natural language, structured but flowing. No decorative banners, no caps-shouting, no "use this exact wording" verbatim blocks — models respond better to a concise brief than to a 700-word bookkeeping form.
 
@@ -301,6 +328,13 @@ Follow the `timeline-assembler` skill. The shape:
 
 The final video length = the sum of the per-clip durations (which, when the interactive storyboard is present, equals the storyboard's total duration). Concatenation is timeline-only — NEVER `ffmpeg concat` or any other glue tool; the timeline handles multi-track mix, per-clip durations, aspect reframe and crash-safe state.
 
+## MODEL DISPATCH (read before composing any prompt)
+
+Video prompt composition is MODEL-AWARE: identify the model family that will render (braxil's video generation currently lands on Seedance-class multi-shot models by default) and load that model's spec from `references/` BEFORE composing:
+
+- **Seedance-class (current default): read [references/seedance-2.md](references/seedance-2.md)** and compose per its skeleton, limits and camera vocabulary. This is mandatory for every storyboard-to-video render today, not optional.
+- Other model families: apply the general rules below until a dedicated reference exists (add one per family as they join the routing).
+
 ## Continuity formula (Seedance-class multi-shot models) and reference hygiene
 
 **Reference hygiene: pass CLEAN panel crops, never the raw sheet, when the model accepts several references.** Feeding the whole panel SHEET (with gutter lines, borders and any baked chrome) as the visual blueprint contaminates the render: the grid lines bleed into textures as banding/striping artifacts (reported: striped lines across a character's hair). Extract each clip's panels with `extract_panel` (clean crops, no gutters, no numbers) and pass those as the shot blueprint images, plus the separate character/prop reference images. Only fall back to the whole sheet when the model's reference slots cannot fit the crops, and then keep the explicit "ignore the sheet chrome" negative.
@@ -313,6 +347,8 @@ The final video length = the sum of the per-clip durations (which, when the inte
 3. **Lock lighting and set phrasing verbatim** across cuts and across clips (copy the same sentence, do not paraphrase).
 4. **Max ~5 camera setups per generation.** Seedance-class models hold hard cuts + consistency reliably up to about 5 shots per clip: if a clip's storyboard beats exceed that, split it into two generate_video calls chained by frame.
 5. **FRAME-CHAINING is the plano-secuencia formula (anchor-and-extend):** for full continuity between consecutive clips, extract the FINAL FRAME of the rendered clip N and pass it as the FIRST frame / anchor reference of clip N+1 (the provider's startFrame/lastFrame params when available, else first reference image with "continue exactly from this frame"). This preserves set, wardrobe, light and positions across the join better than any text.
+
+5b. **PREVIOUS CLIP AS VIDEO REFERENCE (when the model accepts video refs, e.g. Seedance-class: check the selected model's capabilities first).** The final frame carries the join POINT; the previous VIDEO carries the DYNAMICS: pacing, how the actors move, camera cadence, lighting in motion. So for every clip after the first, ALSO attach the previous rendered clip (V1 when generating V2, and so on) as a reference video, AND say its role in the prompt explicitly: *"the reference video is the IMMEDIATELY PRECEDING clip of this same film: continue its story directly, matching its pacing, camera language, lighting, set and the exact state of every character at its end; do NOT copy its shots or repeat its action"*. Without the role sentence, models treat a reference video as a style/action template and re-enact it. If the model accepts no video reference, frame-chaining alone (rule 5) is the fallback.
 6. **True plano secuencia (one continuous take, no cuts):** describe it as ONE shot with a single continuous camera move (never CUT blocks), and generate it as one clip; if it exceeds the model's duration cap, split at a motivated camera moment and frame-chain (rule 5): the join reads as an invisible cut.
 7. **One master audio bed:** keep music OFF the clips (separate timeline track, as this skill already does) and describe only diegetic SFX per cut, so joins never fight the soundtrack.
 
