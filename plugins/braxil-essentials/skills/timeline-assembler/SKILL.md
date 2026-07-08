@@ -1,9 +1,40 @@
 ---
 name: timeline-assembler
-description: "Canonical rules for assembling a Braxil timeline — track conventions, fps / aspect-ratio inheritance from source clips, audio mixing levels, music ducking, transitions, subtitles, and the preview-before-render handoff. Use whenever a workflow stitches multiple media clips into a single output via create_timeline + add_clip_to_timeline + render_timeline. Triggers: timeline, assemble video, montar video, montar timeline, build timeline, compose video, stitch clips, render timeline, edit timeline."
+description: "Canonical rules for assembling a Braxil timeline — cutting a source with TRIMMED clips (never new files), track conventions, fps / aspect-ratio inheritance, audio mixing / ducking, transitions, subtitles, and finishing by SHOWING the timeline (never auto-rendering). Use whenever a workflow stitches clips or trims a source into a video via create_timeline + add_clip_to_timeline. Triggers: timeline, assemble video, montar video, montar timeline, build timeline, compose video, stitch clips, cut video, quitar tomas falsas, recortar video, edit timeline."
 ---
 
-This skill is the source of truth for HOW to build a Braxil timeline well. It's intentionally workflow-agnostic — `create-video`, future `create-social-clip`, `slideshow-to-video`, `podcast-to-video`, anything that ends in a `render_timeline` call should follow these rules. Workflows just supply the inputs (which clips, which audio, which subtitles); the assembly logic lives here.
+This skill is the source of truth for HOW to build a Braxil timeline well. It's intentionally workflow-agnostic — `create-video`, future `create-social-clip`, `slideshow-to-video`, `podcast-to-video`, anything that assembles clips should follow these rules. Workflows just supply the inputs (which clips, which audio, which subtitles); the assembly logic lives here.
+
+## 🛑 SUPER-MUST #1 — Cut a source with TRIMMED clips, NEVER new .mp4 files
+
+To build a video out of a source that has bad takes / dead air / parts to drop, you do **NOT** create new video files. The timeline plays **TRIMMED segments of the SAME source**: place several clips that ALL point at that ONE source `path`, each spanning a different `[X → Y]` range of the source. That is exactly what a timeline is for.
+
+A clip is trimmed with `sourceInMs` + `durationMs` in `add_clip_to_timeline`:
+- `path`: the **SAME source video** — reuse the exact same file for every segment.
+- `sourceInMs`: where IN THE SOURCE the segment starts, ms (second X × 1000).
+- `durationMs`: how long the segment plays, ms ((Y − X) × 1000).
+- `startMs`: where the segment sits on the timeline (append after the previous one).
+
+Example — "keep 0–4 s and 9–15 s of `take.mp4`, drop the fluffed bit in between" = **TWO clips of the same file**: `{ path: "take.mp4", startMs: 0, sourceInMs: 0, durationMs: 4000 }` then `{ path: "take.mp4", startMs: 4000, sourceInMs: 9000, durationMs: 6000 }`. Add as many segments as you need until it's perfect; nudge each edge with `trim_clip`.
+
+**FORBIDDEN, full stop:** creating ANY new `.mp4` (via `generate_video`, `ffmpeg`, a re-encode, a "cut clips" step) to stitch a video out of an existing source. Never duplicate a source into new files to assemble it — the source is placed as-is with trimmed clips (same file, different in/out). This is a MUST.
+
+## 🛑 SUPER-MUST #2 — Assembling a video = SHOW the timeline, NEVER render it
+
+When you assemble a video, the deliverable is the **TIMELINE shown in the work area** — NOT a rendered mp4. Do **NOT** call `render_timeline`, do **NOT** "generate the video". Finish with:
+
+`show_result({ resourceType: "timeline", timelineId })`
+
+The timeline plays fully in the work area (preview, scrub, inline editing). Flattening it to an mp4 with `render_timeline` is done **ONLY** when the user EXPLICITLY asks to export / render / download the final file. Default assembly ends at "show the timeline" — never at a render. This is a MUST.
+
+## Editing a talking-head video → `references/TALKING_HEAD.md`
+
+Editing a raw **talking-head / selfie / piece-to-camera** source (a person talking
+straight at the camera — UGC ad, founder explainer, etc.) has its own playbook:
+**cut the silences / dead air, alternate normal↔zoom framings so no shot runs past
+~10 s (keeping the face in frame), pop a brand logo on V2 when a brand is named,
+and drop topic-matching B-roll cutaways**. Read **`references/TALKING_HEAD.md`**
+for the full rules whenever the source is someone talking to camera.
 
 ## 🛑 The timeline is addressed by `id`, never by a disk path you hunt for
 
@@ -21,9 +52,44 @@ Lost the `id` (you shouldn't — it's in the response)? The ONLY recovery is `re
 
 A timeline is a LIVE app artefact: the GUI visor watches it and reflows the instant it changes, and the user can also edit it inline. So your in-memory copy from a previous turn may be stale — **re-read the CURRENT state immediately before every edit**, never trust a snapshot.
 
+**⚡ The fast, default way to edit a timeline is to WORK ON THE JSON: `get_timeline` → transform the whole object in memory → `update_timeline` (which saves the modified .json).** One read + one write covers ANY edit, however big — building all the clips, splitting a source into many trimmed segments, retiming, reordering, adding overlays, setting every `scale`. Do NOT drive an edit as a long chain of unitary calls (`add_clip_to_timeline` × N, `move_clip`, `set_clip_volume`, `trim_clip`, `update_clip`…): that's slow, chatty, and each call re-validates. Compose the final state once and write it once.
+
 - **READ:** `get_timeline` — no args needed for the timeline the user has open (defaults to the active document); returns the full live JSON (clips with `startMs`, `track`, `scale`, `offsetX/Y`, …). Do NOT `read_file` a timeline to inspect it — `read_file` RENDERS it to a video so you can WATCH it; it does not give you the structure.
-- **WRITE (default):** transform that JSON yourself and send the WHOLE result back in a SINGLE `update_timeline` call (atomic full-state replacement). One read + one write covers any edit — bulk changes, reordering, retiming, structural surgery — with no per-tool contract to learn and no partial application.
-- **WRITE (shortcut):** for a trivial tweak to ONE clip ("mute this", "move that 2s"), a single `update_clip` / `move_clip` / `trim_clip` call is cheaper than re-emitting the full JSON. Use them only in that case.
+- **WRITE (default, use this almost always):** transform that JSON yourself and send the WHOLE result back in a SINGLE `update_timeline` call (atomic full-state replacement). `update_timeline` IS "edit the .json" — minus the risk of a malformed hand-write breaking the visor.
+- **WRITE (shortcut — ONLY for a tiny, isolated change):** for a single trivial tweak to ONE clip ("mute this", "move that 2s") a unitary `update_clip` / `move_clip` / `trim_clip` / `set_clip_volume` is fine and cheaper. The moment the edit touches MORE than one clip, or adds/removes/retimes several, go back to the read-JSON → `update_timeline` path. NEVER use the unitary tools to assemble or to do a multi-clip edit.
+
+## The timeline JSON shape — what to build / transform for `update_timeline`
+
+`update_timeline` call: `{ id: "<timelineId>", state: { settings, clips } }` — `state` MUST contain `settings` and `clips`; the `id` comes from the param, NOT from `state`. `get_timeline` returns `{ id, name, version, settings, clips }` → transform `settings` + `clips` and send them back as `state`. When editing, START from what `get_timeline` returned and change only what you need; **only include fields you actually set** — omitted optional fields default sensibly, don't invent values.
+
+### `settings`
+`{ projectFps, projectWidth, projectHeight, videoTracks, audioTracks, activeVideoTrack, activeAudioTrack, pixelsPerSecond, playheadMs, trackHeight, … }`. `projectFps` / `projectWidth` / `projectHeight` are inherited from the first video clip (see "FPS and dimensions") — do NOT change them unless the user wants a different render shape. Leave the view fields (`pixelsPerSecond`, `previewSplit`, `playheadMs`, `trackHeight`…) exactly as `get_timeline` returned them.
+
+### `clips[]` — each clip object
+**Required (every clip):**
+- `id` — `"clip-<hex8>"`. KEEP existing ids when editing; for a NEW clip mint a fresh unique one.
+- `track` — `"V1"`/`"V2"`/`"A1"`/`"A2"`… (STRING). V-tracks stack (higher = on top); A-tracks all mix.
+- `path` — absolute source file (or sentinel `"title:<id>"` / `"timeline:<id>"`).
+- `startMs` — position ON THE TIMELINE, integer ms.
+- `durationMs` — visible length, integer ms ≥ 50.
+
+**Trim (place a SEGMENT of a source — this is how you cut / drop silences, SUPER-MUST #1):**
+- `sourceInMs` — where IN THE SOURCE this clip starts (ms; 0 = from the top).
+- `sourceTotalMs` — the source's true length (ms); keep it accurate so a trim never runs past the end.
+
+**Visual transform (per clip):**
+- `scale` — zoom (1.0 = fit, 1.15–1.3 = punch-in). `offsetX` / `offsetY` — re-frame after a zoom so the subject stays centred (never crop the face out).
+- `sourceWidthPx` / `sourceHeightPx` — source native pixel size (probed on add). `rotation`, `hue`, `saturation`, `brightness`, `contrast`, `cornerRadiusPx`… — optional colour/geometry.
+
+**Audio & linking:**
+- `linkId` — shared id pinning a V clip to its auto-paired A peer (they move/trim/remove together) — keep it consistent.
+- `hasAudio` — whether the clip feeds the mix. `volumePoints` — `[{ t, v }]` gain automation (`t` = ms, `v` = linear gain 0–2).
+
+**Transitions:**
+- `transitionIn` / `transitionOut` — `{ type, durationMs, alignment, params? }` (e.g. a cross-dissolve out on a logo/overlay; see "Transitions").
+
+**Other:**
+- `shotCuts` — detected shot-cut points inside the source, in source-ms (the clip's "tomas"; see `extract_take`). `titleProps` — typography for `title:` clips. `aiState` — AI-generation provenance on AI clips; leave it as-is.
 
 Both paths validate and the GUI reflects the change instantly. **Do NOT hand-edit the timeline JSON with `edit_file`/`write_file`** — `update_timeline` IS the "edit the JSON" path, minus the risk of a malformed write breaking the visor. If your edit reports success the user sees it on the next paint; if it failed, the visor won't change — surface the failure, don't claim success.
 
@@ -45,7 +111,25 @@ Tracks are named `V1`, `V2`, … (video) and `A1`, `A2`, … (audio). Their sema
 | **A2** | Background music — ONE continuous clip sized to the full video duration |
 | **A3+** | SFX / foley accents (whooshes, taps, stings) — one per type if needed |
 
-**Auto-pair audio for V clips:** when you call `add_clip_to_timeline` with a V-track video that has an audio stream (ffprobe-detected at add time), the tool automatically drops a sibling clip on the first free A lane — same path, same `startMs`, same `durationMs`, sharing a `linkId` so move/trim/remove stays in sync. The V clip's own `hasAudio` is flipped to false to prevent double-mixing; the A peer becomes the canonical source for the renderer and for any per-clip volume edits (`set_clip_volume`, `volumePoints`, mute). You get the dedicated audio lane "for free" — same UX as dropping a clip into Final Cut / DaVinci. To opt out (e.g. you want a silent video layer), pass `hasAudio: false` to `add_clip_to_timeline`.
+### 🛑 Every video clip with sound MUST have a paired A-track audio clip — ALWAYS
+
+A V-track video clip that carries audio does NOT sound on its own in the mix — its sound comes from a **paired clip on an A-track**. So **every** talking/video clip that has audio MUST have an audio peer on an A-lane. No exceptions (unless the clip is genuinely silent and you want it silent).
+
+- **Via `add_clip_to_timeline`:** this is automatic — when you add a V-track video with an audio stream (ffprobe-detected), the tool drops a sibling clip on the first free A lane (same `path`, `startMs`, `durationMs`, `sourceInMs`, sharing a `linkId`), and flips the V clip's `hasAudio` to false to avoid double-mixing. The A peer is the canonical source for the renderer and for volume edits (`set_clip_volume`, `volumePoints`, mute). To opt out for a genuinely silent layer, pass `hasAudio: false`.
+- **⚠️ Via `update_timeline` (building the JSON yourself): the auto-pair does NOT run — you MUST add the A-track peers by hand.** For EVERY V-track video clip that has audio, emit a matching A-track clip in the `clips` array: same `path`, `startMs`, `durationMs`, `sourceInMs`, a shared `linkId`, on an A lane — and set the V clip's `hasAudio: false`. Forgetting this = a video with NO SOUND (the reported bug: a talking-head timeline that had zero A-track clips → silent). This is a MUST.
+
+**Example — one talking segment (trimmed 22–34.5 s of the source), with its audio peer:**
+
+```json
+{ "id": "clip-seg1v", "track": "V1", "path": "/…/IMG_1659.MOV",
+  "startMs": 0, "durationMs": 12500, "sourceInMs": 22000, "sourceTotalMs": 91120,
+  "linkId": "seg1", "hasAudio": false },
+{ "id": "clip-seg1a", "track": "A1", "path": "/…/IMG_1659.MOV",
+  "startMs": 0, "durationMs": 12500, "sourceInMs": 22000, "sourceTotalMs": 91120,
+  "linkId": "seg1" }
+```
+
+The V clip shows the picture (`hasAudio:false`), the A1 peer carries its voice — same `startMs`/`durationMs`/`sourceInMs`, same `linkId`. Do this for every talking segment.
 
 ## FPS and dimensions inherit from the first video clip
 
@@ -137,18 +221,22 @@ When you do add subtitles, derive the segments from the panel `caption` / `dialo
 The canonical end-of-workflow sequence:
 
 1. `create_timeline({ name: "<video-title>" })` — NO fps / width / height overrides.
-2. `add_clip_to_timeline` × N for V1 video clips, in time order. The first call seeds fps + dimensions automatically.
+2. `add_clip_to_timeline` × N for V1 video clips, in time order — trimmed segments of the SAME source(s) per SUPER-MUST #1 (never new files). The first call seeds fps + dimensions automatically.
 3. If music: ONE `generate_audio({ duration: total_seconds })` then `add_clip_to_timeline` for the music file on A2. Duck it ONLY if voice/dialogue plays over it — `set_clip_volume(clipId, { change: { gain: 0.04 } })` (-28 dB) where the voice speaks (or `volumePoints` for mixed sections). If there's NO voice (ambient music scoring an action, intro/outro, montage), leave it at a normal present level — do NOT duck. See "Audio mixing levels".
 4. (Optional) `set_clip_transition` on the few clips that warrant a soft edge.
 5. (Optional) `add_subtitles_to_timeline` for tutorial / social explainer.
-6. **`show_result({ resourceType: "timeline", timelineId })`** — open the timeline editor so the user can preview / scrub / approve before the render burns cycles.
+6. **`show_result({ resourceType: "timeline", timelineId })` — THIS IS THE END.** Show the assembled timeline in the work area. STOP here. Do NOT render (SUPER-MUST #2).
+
+**Rendering to a flat mp4 is NOT part of assembly.** Only when the user EXPLICITLY asks to export / render / download the final file do you then:
 7. `render_timeline({ id })` — NO fps / width / height overrides; let the inherited settings drive.
 8. `show_result({ resourceType: "video", path: <rendered file> })` — surface the final mp4.
 
-Skipping step 6 (the preview) is allowed only when the user explicitly said "render directly". The default UX is: assemble → show timeline → render → show video. The user gets two chances to review (timeline + final) instead of just discovering issues on the rendered file.
+Default UX: assemble → **show the timeline** → done. The user previews, scrubs and edits it live; they render it themselves (or ask you to) if and when they want a flat file. Never auto-render.
 
 ## Common mistakes to avoid
 
+- ❌ Creating NEW `.mp4` files to cut a source (bad takes, dead air). WRONG — place TRIMMED clips of the SAME source (`sourceInMs` + `durationMs` on the same `path`). Never `generate_video` / `ffmpeg` / re-encode a source into new files to assemble it. See SUPER-MUST #1.
+- ❌ Rendering the timeline (or "generating the video") as the finish. WRONG — assembly ENDS at `show_result({ resourceType: "timeline", timelineId })`. Only render when the user explicitly asks to export. See SUPER-MUST #2.
 - ❌ `ffmpeg concat` to glue clips instead of using `create_timeline`. The timeline is the abstraction; concat strips you of multi-track, mix, reframe, transitions, subtitles, and crash recovery.
 - ❌ Passing `fps` / `width` / `height` to `create_timeline` or `render_timeline` as defensive defaults. Inheritance is doing the right thing; overriding it re-introduces the black-flicker / black-band bugs.
 - ❌ Music drowning the voice. WHEN there's voiceover/dialogue, duck the music to -28 dB under it (or volumePoints for mixed sections). ❌ But also: don't duck music that has NO voice over it (ambient/action/intro/outro) — that makes a wordless scene sound empty. Decide from the actual audio.
