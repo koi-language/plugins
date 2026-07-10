@@ -32,7 +32,7 @@ If a model in the `generate_image` catalog is tagged with the `visual_storyboard
 
 ## High-level flow
 
-Activate (remember the returned absolute directory) → `read_file` `STORYBOARD_ANATOMY.md` → `read_file` `STYLE_PRESETS.md` (chosen style's phrasing / custom flow) → `read_file` `VIDEO_TYPE_<TYPE>.md` IF a type is named else skip → follow ANATOMY's 6 steps verbatim → `generate_image` (`model` = the `visual_storyboard`-labelled model, `resolution: "4k"`, AND the `metadata` block — all mandatory) → show_result + companion note.
+Activate (remember the returned absolute directory) → `read_file` `STORYBOARD_ANATOMY.md` → `read_file` `STYLE_PRESETS.md` (chosen style's phrasing / custom flow) → `read_file` `VIDEO_TYPE_<TYPE>.md` IF a type is named else skip → follow ANATOMY's 6 steps verbatim → `generate_image` (use the `visual_storyboard`-labelled model if there is one, `resolution: "4k"`, plus the `metadata` block) → show_result + companion note.
 
 ## 🛑 Multi-sheet = STRICTLY SEQUENTIAL, never parallel
 
