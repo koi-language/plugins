@@ -1,5 +1,5 @@
 ---
-name: video-models
+name: video-generator
 description: MANDATORY before ANY video generation — activate this skill the moment a request involves creating, generating, animating, or editing a video, i.e. before EVERY `generate_video` call: text-to-video, image-to-video, reference-to-video, motion transfer, talking-head avatar, video-to-video edit, or extend. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category and matching input shape, and exactly which parameters each supported model accepts or rejects (and which specific models have their own optimization skill, e.g. Seedance). If you are about to generate/animate/edit a video and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "generate/create/make a video", "genera/crea/haz un vídeo", "animate this image/photo", "anima esta imagen/foto", "image to video", "talking head/avatar", "extend/make this clip longer", "restyle this video", "remove the background of this video", or any mention of a video model (Veo, Kling, Seedance, WAN, Gemini Omni Flash, OmniHuman).
 ---
 

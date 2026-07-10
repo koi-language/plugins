@@ -1,5 +1,5 @@
 ---
-name: audio-models
+name: audio-generator
 description: MANDATORY before ANY audio generation — activate this skill the moment a request involves speech/TTS, transcription, sound effects / Foley, music, or voice cloning, i.e. before EVERY `generate_audio` (or `create_voice`) call. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category (matching the mode) and exactly which parameters each supported model accepts or rejects. If you are about to generate audio and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "text to speech/TTS", "narración/voz en off", "read this aloud", "lee esto en voz alta", "transcribe this audio", "transcribe/subtítulos", "sound effect/Foley", "efecto de sonido", "generate music/score", "genera música/banda sonora", "clone a voice", "clona una voz", or any mention of an audio model (MiniMax, Wizper/Whisper, ElevenLabs).
 ---
 

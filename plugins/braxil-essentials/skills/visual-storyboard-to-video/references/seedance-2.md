@@ -1,6 +1,6 @@
 # Seedance 2.0 prompt spec (model-specific layer)
 
-Apply this file whenever the video generation lands on a Seedance-class multi-shot model (braxil's current default for storyboard-to-video). It refines, never replaces, the skill's general rules (continuity formula, panels-are-action-references, dimensions, music-off-clips).
+Apply this file whenever the chosen video model is a Seedance-class multi-shot model. It refines, never replaces, the skill's general rules (continuity formula, panels-are-action-references, dimensions, music-off-clips).
 
 ## Prompt skeleton (per clip)
 

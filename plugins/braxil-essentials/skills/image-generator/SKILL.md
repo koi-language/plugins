@@ -1,5 +1,5 @@
 ---
-name: image-models
+name: image-generator
 description: MANDATORY before ANY image generation or editing — activate this skill the moment a request involves creating, generating, drawing, rendering, editing, inpainting, outpainting/reframing, upscaling, removing the background of, or camera-rotating an image, i.e. before EVERY `generate_image` call. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category and exactly which parameters each supported model accepts or rejects. If you are about to generate/edit an image and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "generate/create/make/draw/render an image", "genera/crea/haz/dibuja una imagen o foto", "edit/retouch this photo", "edita/retoca la foto", "inpaint", "outpaint", "reframe", "upscale", "remove/quita el fondo", "logo", "poster", "banner", "mockup", or any mention of an image model (Nano-Banana, GPT Image, Seedream, Krea, Qwen, Bria).
 ---
 
