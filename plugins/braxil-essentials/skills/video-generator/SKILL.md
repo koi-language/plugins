@@ -61,13 +61,40 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 
 ⚠ **Motion transfer (Kling Motion-Control)** needs a reference motion video + `characterOrientation`, which the `video` tool doesn't expose — it isn't usable through the standard tool right now.
 
-## Choosing within a category
+## Choosing within a category — pick on merit
 
-Once the category and input shape are fixed, several models may qualify. Decide from the data — neutrally, no default favourite:
+Once the category and input shape are fixed, several models may qualify. **Choose deliberately from each model's strengths — do not just grab whatever's first, and do not fall back to WAN merely because a better model errored.** These are the generative (`operation:"new"`) models BRAXIL has enabled:
 
-- Compare the candidates' cards in `references/models.md` on the traits your task needs: max resolution (only some reach 4k), duration range (differs a lot — some cap at 8s, others reach 15s, extend is fixed), native-audio support, and the exact input shape (start/end frame, refs, audio-driven lip-sync).
-- **What the labels mean — use them to pick the best-suited model.** A model's labels (the Catalog table's **Labels** column) mark the content, subject, motion or style that model is the BEST-SUITED for. If the user's request matches a label, **strongly prefer that model** over an unlabelled one in the same category — the label is telling you it is the best fit. Examples: `avatar` / `talking-head` → the best for a lip-synced presenter; `anime` → the best for anime-style motion; `product` → product/e-commerce clips; `cinematic`, `nature`, etc. → their named subject/style. Read every candidate's labels against what the user asked for and route accordingly. When no label matches, ignore labels and choose on quality / price.
-- Some behaviours live on a single model (motion transfer, fixed-length extend). Find that model by the input shape / label it supports in the table + `references/models.md`, not by memory.
+| Model | Best at | Watch out for |
+|---|---|---|
+| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios. | Caps at 1080p (no 4k). Has an optimization skill — activate it. |
+| **Kling v3 Pro** `fal-ai/kling-video/v3/pro/image-to-video` | Strong image-to-video for **product & controlled cinematic** shots; clean motion, start+end frame, up to 15s. Best pick when Seedance can't do it. | Image-to-video only. Inherits aspect from the start image (no `aspectRatio`/`resolution`), ignores `seed`. |
+| **Veo 3.1** `fal-ai/veo3.1/image-to-video` | Top-tier realism; **the only 4k model**. Reach for it when you need 4k or maximum photoreal polish. | Image-to-video only, no `endFrame`, durations locked to `4s/6s/8s`, 16:9 or 9:16 only. Priciest — use when the quality/4k is the point. |
+| **Luma Ray v3.2** `luma/agent/ray/v3.2/text-to-video` · `…/image-to-video` | **Elegant, clean-motion b-roll / cinematic** clips; polished all-rounder. Does text-to-video AND image-to-video (start+end frame), most aspect ratios, up to 1080p. Also does **reframe** (change a clip's aspect ratio) and **video-to-video** — see below. | Only `5s`/`10s` durations. **No native audio.** Caps at 1080p. |
+| **Gemini Omni Flash** `google/gemini-omni-flash/image-to-video` · `…/reference-to-video` | **Fast & cheap** image-to-video and reference-to-video (compose from up to 10 refs). Good for quick iteration / social hooks. | Minimal controls: `16:9`/`9:16` only, `3–10s`, no `seed`/`resolution`. Lower fidelity than the cinematic models. |
+| **WAN 2.7** `fal-ai/wan/v2.7/image-to-video` | A fallback image-to-video when the others can't serve the shape. | **Last resort — pricey and weaker.** No audio. Don't pick it over Seedance/Kling/Veo/Luma just because one of them errored; retry the better ones first. |
+
+**Decision in one line:** refs or text-only → **Seedance** (or **Gemini Omni Flash** for a fast/cheap take); animating a photo → **Seedance**, then **Kling** (product/controlled), **Veo** (4k / max realism) or **Luma** (elegant b-roll); only if none fit → **WAN**.
+
+### Editing an existing clip — the editor is auto-picked, but here's who's best
+
+Edits are **`operation:"edit"` (leave `model` UNSET)** — the server/router picks the editor from the `video_editing` pool for you. You don't choose the slug, but knowing the merits tells you what to expect (and which `default` label to set in the backoffice):
+
+| Editor | Best at | Notes |
+|---|---|---|
+| **Gemini Omni Flash** `google/gemini-omni-flash/edit` | **The best, default editor.** Follows a plain-language instruction and **keeps everything else in the frame the same** — the go-to for "change/add/remove X in this clip". Output dims/length follow the source. | Unavailable in EEA/CH/UK. Make it the pool's `default`-labelled row so the router picks it first. |
+| **Luma Ray v3.2 v2v** `luma/agent/ray/v3.2/video-to-video` | Whole-clip **restyle / colour-grade / repaint / motion swap** — a stylistic transform of the source, not a surgical edit. | 5s/10s, up to 1080p. |
+| **Luma Ray v3.2 reframe** `luma/agent/ray/v3.2/reframe` | **Re-aspect a clip** (e.g. 16:9 → 9:16), outpainting the newly exposed areas. The pick when the ask is "change the aspect ratio / reframe for Reels". | Needs the target `aspectRatio`. |
+| **Kling o3 v2v** `fal-ai/kling-video/o3/*/video-to-video/*` | Reference-guided v2v when you need extra style/character image refs bound to the edit. | Niche; the router only reaches for it over Gemini when its shape/label fits. |
+
+Rule of thumb: a **targeted instruction edit** ("remove the logo", "make it night") → **Gemini Omni Flash**; a **full restyle** → Luma v2v; an **aspect-ratio change** → Luma reframe. Since the agent leaves `model` unset, enforce this by putting the `default` label on Gemini Omni Flash's `video_editing` row in the backoffice. See `references/models.md`.
+
+### Two overrides that beat the table
+
+- **A matching label wins.** A model's labels (Catalog table's **Labels** column) mark what it's BEST-SUITED for (`avatar`/`talking-head`, `anime`, `product`, `cinematic`, `nature`…). If the user's request matches a label, prefer that labelled model even over the default. When no label matches, choose on the strengths above.
+- **Input shape is absolute.** Only choose among models that actually accept your shape (a text-only prompt can't go to an image-to-video slug; an `endFrame` needs a model that takes one). If the preferred model's variant can't take your input, step to the next that fits — don't force it.
+
+Some behaviours live on a single model (motion transfer, fixed-length extend, server-routed edit); find them by input shape in `references/models.md`, not by memory.
 
 ## Per-model optimization skills
 

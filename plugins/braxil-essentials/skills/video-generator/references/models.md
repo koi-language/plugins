@@ -101,6 +101,56 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 
 - **Rejects**: aspectRatio (follows input image), withAudio. *Not settable via the tool:* audio-driven lip-sync (`audioUrl`).
 
+### Luma Ray 3.2 — Text-to-Video — `luma/agent/ray/v3.2/text-to-video`
+- text-only (no frames). Elegant, clean-motion cinematic / b-roll.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤6000 chars | English. |
+| aspectRatio | optional | `3:4·4:3·1:1·9:16·16:9·21:9` | clamped to nearest; omit → 16:9. |
+| resolution | optional | `540p·720p·1080p` (low→540p, medium→720p, high/ultra→1080p) | omit → 1080p. |
+| duration | optional | snapped to `5s`/`10s` (≤7→5s, else 10s) | omit → 5s. |
+
+- **Rejects**: startFrame, endFrame, referenceImages. **No native audio** (no `withAudio`), no `seed`.
+
+### Luma Ray 3.2 — Image-to-Video — `luma/agent/ray/v3.2/image-to-video`
+- needs `startFrame` (optional `endFrame`).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤6000 chars | motion description. |
+| startFrame | required | image | literal first frame → `image_url`. |
+| endFrame | optional | image | last frame → interpolation. |
+| aspectRatio | optional | `3:4·4:3·1:1·9:16·16:9·21:9` | omit → 16:9. |
+| resolution | optional | `540p·720p·1080p` | omit → 1080p. |
+| duration | optional | `5s`/`10s` | omit → 5s. |
+
+- **Rejects**: referenceImages. **No native audio**, no `seed`.
+
+### Gemini Omni Flash — Image-to-Video — `google/gemini-omni-flash/image-to-video`
+- needs `startFrame` + `prompt`. Fast & cheap.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars | |
+| startFrame | required | image | literal first frame → `image_url`. |
+| aspectRatio | optional | `16:9·9:16` only | clamped to nearest orientation; omit → 16:9. |
+| duration | optional | 3–10 s (clamped) | omit → 8s. |
+
+- **Rejects**: endFrame, referenceImages, resolution, seed, withAudio.
+
+### Gemini Omni Flash — Reference-to-Video — `google/gemini-omni-flash/reference-to-video`
+- composes from `referenceImages` (up to 10). Fast & cheap.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars; bind refs positionally via `<IMAGE_REF_0>`-style tags yourself | |
+| referenceImages | required | up to 10 images | |
+| aspectRatio | optional | `16:9·9:16` only | omit → 16:9. |
+| duration | optional | 3–10 s (clamped) | omit → 8s. |
+
+- **Rejects**: startFrame, endFrame, resolution, seed, withAudio.
+
 ### Kling v3 Standard — Motion-Control — `fal-ai/kling-video/v3/standard/motion-control`
 - motion transfer. ⚠ **Requires a reference motion video + `characterOrientation`, which the `video` tool does NOT expose (no `referenceVideos`/`characterOrientation` params).** Effectively not usable through the standard MCP `video` tool right now — do not pick it unless a dedicated path provides those inputs.
 
@@ -117,6 +167,27 @@ The server picks the editor; you pass `sourceVideo` + `prompt`.
 | sourceVideo | required | path/@mention to the clip | |
 | prompt | required | edit instruction ≤20000 chars | tip: append "Keep everything else the same." |
 - Output dims/length follow the source. Unavailable in EEA/CH/UK.
+
+### Luma Ray 3.2 — Video-to-Video — `luma/agent/ray/v3.2/video-to-video`  *(operation `"edit"`)*
+Restyle / transform an existing clip.
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"edit"` | |
+| sourceVideo | required | path/@mention to the clip | → `video_url`. |
+| prompt | required | string ≤6000 chars | how to edit the video. |
+| resolution | optional | `540p·720p·1080p` | omit → 1080p. |
+| duration | optional | `5s`/`10s` | omit → 5s. |
+| startFrame | optional | image | first frame of the edited output. |
+
+### Luma Ray 3.2 — Reframe — `luma/agent/ray/v3.2/reframe`  *(operation `"edit"`)*
+Change a clip's **aspect ratio**, outpainting the newly exposed areas.
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"edit"` | |
+| sourceVideo | required | source clip ≤30s | → `video_url`. |
+| aspectRatio | **required** | `3:4·4:3·1:1·9:16·16:9·21:9` | the NEW aspect ratio (the point of reframe). |
+| prompt | required | string ≤6000 chars | what to paint into the new areas. |
+| resolution | optional | `540p·720p·1080p` | omit → 1080p. |
 
 ### Veo 3.1 — Extend Video — `fal-ai/veo3.1/extend-video`  *(operation `"extend"`)*
 | `video` param | Req? | Accepted values | Notes |

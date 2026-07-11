@@ -32,6 +32,16 @@ The gateway hard-errors on an unknown slug and silently drops fields a model doe
 
 Returns `{ success, provider, model, images: [{ url?, b64?, savedTo?, exportedTo? }] }`.
 
+## Multiple images at once — use `batch`, never many separate calls
+
+When you need SEVERAL images in one go (regenerating a set of storyboard panels, a variation grid, a few edits), pass them in the **`batch` array of a SINGLE `generate_image` call** — do **NOT** emit one `generate_image` tool call per image. Tool calls run **serially**, so N separate calls take N× as long; one batched call runs them **in parallel** and returns together.
+
+- Each `batch` entry is an object with the same fields as a single call (`prompt`, `model`, `referenceImages`, `aspectRatio`, `resolution`, `quality`, `outputFormat`, `seed`, `metadata`, `summary`, `n`).
+- Any field you set at the **top level** is the shared default for entries that omit it — set a common `model` / `aspectRatio` once and give each entry just its own `prompt`.
+- Returns `{ results: [ …one result per entry, in order… ] }`; each entry carries the saved path(s) in its `artifacts[]` (and the raw result under `result`). A per-entry `ok:false` means only that image failed — the others still ran.
+
+Use a single call for a single image (the top-level fields). Reach for `batch` the moment there is more than one.
+
 ## Categories — you pick a `generate_image` model for two of them
 
 The `generate_image` `model` param covers **generation** and **editing** only. Pick a slug **whose category matches what you are doing, and NEVER one that lacks it**:
