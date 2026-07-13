@@ -130,7 +130,7 @@ Both are required. Passing the reference image without the continuity block lead
 
 ## 🎬 The Final Render Pipeline
 
-> 📍 **The authority for the final-render pipeline is now the `visual-panels-to-video` skill** (`list_skills` → its `directory` → SKILL.md). It supersedes the algorithm sketch below in one important way: **per-clip duration is the sheet's OWN duration** (the whole-second 4–15 value the storyboard assigned that PART — taken from the interactive storyboard JSON when present), NOT a fixed 15 s. The timeline concatenates clips back-to-back at each clip's own duration (cumulative cursor), not at fixed 15 s slots. The sketch below is the original equal-15 s-sheet view; follow the skill for the real, variable-duration behaviour.
+> 📍 **The authority for the final-render pipeline is now the `visual-panels-to-video` skill** (`list_skills` → its `directory` → SKILL.md). It supersedes the algorithm sketch below in one important way: **per-clip duration is the sheet's OWN duration** (the whole-second 4–15 value the storyboard assigned that PART — taken from the storyboard JSON when present), NOT a fixed 15 s. The timeline concatenates clips back-to-back at each clip's own duration (cumulative cursor), not at fixed 15 s slots. The sketch below is the original equal-15 s-sheet view; follow the skill for the real, variable-duration behaviour.
 
 After every sheet is approved, run the final-render step: **one `generate_video` call per sheet** (NOT per panel), then stitch the sheet-clips on a timeline.
 

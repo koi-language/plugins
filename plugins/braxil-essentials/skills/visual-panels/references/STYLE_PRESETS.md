@@ -8,7 +8,7 @@ This file contains the **3 official style presets** for Tenframe storyboard shee
 
 When building a prompt, copy the relevant phrasing block into the **VISUAL STYLE** section of the storyboard prompt.
 
-> **POV / first-person is NOT a style — it is a camera angle.** It lives at the **interactive storyboard** level, per shot (`shot: "ECU POV"`, `shot: "MS first-person"`, etc.), and can combine with ANY of the 3 styles below. A "POV Premium 3D" storyboard, a "POV Claymation" storyboard or a "POV Realistic UGC" storyboard are all valid combinations — pick the visual style here, and set POV framing per shot in the interactive storyboard's `shot` field. Don't list POV as a style choice in any form / select.
+> **POV / first-person is NOT a style — it is a camera angle.** It lives at the **storyboard** level, per shot (`shot: "ECU POV"`, `shot: "MS first-person"`, etc.), and can combine with ANY of the 3 styles below. A "POV Premium 3D" storyboard, a "POV Claymation" storyboard or a "POV Realistic UGC" storyboard are all valid combinations — pick the visual style here, and set POV framing per shot in the storyboard's `shot` field. Don't list POV as a style choice in any form / select.
 
 ---
 
