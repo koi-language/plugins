@@ -6,7 +6,7 @@
 
 | Capability | Extraction move |
 |---|---|
-| Multi-shot in one call [official] | `Shot 1:/2:/3:` labels · one action + one camera each · Standard tier · 10–15s/`auto` · shots×seconds budget |
+| Multi-shot in one call [official] | `Shot N:` labels, as many as the edit has cuts (no published cap) · one action + one camera each · Standard tier · `auto` duration · budget by density, not shot count |
 | Native synced audio [official] | name specific sounds; dialogue as a natural quoted line on-screen; short lines; clean front face ref; SFX>music>dialogue — test dialogue first |
 | Role-separated references [official] | per-asset role **+ exclusion** ("motion only, no appearance") |
 | Motion transfer via @Video [official/field] | donor clip for choreography/camera rhythm + identity @Image |

@@ -1,16 +1,18 @@
 # Multi-Shot Grammar — real cuts inside one generation
 
-*Seedance 2.0's defining capability over 1.x: a single 10–15s call can contain 2–3 shots with genuine editorial cuts. Labels: [official] = ByteDance/fal docs · [field] = practitioner-reported. Last verified 2026-06-09.*
+*Seedance 2.0's defining capability over 1.x: a single call can contain multiple shots with genuine editorial cuts. No provider doc publishes a cap on shots per generation; the limit is prompt density, not a number. Labels: [official] = ByteDance/fal docs · [field] = practitioner-reported · [heuristic] = default to test. Last verified 2026-06-09.*
 
 ## The grammar [official]
-Label every cut explicitly — `Shot 1:` / `Shot 2:` / `Shot 3:` — in plain prose. The labels are what give the model cut points; long unlabeled prompts tend to render as one continuous take. Per shot: **one primary action + one camera move**, plus its sound. Order inside each shot: subject + action → camera → sound.
+Label every cut explicitly (`Shot 1:` / `Shot 2:` / `Shot 3:` / `Shot N:`) in plain prose. The labels are what give the model cut points; long unlabeled prompts tend to render as one continuous take. Use as many labels as the edit has cuts. Per shot: **one primary action + one camera move**, plus its sound. Order inside each shot: subject + action → camera → sound.
 
-## The budget [official]
-Shots cost seconds. Plan ≈4–6s per shot: two shots want ~10s, three want 12–15s. Ask for four shots in 5s and the model compresses or skips beats. `duration: auto` lets the model size the clip to the prompt's complexity — a strong default for multi-shot; set an explicit duration only when the edit demands it.
+## The budget [heuristic]
+Ask for as many shots as the edit needs: there is no published ceiling, and the model does honor high cut counts. What degrades is not the *number* of labels but the amount of new information per second. A shot with its own location, its own character turn and its own dialogue line needs room; a fast cut inside one continuous action barely costs anything. So budget by density, not by a fixed seconds-per-shot rule: if a shot's action cannot complete in the seconds it gets, that is the shot the model will compress or skip. Fix it by giving the clip more duration, by simplifying that shot to one action, or by moving the beat to a later generation, not by capping the shot count.
+
+`duration: auto` lets the model size the clip to the prompt's complexity and is the strong default for multi-shot; set an explicit duration only when the edit demands it (a music sync, a fixed-length cutdown).
 
 ## Requirements [official + field]
 - **Standard tier [field].** Official fal docs give fast endpoints the same schema and multi-shot support, but field reports say fast tiers do not reliably honor multi-shot (or slow-motion or dolly moves) on the first try.
-- **10–15s or `auto` [official].** Multi-shot below ~10s starves the beats.
+- **Duration 4–15s or `auto` [official].** Longer clips give dense multi-shot edits more room, but short multi-shot is legal: a rapid-cut 5s piece is fine as long as each shot's action is small enough to land.
 
 ## Timestamps: secondary on Western surfaces, primary on Chinese surfaces [official + field]
 Prefer `Shot N:` labels as the structure — clear and portable across surfaces. fal's reference-to-video docs additionally accept timestamp pacing phrases ("At 5 seconds…", "Cut scene to…"); use them sparingly as *hints inside* a labeled shot, never as bracketed `[0-6s]` blocks replacing the labels.
@@ -31,8 +33,8 @@ For an unbroken take, say so: "single continuous take, no cuts" — otherwise a 
 ## Failure → fix [field]
 | Symptom | Fix |
 |---|---|
-| Renders as one continuous take | clearer `Shot N:` labels · reduce to two shots · Standard tier |
-| A shot's action skipped/compressed | fewer shots · raise duration / `auto` · one action per shot |
+| Renders as one continuous take | clearer `Shot N:` labels · Standard tier |
+| A shot's action skipped/compressed | raise duration / `auto` · one action per shot · move the overloaded beat to a later generation |
 | Cut lands mid-action | end each shot's sentence on the completed beat; let the next shot open the new one |
 | Atmosphere breaks between shots | declare the persisting effect once for the whole piece: "thin mist throughout, every shot" (全程薄雾) |
 
