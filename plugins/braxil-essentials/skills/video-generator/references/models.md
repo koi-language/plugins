@@ -101,6 +101,20 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 
 - **Rejects**: aspectRatio (follows input image), withAudio. *Not settable via the tool:* audio-driven lip-sync (`audioUrl`).
 
+### Pixverse v6 — Image-to-Video — `fal-ai/pixverse/v6/image-to-video`
+- needs `startFrame`. First frame ONLY — it does not interpolate to a tail frame.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | image | the literal first frame. |
+| prompt | required | string ≤2048 bytes | the ONLY i2v model here that requires a prompt. |
+| resolution | optional | `360p·540p·720p·1080p` (low→540p, medium→720p, high/ultra→1080p) | omit → 720p. |
+| duration | optional | 1–15 s (any integer, not an enum) | omit → 5s. |
+| withAudio | optional | true/false | BGM + SFX + dialogue. **Upstream default is OFF**, so pass it explicitly for a scored clip. |
+| seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
+
+- **Rejects**: aspectRatio (inherited from the start image), endFrame, referenceImages. *Not settable via the tool:* `style` (anime / 3d_animation / clay / comic / cyberpunk), `thinking_type` (prompt auto-optimisation), `generate_multi_clip_switch` (dynamic camera cuts), `negative_prompt`.
+
 ### Luma Ray 3.2 — Text-to-Video — `luma/agent/ray/v3.2/text-to-video`
 - text-only (no frames). Elegant, clean-motion cinematic / b-roll.
 
