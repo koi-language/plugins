@@ -102,6 +102,18 @@ Some models have a **dedicated skill** with the optimal way to prompt and drive 
 
 - **Seedance 2** (`bytedance/seedance-2.0/*`) → activate the `braxil-essentials:seedance-2-0` skill before building the prompt.
 
+## Editing a clip longer than 10 seconds — ASK FOR THE SEGMENT FIRST
+
+An AI video edit covers **10 SECONDS AT MOST**. So before editing an existing clip, look at its duration:
+
+- **≤ 10 s** → edit it as usual (`operation:"edit"`, `sourceVideo` = the clip).
+- **> 10 s** → **do NOT start generating.** The user has to tell you WHICH part they want changed:
+  1. Show the clip with the **segment-selection tool armed**: `show_video` with `selectSegment: true` (MCP), or `show_result` `resourceType:"video"` + `selectSegment: true` (native tools). It works whether the clip is already open in the work area or not — if it is visible, the tool is simply armed on it; if not, it opens with the tool armed.
+  2. **Ask them in the chat**, in their language, to drag the segment they want modified, and say plainly that an edit can cover at most 10 seconds. Then **WAIT for their answer**.
+  3. Their pick reaches you in the **`# WORKING AREA`** block of the next turn (the selected segment, start/end in ms). **Edit exactly that segment** — cut it out of the source and edit the cut, never the whole clip.
+
+The same rule holds when the clip arrives as an attachment rather than open in the work area: show it with `selectSegment` and ask.
+
 ## Gotchas
 
 - **startFrame ≠ referenceImages.** startFrame is a strict commitment to identical pixels at t=0. Storyboards, sheets, mood boards, character/style refs are `referenceImages`. When unsure, use `referenceImages` — the wrong choice fails or produces a different take.
