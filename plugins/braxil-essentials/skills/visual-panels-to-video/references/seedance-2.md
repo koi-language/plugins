@@ -1,35 +1,46 @@
 # Seedance 2.0 prompt spec (model-specific layer)
 
-Apply this file whenever the chosen video model is a Seedance-class multi-shot model. It refines, never replaces, the skill's general rules (continuity formula, panels-are-action-references, dimensions, music-off-clips).
+Apply this file when the chosen video model is a Seedance-class multi-shot model doing **reference-to-video from a storyboard**. It refines, never replaces, the skill's compact shape (scene line → count line → one line per shot → closing note) and its attachment rule (this clip's own WHOLE sheet + the previous clip video, nothing else).
 
-## Prompt skeleton (per clip)
+## Attachments (Seedance reference-to-video)
 
-1. **Reference roles block** (first lines): one line per attached file stating its authority, in attachment order: "Image 1 = shot blueprint panels (follow ONLY panels A-B, in order)", "Image 2/3 = character identity locks (match face, build, hair, wardrobe exactly)", "Image 4 = prop design lock", "Video 1 = the immediately preceding clip of this same film" (rule 5b). Seedance natively understands positional references; keep roles explicit and never re-describe a locked identity differently later.
-2. **Global style + set line**: one sentence, copied VERBATIM across every clip of the piece (film stock, set, palette, lighting direction). Paraphrasing between clips is what causes look drift.
-3. **Continuity lock**: the hard rules true in every shot (from the storyboard's continuity LOCK + per-shot rows).
-4. **Timeline: CUT blocks with timestamps** ("CUT 3 (0:05.5 - 0:07.5)"), beat-by-beat. Each block: shot type + camera move (exact vocabulary below), ONE physical action, dialogue with speaker label, SFX. Panels are reference stills of a moment WITHIN the cut, never start frames: say it once globally.
-5. **Audio design line**: diegetic SFX + dialogue + ambience only; name silence explicitly when wanted ("near-silence, faint idle hum"). Music NEVER in the clip (separate timeline track).
+- **This clip's OWN whole panel sheet** (uncropped) — the ONLY image. Never `extract_panel` / crop; never attach other sheets; never attach separate character/prop refs (the sheet already carries the character design). Name the panel range in the prompt ("panels A to B").
+- **The immediately-previous clip as a video** (`prev_clip` → `Video 1`), K ≥ 2 only. Immediate predecessor only.
+- Max 12 files total per generation; reference VIDEOS max 3, each < 50 MB, combined ≤ 15 s. When the previous clip exceeds the budget, trim to its final 5–8 seconds (timeline tools), never skip the continuation line.
+
+## Compact prompt skeleton (per clip)
+
+Keep it SHORT — the size of the reference example, no timecodes, no CUT blocks, no per-shot style.
+
+1. **Scene line** (1–2 sentences): medium/look + who is in frame. Copy VERBATIM across every clip of the piece (paraphrasing drifts the look).
+2. **Continuation line** (K ≥ 2 only): "`Video 1` is the immediately preceding clip; continue directly from its last frame — same lighting, positions, momentum, world-state; don't reset; don't re-enact its shots."
+3. **Count line**: "`<N>` shots, hard cuts, perfect continuity. Each shot matches the framing of its reference panel (panels A to B)." The model counts and maps shots→panels; no per-shot panel citation.
+4. **One line per SHOT**, JSON order: `SHOT n — <shot size>, <angle if non-default>, <one camera move>: <one physical beat>.` Dialogue inline in its spoken language; SFX inline at the end. One camera instruction per shot.
+5. **Closing note** (1 line): environment / atmosphere / lighting held across the clip + the audio line ("diegetic sound only…"; music on a separate track). Fold any story-wide hard rules in as a short "Hard rules: …" clause.
+
+Panels are reference stills of a moment WITHIN each shot, not start frames: say it once globally.
 
 ## Hard limits (Seedance 2.0)
 
-- Output: 4-15 seconds per generation. Our storyboard clips must respect this: a clip over 15s MUST be split (frame-chained, rule 5) BEFORE composing.
-- Camera setups: reliable up to ~5 per generation; more setups = split the clip.
-- Attachments: max 12 files total per generation. Reference VIDEOS: max 3, each < 50MB, combined <= 15s. When passing the previous clip (rule 5b) and it exceeds the budget, trim to its final 5-8 seconds (extract with the timeline tools), never skip the role sentence.
-- Keep the SAME reference set (same files, same order) on every clip of the piece.
+- Output: 4–15 seconds per generation. A clip over 15 s MUST be split upstream (`visual-panels` chunking) BEFORE composing — never here.
+- Camera setups: reliable up to ~5 per generation; more = the clip was mis-chunked.
+- Keep the SAME scene line and lighting phrasing on every clip of the piece.
 
 ## Camera vocabulary (use these exact terms)
 
-static locked-off, slow dolly in / dolly out, push-in, snap zoom, whip pan, slow pan left/right, tilt up/down, crane up/down, orbit clockwise/counterclockwise, tracking shot alongside, handheld (subtle sway), shoulder-level follow, low-angle looking up, high-angle looking down, POV, insert ECU. One camera instruction per CUT; combining two moves in one cut invites drift.
+static locked-off, slow dolly in / dolly out, push-in, snap zoom, whip pan, slow pan left/right, tilt up/down, crane up/down, orbit clockwise/counterclockwise, tracking shot alongside, handheld (subtle sway), shoulder-level follow, low-angle looking up, high-angle looking down, POV, insert ECU. One camera instruction per shot; combining two moves in one shot invites drift.
 
 ## The 2-second hook (conditional)
 
-For social-first pieces (ads, shorts, reels) the FIRST cut of the FILM should open on a strong hook: motion already in progress, a striking composition, or the punchline object in frame. NEVER override the user's approved storyboard to force a hook: if the storyboard's opening is a slow establish, render the slow establish (user requirements are sacred). Apply the hook only when composing beats the storyboard leaves open or when the user asks for social-optimized pacing.
+For social-first pieces (ads, shorts, reels) the FIRST shot of the FILM should open on a strong hook: motion already in progress, a striking composition, or the punchline object in frame. NEVER override the user's approved storyboard to force a hook: if the storyboard's opening is a slow establish, render the slow establish (user requirements are sacred). Apply the hook only when composing beats the storyboard leaves open.
 
 ## Do / Don't
 
 - DO name counts, sides and targets exactly (Seedance renders literally; ambiguity invents).
-- DO keep every character's noun phrase identical across all cuts and clips.
+- DO keep every character's noun phrase identical across all shots and clips.
 - DO state explicit ABSENCES for aftermath shots (what must NOT appear).
-- DON'T pass the raw panel sheet when per-panel crops fit in the attachment budget (gutter lines bleed into textures as banding).
-- DON'T describe multi-beat physics inside one cut: one frozen intent per cut, motion flows through the panel's reference moment.
+- DON'T crop the sheet or attach individual panels — attach the WHOLE sheet (the count line tells the model which panels to read).
+- DON'T attach anything beyond this clip's own sheet + the previous clip video.
+- DON'T describe multi-beat physics inside one shot: one physical beat per shot, motion flows through the panel's reference moment.
 - DON'T mention platform names, watermarks, text overlays or captions: no on-screen text ever.
+- DO mesh photoreal human faces before attaching: Seedance rejects a raw photoreal face as a reference. Pre-step (main skill): on a COPY of the sheet, extract each face panel → `generate_image` edit to overlay a faint blue wireframe mesh → `replace_panel` back → attach that meshed copy. Then in the prompt add a line naming the meshed panels stating the face is ordinary bare skin, no mesh/grid, in the video.

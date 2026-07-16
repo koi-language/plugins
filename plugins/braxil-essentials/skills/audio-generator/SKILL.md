@@ -52,6 +52,12 @@ One tool, four **modes**. YOU pick the model each time — pass `model` (require
 
 Clone a voice from an audio sample (MiniMax Voice Clone), then use the returned voice name as `voice` in later speech calls. Knobs: `noiseReduction` (phone/handheld samples), `volumeNormalization`, `accuracy` 0..1, `previewText`, `modelVariant` (`speech-02-hd` default / `speech-02-turbo` / `speech-01-hd` / `speech-01-turbo`). `language` is NOT supported (dropped).
 
+**Getting the sample — offer BOTH ways.** The `audioFile` a clone needs can come from either:
+- **Recording live in BRAXIL** — tell the user they can record their own voice with BRAXIL's microphone; ask them to record **~60 seconds** of clean, natural speech (a normal talking pace, no background noise). The recording lands as an audio file you pass straight to `create_voice`.
+- **An existing audio file** — the user supplies a clean voice sample (10–60 s) they already have.
+
+When the user asks to clone a voice and hasn't provided a sample, don't just wait for a file: proactively offer the mic-recording route ("graba unos 60 segundos con el micro, o pásame un audio con la voz").
+
 ## Routing
 
 | I want… | Category → mode + fields |

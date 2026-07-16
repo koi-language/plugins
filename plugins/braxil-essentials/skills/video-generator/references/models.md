@@ -2,7 +2,7 @@
 
 Only models **enabled in the BRAXIL backend** are listed, and each table uses the **actual MCP tool parameters the agent can set** — NOT raw fal fields.
 
-`video` parameters: **`operation` ('new'|'edit'|'extend'), `model`, `prompt`, `startFrame`, `endFrame`, `referenceImages`, `sourceVideo` (edit/extend), `aspectRatio`, `cameraMovement`, `resolution`, `duration`, `quality`, `withAudio`, `seed`** (`seed` is `operation:"new"` only — honoured by Seedance / Veo / WAN, ignored by Kling). There is NO `characterOrientation`, `keepOriginalSound`, `referenceVideos` or `audioUrl` on this tool.
+`video` parameters: **`operation` ('new'|'edit'|'extend'), `model`, `prompt`, `startFrame`, `endFrame`, `referenceImages`, `referenceVideos` (new only — continuation/prev-clip), `sourceVideo` (edit/extend), `aspectRatio`, `cameraMovement`, `resolution`, `duration`, `quality`, `withAudio`, `seed`, `extra_params`** (`seed`, `referenceVideos` and `extra_params` are `operation:"new"` only; `seed` honoured by Seedance / Veo / WAN, ignored by Kling; `extra_params` = model-specific escape hatch, see Notes). There is NO `characterOrientation`, `keepOriginalSound` or `audioUrl` on this tool.
 
 `cameraMovement` (optional): `static`, `pan_left`, `pan_right`, `zoom_in`, `dolly_in`, `orbit_right`, … — a motion hint honoured by some models, ignored by others.
 
@@ -21,7 +21,7 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 |---|---|---|---|
 | prompt | required | string | English. |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | clamped to nearest. |
-| resolution | optional | `480p·720p·1080p` | omit → 1080p. |
+| resolution | optional | `480p·720p·1080p·4k` | omit → 1080p. Reaches 4k (per fal schema). |
 | duration | optional | 4–15 s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
@@ -37,7 +37,7 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 | endFrame | optional | image | first+last interpolation. |
 | prompt | optional | string | motion description. |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
-| resolution | optional | `480p·720p·1080p` | omit → 1080p. |
+| resolution | optional | `480p·720p·1080p·4k` | omit → 1080p. Reaches 4k (per fal schema). |
 | duration | optional | 4–15 s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
@@ -52,12 +52,12 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 | prompt | required | string; `@refN` binds to the images by position | |
 | referenceImages | required | up to 9 images | via the tool, only IMAGE refs are settable. |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
-| resolution | optional | `480p·720p·1080p` | omit → 720p. |
-| duration | optional | 4–15 s | omit → auto. |
+| resolution | optional | `480p·720p·1080p·4k` | omit → 720p. Reaches 4k (per fal schema). |
+| duration | optional | `auto·4–15` s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
-- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference VIDEOS and reference AUDIO (the model supports them, but `video` exposes no `referenceVideos`/`audioUrl`). ▶ activate `braxil-essentials:seedance-2-0`.
+- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (encoder bitrate mode). ▶ activate `braxil-essentials:seedance-2-0`.
 
 ### Veo 3.1 — Image-to-Video — `fal-ai/veo3.1/image-to-video`
 - needs `startFrame` + `prompt`.
@@ -67,7 +67,7 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 | prompt | required | string ≤20000 chars | |
 | startFrame | required | image (≥720p, 16:9 or 9:16) | |
 | aspectRatio | optional | `auto·16:9·9:16` | only these. |
-| resolution | optional | `720p·1080p·4k` (low→720p, medium/high→1080p, ultra→4k) | omit → 1080p. Only Veo reaches 4k. |
+| resolution | optional | `720p·1080p·4k` (low→720p, medium/high→1080p, ultra→4k) | omit → 1080p. |
 | duration | optional | snapped to `4s·6s·8s` | omit → 8s. |
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
@@ -215,13 +215,30 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 
 ## Avatar — dedicated tool (no `model` pick)
 
-Talking-head lip-sync goes through **`generate_avatar_video`**, not `video`:
+Talking-head avatar (a face PHOTO speaks) goes through **`generate_avatar_video`**, not `video`:
 
-- **`generate_avatar_video({ image, audioFile, prompt?, aspectRatio? })`** → serves `fal-ai/bytedance/omnihuman/v1.5`. `image` = face photo; `audioFile` = the voice the avatar speaks; `aspectRatio` `1:1/16:9/9:16`.
+- **`generate_avatar_video({ image, audioFile, prompt?, aspectRatio? })`** → serves `fal-ai/bytedance/omnihuman/v1.5`. `image` = face photo; `audioFile` = the voice the avatar speaks; `aspectRatio` `1:1/16:9/9:16`. Synthesises the whole performance from one still image.
+
+---
+
+## Lip-sync — dedicated tool (no `model` pick)
+
+Re-voicing / dubbing an EXISTING video goes through its own tool, **`lipsync_video`** (not the avatar tool, and not `video`):
+
+- **`lipsync_video({ video, audioFile })`** → serves `fal-ai/veed/lipsync/v2`. `video` = the source clip whose on-screen mouth is re-articulated; `audioFile` = the new audio track to sync to. Everything else in the source (framing, motion, background, dimensions, length) is preserved — only the lips change. Produces a NEW video.
+
+| `lipsync_video` param | Req? | Notes |
+|---|---|---|
+| video | required | the existing clip to re-lipsync (fal field `video_url`). |
+| audioFile | required | the new audio the video should speak (fal field `audio_url`). |
+
+- Takes ONLY those two inputs — no prompt, aspectRatio, duration or seed (veed/lipsync/v2 exposes none). Output follows the source video's own dimensions and length.
+- **Avatar vs lip-sync:** a face PHOTO → `generate_avatar_video`; an existing VIDEO → `lipsync_video`. Different tools, different inputs.
 
 ---
 
 ## Notes
 - **startFrame ≠ referenceImages**: startFrame = literal frame 0; storyboards/style refs are `referenceImages` (only reference-to-video accepts them).
-- **Duration & resolution are per-model** — Veo `4s/6s/8s`, extend fixed 7s, Seedance/Kling up to 15s. Only Veo reaches 4k. Most models emit 1080p when you omit resolution (Seedance ref-to-video → 720p).
-- **`seed` IS a `video` parameter** (on `operation:"new"`) — honoured by Seedance / Veo / WAN, ignored by Kling. **`characterOrientation`, `keepOriginalSound`, `referenceVideos`, `audioUrl` are NOT `video` parameters** — the agent cannot set them, even where a model supports them.
+- **Duration & resolution are per-model** — Veo `4s/6s/8s`, extend fixed 7s, Seedance/Kling up to 15s. **4k is reached by Veo AND ALL THREE Seedance 2.0 endpoints (text-to-video, image-to-video, reference-to-video)** — per their fal schemas; check each model's row. Most models emit 1080p when you omit resolution (Seedance t2v/i2v → 1080p, ref-to-video → 720p).
+- **`seed` IS a `video` parameter** (on `operation:"new"`) — honoured by Seedance / Veo / WAN, ignored by Kling. **`referenceVideos` IS a `video` parameter on `operation:"new"`** (continuation / prev-clip carry-over; honoured by reference-to-video models like Seedance). **`characterOrientation`, `keepOriginalSound`, `audioUrl` are NOT `video` parameters** — the agent cannot set them, even where a model supports them.
+- **`extra_params` — the model-specific escape hatch.** For a per-model knob this tool does NOT expose as a first-class field (e.g. Seedance `bitrate_mode`), pass it inside `extra_params` as an object whose KEY is the EXACT provider field name (snake_case, as in the model's API) and value as the API expects — e.g. `extra_params: { "bitrate_mode": "..." }`. Only send params listed in the model's own row above; the keys travel verbatim to the provider (unknown ones are ignored). `extra_params` NEVER overrides a first-class param (duration/resolution/aspectRatio/…) — set those directly. Same mechanism exists on `generate_image` and `generate_audio`.

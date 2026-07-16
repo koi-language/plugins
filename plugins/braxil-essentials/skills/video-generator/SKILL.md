@@ -25,11 +25,12 @@ Choosing a slug whose adapter rejects your request shape (e.g. an image-to-video
 - `endFrame` — the LITERAL last frame. Pair with `startFrame` for "animate FROM image A TO image B" — the model interpolates. Don't collapse a FROM→TO request into a frameless prompt.
 - `referenceImages` — visual REFERENCES (style sheets, storyboards, character designs, subject photos) guiding look/composition/identity, NOT the literal first frame. Only reference-to-video models accept them.
 - `sourceVideo` — the existing clip, for `operation:"edit"`/`"extend"` (the ONLY reference for those — never re-attach the images the video was generated from).
+- `referenceVideos` — (operation `"new"` only) video REFERENCES for CONTINUITY / style / motion carry-over, e.g. the immediately-preceding clip of a multi-shot film so this new clip continues from it. NOT a v2v edit of them (that is `operation:"edit"`): the model renders the NEW scene in `prompt` and treats the videos as continuity anchors. Only reference-to-video / continuation-aware models honour them (e.g. `bytedance/seedance-2.0/reference-to-video`); others ignore them. Combine freely with `referenceImages` (e.g. the panel sheet + the previous clip). The tool auto-routes this as a continuation (keeps your pinned model, not a v2v editor).
 - `withAudio` — generate an audio track (SFX/dialogue/VO/ambient). **Default true.** Set false only for a deliberately silent clip. Does NOT control background music (exclude music via prompt text).
 - `cameraMovement` — optional motion hint (`static`, `pan_left`, `zoom_in`, `dolly_in`, `orbit_right`, …); some models honour it, others ignore it.
 - `seed` — reproducibility seed (operation `"new"` only): same seed + prompt ⇒ the same clip **on models that honour it** (Seedance, Veo, WAN; Kling ignores it). Omit for a fresh result.
 
-> The `video` tool has NO `characterOrientation`, `keepOriginalSound`, `referenceVideos` or `audioUrl` — even where a model supports them, the agent can't set them here.
+> The `video` tool has NO `characterOrientation`, `keepOriginalSound` or `audioUrl` — even where a model supports them, the agent can't set them here. (`referenceVideos` IS available on `operation:"new"` — see above.)
 - `saveTo` — optional COPY (dir or `.mp4/.mov/.webm`). Original stays in `~/.koi/videos/` (returned `savedTo` — use THAT for the timeline/library); copy is `exportedTo`.
 - `model` — **REQUIRED. YOU pick the exact slug.** No auto-router — omitting it (or `"auto"`) makes the tool error out. Read the tool's **Catalog table** (or `references/models.md`) and pick a slug whose **Categories** match your operation AND whose input shape matches your request. Don't invent a slug.
 
@@ -44,8 +45,11 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 | `video_editing` | v2v transform | restyling / repainting an existing clip (`referenceVideos` present) |
 | `video_extend` | make longer | continuing an existing clip |
 | `video_avatar` | talking head | lip-syncing a face image to an audio track (`imageUrl` + `audioUrl`) |
+| `video_lipsync` | re-voice a clip | re-articulating the lips of an EXISTING video to a new audio track (`videoUrl` + `audioUrl`) |
 
-**Hard rule:** editing a clip ⇒ pick a `video_editing` slug; extending ⇒ `video_extend`; an avatar ⇒ `video_avatar`. And never pin an image-to-video slug for a text-only prompt (or a text-to-video slug when you pass a `startFrame`) — the shapes must line up. (No video background-removal or synced-Foley model is currently enabled.)
+**Hard rule:** editing a clip ⇒ pick a `video_editing` slug; extending ⇒ `video_extend`; an avatar (face photo → talking video) ⇒ `generate_avatar_video`; dubbing/re-voicing an existing clip (video → same clip, new lips) ⇒ `lipsync_video`. And never pin an image-to-video slug for a text-only prompt (or a text-to-video slug when you pass a `startFrame`) — the shapes must line up. (No video background-removal or synced-Foley model is currently enabled.)
+
+**Avatar vs lip-sync — different tools, don't confuse them:** you have a face PHOTO and want it to speak → `generate_avatar_video` (OmniHuman). You already have a VIDEO and want its speech replaced/dubbed → `lipsync_video` (veed/lipsync/v2).
 
 ## Routing: pick the slug yourself
 
@@ -55,9 +59,11 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 | Animate one photo | `video` `"new"`, `model` from `image_to_video` | `prompt` + `startFrame` |
 | Frame A → frame B | `video` `"new"`, `model` that accepts a last frame | `prompt` + `startFrame` + `endFrame` |
 | Compose from image refs | `video` `"new"`, `model` = `bytedance/seedance-2.0/reference-to-video` | `prompt` + `referenceImages` |
+| Continue from the previous clip (multi-shot chaining) | `video` `"new"`, `model` = `bytedance/seedance-2.0/reference-to-video` | `prompt` + `referenceImages` (e.g. the panel sheet) + `referenceVideos` (the previous clip) |
 | Edit an existing clip | `video` `operation:"edit"` — **no model** (server-routed) | `sourceVideo` + `prompt` |
 | Extend a clip (+7s) | `video` `operation:"extend"` — **no model** | `sourceVideo` + `prompt` |
-| Talking-head avatar | `generate_avatar_video` — **no model** | `image` + `audioFile` (+`aspectRatio`) |
+| Talking-head avatar (face photo speaks) | `generate_avatar_video` — **no model** | `image` + `audioFile` (+`aspectRatio`) |
+| Lip-sync / dub an existing clip | `lipsync_video` — **no model** | `video` + `audioFile` |
 
 ⚠ **Motion transfer (Kling Motion-Control)** needs a reference motion video + `characterOrientation`, which the `video` tool doesn't expose — it isn't usable through the standard tool right now.
 
@@ -67,14 +73,14 @@ Once the category and input shape are fixed, several models may qualify. **Choos
 
 | Model | Best at | Watch out for |
 |---|---|---|
-| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios. | Caps at 1080p (no 4k). Has an optimization skill — activate it. |
+| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios, **reaches 4k** (all three endpoints; pass `resolution: "4k"`). | Has an optimization skill — activate it. |
 | **Kling v3 Pro** `fal-ai/kling-video/v3/pro/image-to-video` | Strong image-to-video for **product & controlled cinematic** shots; clean motion, start+end frame, up to 15s. Best pick when Seedance can't do it. | Image-to-video only. Inherits aspect from the start image (no `aspectRatio`/`resolution`), ignores `seed`. |
-| **Veo 3.1** `fal-ai/veo3.1/image-to-video` | Top-tier realism; **the only 4k model**. Reach for it when you need 4k or maximum photoreal polish. | Image-to-video only, no `endFrame`, durations locked to `4s/6s/8s`, 16:9 or 9:16 only. Priciest — use when the quality/4k is the point. |
+| **Veo 3.1** `fal-ai/veo3.1/image-to-video` | Top-tier realism; reaches 4k. Reach for it when you need maximum photoreal polish (Seedance also does 4k, so pick Veo for the realism, not just the resolution). | Image-to-video only, no `endFrame`, durations locked to `4s/6s/8s`, 16:9 or 9:16 only. Priciest — use when the max-quality is the point. |
 | **Luma Ray v3.2** `luma/agent/ray/v3.2/text-to-video` · `…/image-to-video` | **Elegant, clean-motion b-roll / cinematic** clips; polished all-rounder. Does text-to-video AND image-to-video (start+end frame), most aspect ratios, up to 1080p. Also does **reframe** (change a clip's aspect ratio) and **video-to-video** — see below. | Only `5s`/`10s` durations. **No native audio.** Caps at 1080p. |
 | **Gemini Omni Flash** `google/gemini-omni-flash/image-to-video` · `…/reference-to-video` | **Fast & cheap** image-to-video and reference-to-video (compose from up to 10 refs). Good for quick iteration / social hooks. | Minimal controls: `16:9`/`9:16` only, `3–10s`, no `seed`/`resolution`. Lower fidelity than the cinematic models. |
 | **WAN 2.7** `fal-ai/wan/v2.7/image-to-video` | A fallback image-to-video when the others can't serve the shape. | **Last resort — pricey and weaker.** No audio. Don't pick it over Seedance/Kling/Veo/Luma just because one of them errored; retry the better ones first. |
 
-**Decision in one line:** refs or text-only → **Seedance** (or **Gemini Omni Flash** for a fast/cheap take); animating a photo → **Seedance**, then **Kling** (product/controlled), **Veo** (4k / max realism) or **Luma** (elegant b-roll); only if none fit → **WAN**.
+**Decision in one line:** refs or text-only → **Seedance** (or **Gemini Omni Flash** for a fast/cheap take); animating a photo → **Seedance**, then **Kling** (product/controlled), **Veo** (max photoreal realism) or **Luma** (elegant b-roll); only if none fit → **WAN**. (Need 4k? Both Seedance and Veo deliver it.)
 
 ### Editing an existing clip — the editor is auto-picked, but here's who's best
 

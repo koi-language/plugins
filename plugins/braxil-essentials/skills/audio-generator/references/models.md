@@ -82,7 +82,7 @@ Clone a voice, then use its name as `voice` in later `mode: 'speech'` calls.
 
 | `create_voice` param | Req? | Accepted values | Notes |
 |---|---|---|---|
-| audioFile | required | path to a 10–60 s clean voice sample | |
+| audioFile | required | path to a 10–60 s clean voice sample | the user can **record it live with BRAXIL's mic (~60 s of natural speech)** or supply an existing file — offer both. |
 | name | required | unique display name | used later as `voice`. |
 | description | optional | accent/age/timbre hint | |
 | language | optional | ISO-639-1 code | |

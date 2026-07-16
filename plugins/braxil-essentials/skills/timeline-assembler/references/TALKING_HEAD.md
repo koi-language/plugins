@@ -28,6 +28,13 @@ sounds robotic and breathless).
   `{ sourceInMs: 5500, durationMs: 5500 }`, laid back-to-back on V1. Never
   generate new files to remove silence.
 - Also cut fluffed takes / obvious mistakes / long "umm"s the same way.
+- **Place every cut edge PRECISELY — never mid-word, and keep the join coherent.**
+  Transcribe the source with `generate_audio` (`transcribe` mode — pass the video
+  directly) to get timestamped `segments` FIRST, then cut in the silence between phrases
+  (a hair of air at each edge) using their `start`/`end`, and check each seam reads as
+  continuous speech. Landing a cut inside a word or between two unconnected halves is the
+  top way this reads as broken. Full method: `CUTTING_SILENCES.md` → "Find the cut points
+  precisely".
 
 ## 2. Alternate framings — never hold one shot too long
 
@@ -48,6 +55,12 @@ slight zoom**.
   face — never zoom and let the face get cut off. If you can't keep the face
   framed at the chosen zoom, re-frame with the offsets (or check the frame
   first) — but don't drop below ~1.5 just to avoid re-framing.
+  - ⚠️ **`offsetX` / `offsetY` are a FRACTION of the canvas, NOT pixels** — `0` =
+    centred, `-0.1` nudges up ~10 % of the frame, `+0.5` = half a canvas. Keep it
+    small (≈ `-0.15…0.15` to re-centre a face). A pixel-sized value like `-40`
+    flies the clip completely off-screen → the clip renders **BLACK** (a real
+    reported bug). To move N px, divide by the canvas height/width (40 px up on a
+    1920-tall canvas = `-0.02`). See `TIMELINE_JSON.md` → Visual transform.
 - Don't zoom on EVERY clip and don't zoom hard — subtle, alternating punches read
   as intentional editing; constant heavy zoom reads as nervous.
 
@@ -88,12 +101,12 @@ different `scale` on each, logo overlays, B-roll). Do NOT build it with a long
 chain of unitary `add_clip_to_timeline` / `set_clip_volume` / `update_clip` calls
 — that's slow and chatty. **Compose the WHOLE `clips` array in memory and write
 it in a SINGLE `update_timeline`** (read the current JSON with `get_timeline`
-first if the timeline already exists). See "Reading & editing an existing
-timeline" in the main skill.
+first if the timeline already exists). See "Editing a timeline = work the JSON"
+in the main skill, and `TIMELINE_JSON.md` for the exact shape.
 
 For a raw talking-head source: (1) split into trimmed speech clips on V1, dropping
 the silences/fluffs; (2) alternate `scale` normal↔zoom every ~5–10 s, keeping the
 face framed; (3) add logo PNGs on V2 at brand mentions (pop-in zoom, ≤5 s,
 dissolve out); (4) drop topic-matching B-roll on V2 every ~15–30 s. Build all of
 that as one full timeline state and `update_timeline` it in one shot, then
-`show_result({ resourceType: "timeline", timelineId })` — never render.
+`show_timeline({ id })` — never render.

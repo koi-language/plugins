@@ -46,7 +46,7 @@ Implication for the skill: false-positive repair and IP-safe rewriting are not o
 
 ## Resolution — Model vs Surface *(recorded 2026-06-14)*
 
-Primary sources (the arXiv model card and the ByteDance Seed page) state Seedance 2.0's **native output resolution is 480p/720p**. Higher resolutions are **surface-specific, not a model-native guarantee**, and even a single surface's docs can disagree: Volcengine/Ark (Pro), BytePlus, Atlas Cloud, Runway, and WaveSpeed expose **1080p**; fal's prose guide says 480p/720p while its model and pricing pages list 1080p (see the fal section below). Treat 480p/720p as the baseline capability and any 1080p/“2K” claim as a per-surface feature to verify per endpoint at call time — never as a universal model spec.
+Primary sources (the arXiv model card and the ByteDance Seed page) state Seedance 2.0's **native output resolution is 480p/720p**. Higher resolutions are **surface-specific, not a model-native guarantee**, and even a single surface's docs can disagree: Volcengine/Ark (Pro), BytePlus, Atlas Cloud, Runway, and WaveSpeed expose **1080p**; fal's prose guide says 480p/720p while its model and pricing pages list 1080p (see the fal section below). Treat 480p/720p as the baseline capability and any 1080p/“2K”/4k claim as a per-surface feature to verify per endpoint at call time — never as a universal model spec. **Update (fal schema, 2026-07-16):** fal's `reference-to-video` OpenAPI lists `resolution` = `480p / 720p / 1080p / 4k` — so 4k is exposed on that endpoint. Still per-endpoint: confirm each endpoint's own schema rather than generalising 4k to the whole family.
 
 ## fal — Authorized Provider, Global *(added 2026-06-10; fields, resolution, and pricing re-verified 2026-06-11)*
 

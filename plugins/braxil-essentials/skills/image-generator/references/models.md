@@ -74,6 +74,21 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 
 - **Rejects**: referenceImages, cameraAngles, quality, outputFormat (provider returns PNG). `seed` accepted but IGNORED by this model.
 
+### Seedream 5 Pro — `bytedance/seedream/v5/pro/text-to-image`  *(text-to-image)*
+
+- higher-fidelity Seedream 5 Pro · no references (slug has NO `fal-ai/` prefix).
+
+
+| `generate_image` param | Req?     | Accepted values                                                      | Notes            |
+| ---------------------- | -------- | -------------------------------------------------------------------- | ---------------- |
+| prompt                 | required | string                                                               | English.         |
+| aspectRatio            | optional | any `W:H` (→ pixel size, per-side ≤14142)                           | omit → model ~2K. |
+| resolution             | optional | `low`→768 · `medium`→1024 · `high`→1536 · `ultra`→2048 (max side px) | default high.    |
+| n                      | optional | 1–6                                                                  | up to 6.         |
+
+
+- **Rejects**: referenceImages, cameraAngles, quality, outputFormat (forced png). `seed` is NOT a field on this model.
+
 ### Krea 2 Turbo — `fal-ai/krea-2/turbo`  *(text-to-image)*
 
 - Krea 2 Turbo · no references.
@@ -158,6 +173,22 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 
 
 - **Rejects**: cameraAngles, quality, outputFormat. `seed` accepted but IGNORED by this model.
+
+### Seedream 5 Pro — Edit — `bytedance/seedream/v5/pro/edit`  *(image-to-image)*
+
+- edit · **needs** `referenceImages`. The higher-fidelity Pro sibling of the Lite edit above (slug has NO `fal-ai/` prefix).
+
+
+| `generate_image` param | Req?     | Accepted values                                        | Notes              |
+| ---------------------- | -------- | ------------------------------------------------------ | ------------------ |
+| prompt                 | required | string                                                 | edit instructions. |
+| referenceImages        | required | 1–10 images (if >10, only the LAST 10 are used)        |                    |
+| aspectRatio            | optional | any `W:H` (→ pixel size, per-side ≤14142)             | omit → model keeps ~2K. |
+| resolution             | optional | `low`→768 · `medium`→1024 · `high`→1536 · `ultra`→2048 |                    |
+| n                      | optional | 1–6                                                    |                    |
+
+
+- **Rejects**: cameraAngles, quality, outputFormat (forced png). `seed` is NOT a field on this model.
 
 ### Qwen Image Edit 2511 — Multiple Angles — `fal-ai/qwen-image-edit-2511-multiple-angles`  *(camera re-angle)*
 

@@ -19,6 +19,7 @@ On activation the runtime returns the skill's absolute `directory` + `resources`
 - **`references/STYLE_PRESETS.md`**: 3 presets (Premium 3D / Claymation / Realistic UGC), ready-to-paste section-B phrasing, + custom-style flow (anime, live-action, watercolor, cyberpunk…). POV is NOT a style: per-shot camera angle, combinable with any style.
 - **`references/VIDEO_TYPE_<TYPE>.md`**: five (ad / explainer / tutorial / demo / social-post). Read ONLY the user-named `type` (brief-context note = internal, informs panels, NOT rendered; caption style; shot mix; audio cue). Never all five; skip if no type named.
 - **Sheet FORMAT = section-E prose.** Full-bleed grid, panels edge-to-edge, thin black gutter lines only, NO numbers/labels, grid to all four margins. NOTHING else: no title banner, cards, drop shadows, caption bars, timecodes, number badges, footer/legend. (`references/LAYOUT_TEMPLATE.png` is DEAD, never attach it or any format reference.)
+- **Render realistic human faces normally here** — as ordinary bare skin, no wireframe mesh. (The Seedance face-filter workaround, meshing faces, happens LATER in `visual-panels-to-video`, right before the video render — not at panel-generation time.)
 
 ## ⚠ STAMP SOURCE-STORYBOARD METADATA: non-negotiable
 
