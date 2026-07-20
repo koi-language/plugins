@@ -2,7 +2,7 @@
 
 Only models **enabled in the BRAXIL backend** are listed, and each table uses the **actual MCP tool parameters the agent can set** — NOT raw fal fields. If a param isn't a tool parameter, the agent can't set it, so it's not in the table (see "Not settable via the tool" per model).
 
-`generate_image` parameters: `model` **(required),** `prompt`**,** `referenceImages`**,** `aspectRatio`**,** `resolution`**,** `quality`**,** `outputFormat`**,** `cameraAngles`**,** `n`**,** `seed` (+ `saveTo`, `summary`, `metadata`). `seed` is honoured only by models whose card lists it; the rest accept and ignore it. There is NO `maskImage`, `safetyTolerance`, `targetSize`, `loras` on this tool.
+`generate_image` parameters: `model` **(required),** `prompt`**,** `referenceImages`**,** `aspectRatio`**,** `resolution`**,** `width`**,** `height`**,** `quality`**,** `outputFormat`**,** `cameraAngles`**,** `n`**,** `seed` (+ `saveTo`, `summary`, `metadata`). `seed` is honoured only by models whose card lists it; the rest accept and ignore it. `width`+`height` (both together) request an **exact pixel canvas** instead of the semantic `resolution` label — honoured ONLY by models that accept explicit dimensions (the **Seedream family** and **Qwen-Image-Edit**); every other model ignores them and falls back to `aspectRatio`/`resolution`. Mind each model's **area cap** (a per-model total-pixel ceiling — e.g. Seedream v5 Pro/Lite edit top out at 2048×2048 ≈ 4.2 MP, so an exact canvas must stay within it; true 4K is not reachable on those edit endpoints). There is NO `maskImage`, `safetyTolerance`, `loras` on this tool.
 
 Background-removal, outpaint and upscale are **separate tools** with **no** `model` **pick** (auto-routed) — see the last section.
 
@@ -185,6 +185,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | referenceImages        | required | 1–10 images (if >10, only the LAST 10 are used)        |                    |
 | aspectRatio            | optional | any `W:H` (→ pixel size, per-side ≤14142)             | omit → model keeps ~2K. |
 | resolution             | optional | `low`→768 · `medium`→1024 · `high`→1536 · `ultra`→2048 |                    |
+| width + height         | optional | exact px canvas; cap is **total AREA ≤ 4.2 MP** (= 2048²), aspect 1:16–16:1 | both together. The limit is area, NOT per-side: one side MAY exceed 2048 if the other shrinks (`4096×1024` ✓, `2896×1448` ✓, even `8192×512` ✓). **True 4K does NOT fit** (`3840×2160`≈8.3 MP doubles the cap) — for 4K, edit here then upscale, or use a 4K text-to-image model. min area 1024². |
 | n                      | optional | 1–6                                                    |                    |
 
 
@@ -221,6 +222,7 @@ These do NOT go through `generate_image`; you don't choose a model.
 
 - `quality` is consumed ONLY by GPT Image 2 (/edit); every other model ignores it.
 - `cameraAngles` is consumed ONLY by Qwen Multiple-Angles.
-- `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2 and Seedream 5 Lite** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `targetSize`**,** `loras` **are NOT parameters** — the agent cannot set them here.
+- `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2 and Seedream 5 Lite** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `loras` **are NOT parameters** — the agent cannot set them here.
+- `width` + `height` (an exact px canvas, both together) are consumed ONLY by the **Seedream family** and **Qwen-Image-Edit**; every other model ignores them and uses `aspectRatio`/`resolution`. Always stay under the model's area cap (Seedream edit = 2048² ≈ 4.2 MP).
 - **Resolution matters**: Nano-Banana caps low unless you send `high`/`ultra`.
 

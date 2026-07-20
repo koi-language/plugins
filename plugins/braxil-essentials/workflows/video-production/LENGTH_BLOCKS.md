@@ -7,7 +7,7 @@ This file documents two things:
 1. **How to map a total duration to one or more panel sheets**, given the per-sheet caps from `STORYBOARD_ANATOMY.md`.
 2. **The render pipeline** for the final video — the chain of `generate_video` + timeline calls that stitches per-frame clips into the final file.
 
-> 📍 Files referenced below by bare name — `STORYBOARD_ANATOMY.md` and any `VIDEO_TYPE_<TYPE>.md` — are owned by the **`visual-panels` skill** and live in its `references/` directory (NOT next to this file). To read one: `list_skills` → the `visual-panels` entry's `directory` → `read_file` `<directory>/references/<file>`. The actual sheet-chunking logic also lives in that skill (SKILL.md § STEP B); the duration→sheet-count table below is the create-video workflow's quantized view of it.
+> 📍 Files referenced below by bare name — `STORYBOARD_ANATOMY.md` and any `VIDEO_TYPE_<TYPE>.md` — are owned by the **`keyframes` skill** and live in its `references/` directory (NOT next to this file). To read one: `list_skills` → the `keyframes` entry's `directory` → `read_file` `<directory>/references/<file>`. The actual sheet-chunking logic also lives in that skill (SKILL.md § STEP B); the duration→sheet-count table below is the create-video workflow's quantized view of it.
 
 ---
 
@@ -130,7 +130,7 @@ Both are required. Passing the reference image without the continuity block lead
 
 ## 🎬 The Final Render Pipeline
 
-> 📍 **The authority for the final-render pipeline is now the `visual-panels-to-video` skill** (`list_skills` → its `directory` → SKILL.md). It supersedes the algorithm sketch below in one important way: **per-clip duration is the sheet's OWN duration** (the whole-second 4–15 value the storyboard assigned that PART — taken from the storyboard JSON when present), NOT a fixed 15 s. The timeline concatenates clips back-to-back at each clip's own duration (cumulative cursor), not at fixed 15 s slots. The sketch below is the original equal-15 s-sheet view; follow the skill for the real, variable-duration behaviour.
+> 📍 **The authority for the final-render pipeline is now the `keyframes-to-video` skill** (`list_skills` → its `directory` → SKILL.md). It supersedes the algorithm sketch below in one important way: **per-clip duration is the sheet's OWN duration** (the whole-second 4–15 value the storyboard assigned that PART — taken from the storyboard JSON when present), NOT a fixed 15 s. The timeline concatenates clips back-to-back at each clip's own duration (cumulative cursor), not at fixed 15 s slots. The sketch below is the original equal-15 s-sheet view; follow the skill for the real, variable-duration behaviour.
 
 After every sheet is approved, run the final-render step: **one `generate_video` call per sheet** (NOT per panel), then stitch the sheet-clips on a timeline.
 

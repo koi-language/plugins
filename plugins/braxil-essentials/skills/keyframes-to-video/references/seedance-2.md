@@ -22,7 +22,7 @@ Panels are reference stills of a moment WITHIN each shot, not start frames: say 
 
 ## Hard limits (Seedance 2.0)
 
-- Output: 4–15 seconds per generation. A clip over 15 s MUST be split upstream (`visual-panels` chunking) BEFORE composing — never here.
+- Output: 4–15 seconds per generation. A clip over 15 s MUST be split upstream (`keyframes` chunking) BEFORE composing — never here.
 - Camera setups: reliable up to ~5 per generation; more = the clip was mis-chunked.
 - Keep the SAME scene line and lighting phrasing on every clip of the piece.
 
@@ -39,8 +39,8 @@ For social-first pieces (ads, shorts, reels) the FIRST shot of the FILM should o
 - DO name counts, sides and targets exactly (Seedance renders literally; ambiguity invents).
 - DO keep every character's noun phrase identical across all shots and clips.
 - DO state explicit ABSENCES for aftermath shots (what must NOT appear).
-- DON'T crop the sheet or attach individual panels — attach the WHOLE sheet (the count line tells the model which panels to read).
+- DO decompose into individual panels — ALWAYS `extract_panel` this clip's panels and attach them one per panel, in order (never the whole sheet). The count line still names the panel range; the model maps shots→panels.
 - DON'T attach anything beyond this clip's own sheet + the previous clip video.
 - DON'T describe multi-beat physics inside one shot: one physical beat per shot, motion flows through the panel's reference moment.
 - DON'T mention platform names, watermarks, text overlays or captions: no on-screen text ever.
-- DO mesh photoreal human faces before attaching: Seedance rejects a raw photoreal face as a reference. Pre-step (main skill): on a COPY of the sheet, extract each face panel → `generate_image` edit to overlay a faint blue wireframe mesh → `replace_panel` back → attach that meshed copy. Then in the prompt add a line naming the meshed panels stating the face is ordinary bare skin, no mesh/grid, in the video.
+- DO launder photoreal human faces through Seedream before attaching: Seedance rejects a raw photoreal face as a reference, but ACCEPTS a Seedream-generated image. Pre-step (main skill): `extract_panel` each face panel → `generate_image` EDIT with `bytedance/seedream/v5/pro/edit` for an EXACT 1:1 copy → attach that Seedream copy. The face panel's LAST model MUST be Seedream (at 4K use Seedream's max size, do NOT upscale a face panel). No mesh, no strip line — the Seedream copy is already a clean ordinary face.

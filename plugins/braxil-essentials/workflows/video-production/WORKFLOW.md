@@ -1,25 +1,25 @@
 ---
 name: video-production
-description: "Create a NEW video FROM SCRATCH (blank canvas) — when the user has only an IDEA/brief (\"make me a video about X\", \"un anuncio de Y\", \"explainer sobre Z\") and there is no storyboard yet. Runs the full pipeline: idea → storyboard → visual sheets → final video, any whole-second duration ≥ 4 s with NO upper cap (long videos just become more sheets spliced together), any type (ad, explainer, tutorial, demo, social post, dialogue scene). DO NOT activate this workflow when the user ALREADY HAS an artifact and just wants to transform it — those are single SKILL tasks, delegate to a worker, NOT this workflow: (a) convert an existing storyboard → visual panel sheets = the `visual-panels` skill; (b) render a video from an existing visual panels = the `visual-panels-to-video` skill; (c) edit/author an storyboard = the `storyboard` skill; (d) animate a SINGLE image, or produce ONE short single-shot clip = direct video generation (image-to-video / `generate_video`), NOT this workflow. SCOPE: this workflow (and the storyboard as its first step) is ONLY for videos with MULTIPLE shots / an actual story or script — never for a single shot or for animating one image. If a 'make a video' brief is AMBIGUOUS about scope (could be a single shot / animating one image vs. a multi-shot story), ASK the user before launching this workflow rather than assuming it. Triggers (blank-canvas MULTI-SHOT / story video creation only): make a multi-shot/story video, create a video, generate a video, quiero un video, hazme un video (con varios planos / una historia), un anuncio, explainer video, tutorial video, demo video, social post video, video about <topic>. NON-triggers (do NOT match): \"pasa este storyboard a visual\", \"convierte el storyboard\", \"haz el video de este storyboard\", \"renderiza este storyboard\" (→ use the skill); \"anima esta imagen\", \"haz un shot corto de…\", a single clip / one-shot (→ direct video generation); or any request that starts from an existing storyboard/sheet."
+description: "Create a NEW video FROM SCRATCH (blank canvas) — when the user has only an IDEA/brief (\"make me a video about X\", \"un anuncio de Y\", \"explainer sobre Z\") and there is no storyboard yet. Runs the full pipeline: idea → storyboard → visual sheets → final video, any whole-second duration ≥ 4 s with NO upper cap (long videos just become more sheets spliced together), any type (ad, explainer, tutorial, demo, social post, dialogue scene). DO NOT activate this workflow when the user ALREADY HAS an artifact and just wants to transform it — those are single SKILL tasks, delegate to a worker, NOT this workflow: (a) convert an existing storyboard → keyframe sheets = the `keyframes` skill; (b) render a video from an existing keyframes = the `keyframes-to-video` skill; (c) edit/author an storyboard = the `storyboard` skill; (d) animate a SINGLE image, or produce ONE short single-shot clip = direct video generation (image-to-video / `generate_video`), NOT this workflow. SCOPE: this workflow (and the storyboard as its first step) is ONLY for videos with MULTIPLE shots / an actual story or script — never for a single shot or for animating one image. If a 'make a video' brief is AMBIGUOUS about scope (could be a single shot / animating one image vs. a multi-shot story), ASK the user before launching this workflow rather than assuming it. Triggers (blank-canvas MULTI-SHOT / story video creation only): make a multi-shot/story video, create a video, generate a video, quiero un video, hazme un video (con varios planos / una historia), un anuncio, explainer video, tutorial video, demo video, social post video, video about <topic>. NON-triggers (do NOT match): \"pasa este storyboard a visual\", \"convierte el storyboard\", \"haz el video de este storyboard\", \"renderiza este storyboard\" (→ use the skill); \"anima esta imagen\", \"haz un shot corto de…\", a single clip / one-shot (→ direct video generation); or any request that starts from an existing storyboard/sheet."
 ---
 
 ## 🎯 What You Build
 
 A two-stage pipeline:
 
-1. **One or more 16:9 4K visual panel sheets** (built by the `visual-panels` skill), each containing a variable-frame grid that describes the video shot-by-shot. The sheet's anatomy is documented in `STORYBOARD_ANATOMY.md`.
-2. **The final video** (built by the `visual-panels-to-video` skill) — generated as N short clips (ONE per sheet, NOT per frame), each at the duration the storyboard assigned that PART, then concatenated on a timeline so the pacing the user signed off on is honored exactly.
+1. **One or more 16:9 4K keyframe sheets** (built by the `keyframes` skill), each containing a variable-frame grid that describes the video shot-by-shot. The sheet's anatomy is documented in `STORYBOARD_ANATOMY.md`.
+2. **The final video** (built by the `keyframes-to-video` skill) — generated as N short clips (ONE per sheet, NOT per frame), each at the duration the storyboard assigned that PART, then concatenated on a timeline so the pacing the user signed off on is honored exactly.
 
 **Key difference from the older 15-second ad workflow:** frames are not fixed at 10 × 1.5s. The number of frames and the duration of each are decided by the narrative — a dialogue beat may be 5s, a montage cut 0.8s, an establishing shot 3s. The only invariant is `sum(frame_durations) === total_video_duration`. See `LENGTH_BLOCKS.md` for the per-sheet caps and the multi-sheet consistency rules.
 
 Companion files are the source of truth — consult them as needed.
 
-> 📍 **Where the visual-sheet references live.** The sheet anatomy, the style presets and the per-type specs are owned by the **`visual-panels` skill** — they are NOT siblings of this WORKFLOW.md anymore. They live in that skill's `references/` directory. To read one, get the skill's absolute `directory` (Step 2 activates `visual-panels` and the activation returns `directory` + `resources`; in earlier steps call `list_skills` and read the `directory` of the `visual-panels` entry), then `read_file` `<that directory>/references/<file>`. NEVER hardcode `~/.koi/skills/...` — in a dev checkout the skill resolves to the plugin repo path.
+> 📍 **Where the visual-sheet references live.** The sheet anatomy, the style presets and the per-type specs are owned by the **`keyframes` skill** — they are NOT siblings of this WORKFLOW.md anymore. They live in that skill's `references/` directory. To read one, get the skill's absolute `directory` (Step 2 activates `keyframes` and the activation returns `directory` + `resources`; in earlier steps call `list_skills` and read the `directory` of the `keyframes` entry), then `read_file` `<that directory>/references/<file>`. NEVER hardcode `~/.koi/skills/...` — in a dev checkout the skill resolves to the plugin repo path.
 
-**Visual-sheet references** (owned by the `visual-panels` skill — read from its `references/` dir as the steps mention them):
+**Visual-sheet references** (owned by the `keyframes` skill — read from its `references/` dir as the steps mention them):
 - `STORYBOARD_ANATOMY.md` — exact spec of every part of a sheet
 - `STYLE_PRESETS.md` — the 4 official visual style presets (Premium 3D / Claymation / Realistic UGC / POV)
-**Per-type specs** (in the same `visual-panels/references/` dir — read ONLY the one matching the resolved `type` slug from Step 0 — never all five; each file is the single source of truth for its type's pacing, captions, dialogue, footer column 4, audio cue and mix):
+**Per-type specs** (in the same `keyframes/references/` dir — read ONLY the one matching the resolved `type` slug from Step 0 — never all five; each file is the single source of truth for its type's pacing, captions, dialogue, footer column 4, audio cue and mix):
 - `VIDEO_TYPE_AD.md` — fires when `type == "ad"`
 - `VIDEO_TYPE_EXPLAINER.md` — fires when `type == "explainer"`
 - `VIDEO_TYPE_TUTORIAL.md` — fires when `type == "tutorial"`
@@ -66,13 +66,13 @@ The mapping between user wording and `type` slug lives in §"Per-type spec routi
 
     **(1) The storyboard JSON** — `~/.koi/storyboards/<id>.json`, built by activating the **`storyboard`** skill. This is Step 1b's deliverable, ALWAYS, both fork branches.
 
-    **(2) The visual panel sheet(s)** — 4K PNG images, built by activating the **`visual-panels`** skill. This is Step 2's deliverable, ALWAYS.
+    **(2) The keyframe sheet(s)** — 4K PNG images, built by activating the **`keyframes`** skill. This is Step 2's deliverable, ALWAYS.
 
     These two skills are NON-NEGOTIABLE. Do NOT substitute either with:
     - A `.md` script / treatment / outline / brief / "video plan" doc.
     - A `.txt` shot list.
     - A `.json` you wrote without activating `storyboard` (the skill body carries the v6 schema, the path convention, character continuity, lighting design and shot vocabulary — guessing the schema produces a file the visor cannot open).
-    - A `generate_image` call for the sheet that bypasses `visual-panels` (the skill carries the sheet anatomy, style presets, per-type footers, chunking math and continuity rules — a free-hand `generate_image` produces an off-brand panel grid).
+    - A `generate_image` call for the sheet that bypasses `keyframes` (the skill carries the sheet anatomy, style presets, per-type footers, chunking math and continuity rules — a free-hand `generate_image` produces an off-brand panel grid).
 
     If you find yourself about to `write_file` something that ends in `.md` (or any non-JSON / non-image extension) as the first artifact of this workflow → STOP. The first artifact MUST be the `storyboard` JSON. The Light Plan from Step 1 is rendered IN CHAT via `prompt_user`'s `message` field — NOT as a file on disk. The user reads it inline and picks the fork.
 
@@ -97,8 +97,8 @@ This workflow has FIVE `###`-level steps and they map 1:1 to the tasks you emit:
 
 1. **Step 0 — Gather inputs** → 1 task
 2. **Step 1 — Light Plan, storyboard authoring, refinement loop** → 1 task (NOT three — Step 1b and Step 1c are `####`-level sub-sections INSIDE Step 1, they are NOT separate steps).
-3. **Step 2 — Build the visual panels(s)** → 1 task
-4. **Step 3 — Show and refine the visual panels** → 1 task
+3. **Step 2 — Build the keyframes(s)** → 1 task
+4. **Step 3 — Show and refine the keyframes** → 1 task
 5. **Step 4 — Generate the final video** → 1 task
 
 Do NOT create tasks for sub-sections (e.g. "#### Step 1b — Build the storyboard JSON" or "#### Product handling guidance" or "#### Just build it escape hatch"). Those are implementation details handled INSIDE Step 1 by its worker.
@@ -158,14 +158,14 @@ The 9 fields you need before Step 1: **type, duration, topic, product-mode, styl
 Content of the paragraph (translate / paraphrase into the user's chat language — never paste literal English):
 
 1. We'll start by building an **storyboard** — *like a comic*: every panel shows the story, the shots and the framing, and the user can edit/refine every part (durations, dialogue, action, camera).
-2. From that storyboard we'll generate **visual panels** — 4K sketches of every shot, also tunable before moving on.
+2. From that storyboard we'll generate **keyframes** — 4K sketches of every shot, also tunable before moving on.
 3. Finally we'll **animate those panels into the final video**.
 
 **Constraints on the paragraph:**
 
 - ONE paragraph. NOT a bulleted list, NOT two paragraphs, NOT a section header followed by sub-points. Conversational tone.
 - The user's chat language (Spanish, English, Portuguese, …) — never English-by-default when the user wrote in another language.
-- Do NOT recite the skill names (`storyboard`, `visual-panels`) — those are internal. Speak in product terms ("storyboard", "panels", "video").
+- Do NOT recite the skill names (`storyboard`, `keyframes`) — those are internal. Speak in product terms ("storyboard", "panels", "video").
 - Do NOT enumerate Hard Rules, durations, panel counts, or technical parameters — the user just needs to know there will be a storyboard, a visual sheet, and a final video, with refinement opportunities along the way.
 - Emit this paragraph via `print` (or as the leading text of the next `prompt_form` if you batch it together with 0b). It IS the first thing the user sees from this workflow.
 
@@ -175,7 +175,7 @@ Content of the paragraph (translate / paraphrase into the user's chat language �
 
 **For a user who wrote in English:**
 
-> *"To make the video we'll go through three reviewable stages: first we build an **storyboard** — works like a comic where you see the story panel by panel with the shots, action and dialogue, and you can tweak every part; then we turn that into **visual panels** (4K sketches of every shot, also tunable); and finally we **animate those panels** into the finished video."*
+> *"To make the video we'll go through three reviewable stages: first we build an **storyboard** — works like a comic where you see the story panel by panel with the shots, action and dialogue, and you can tweak every part; then we turn that into **keyframes** (4K sketches of every shot, also tunable); and finally we **animate those panels** into the finished video."*
 
 Adapt the wording to the user's tone; the structure (three stages, with the comic / panels / video framing) is what must stay.
 
@@ -250,7 +250,7 @@ Render a **light plan** — short, scannable, USER'S CHAT LANGUAGE. The plan ref
 6. **Product handling** (named / generic / none)
 7. **Sheet plan** — sheet count is `ceil(total_duration / D_max)`, where `D_max` is the per-sheet maximum reported by `get_tool_info("generate_video")` (Hard Rule #18 — call this BEFORE proposing the sheet plan; NEVER hardcode the cap). Examples assuming today's typical `D_max = 15` (but read the live value, do not trust the example): 12 s → 1 sheet of 12 s; 20 s → 2 sheets (10 + 10, 12 + 8, or 15 + 5 — pick a split that lands on a narrative beat); 33 s → 3 sheets (11 + 11 + 11, or 15 + 12 + 6); 90 s → 6 sheets. Each sheet's duration is within `[D_min, D_max]`; panels per sheet are 1–10. The split is narrative-driven (end each sheet on an act boundary, a transition, a beat) — don't fall back to "always equal slices".
 
-   ⚠ **MANDATORY: `read_file` the per-type spec for the chosen type BEFORE proposing panel count or per-panel durations.** Panels-per-sheet and per-panel duration are type-driven (an ad's quick cuts ≠ an explainer's narrated beats ≠ a tutorial's step-by-step). Use §"Per-type spec routing" above to pick the right file (`VIDEO_TYPE_AD.md` / `VIDEO_TYPE_EXPLAINER.md` / `VIDEO_TYPE_TUTORIAL.md` / `VIDEO_TYPE_DEMO.md` / `VIDEO_TYPE_SOCIAL_POST.md`). These files live in the **`visual-panels` skill's `references/` dir** (not here) — `list_skills`, find the `visual-panels` entry, and `read_file` `<its directory>/references/VIDEO_TYPE_<TYPE>.md`. Read ONLY the one that matches the type at hand and copy its numbers — do not improvise.
+   ⚠ **MANDATORY: `read_file` the per-type spec for the chosen type BEFORE proposing panel count or per-panel durations.** Panels-per-sheet and per-panel duration are type-driven (an ad's quick cuts ≠ an explainer's narrated beats ≠ a tutorial's step-by-step). Use §"Per-type spec routing" above to pick the right file (`VIDEO_TYPE_AD.md` / `VIDEO_TYPE_EXPLAINER.md` / `VIDEO_TYPE_TUTORIAL.md` / `VIDEO_TYPE_DEMO.md` / `VIDEO_TYPE_SOCIAL_POST.md`). These files live in the **`keyframes` skill's `references/` dir** (not here) — `list_skills`, find the `keyframes` entry, and `read_file` `<its directory>/references/VIDEO_TYPE_<TYPE>.md`. Read ONLY the one that matches the type at hand and copy its numbers — do not improvise.
 
    ⚠ **READING the spec is NOT enough — you must APPLY its numbers.** Quote the spec's "Panels per sheet" range and "Per-panel duration" range INSIDE your plan (field 7), then commit to a specific count and build the arc with exactly that many panels. Reading "8–10 panels × 1.5–2 s" for an ad and then proposing "4 panels × 3.75 s" is the bug — that's explainer pacing applied to an ad. Self-check: count the panels in your arc; if the number is outside the spec's range for this type, RE-DO the arc before presenting. Defaulting to "4 panels × 3.75 s" for every type is the bias this rule exists to break.
 
@@ -352,7 +352,7 @@ Entered after the Turn B `prompt_user` returns. Two outcomes per `prompt_user`:
 
 > 🛑 **CRITICAL — Hard Rule #15 applies in this branch: the task ENDS WITH `prompt_user`, NEVER WITH `return`** (until the user picks *"Looks good — generate the visual sheets"*). Returning early hands control back to the coordinator and the workflow auto-advances to Step 2 — the user never gets to refine. The ONLY `return` the worker emits in this branch is on the turn the user picks "Looks good"; that `return` carries the storyboard path payload. If your task description doesn't explicitly mention this rule, treat it as a planner summary omission and apply the rule from Hard Rule #15 anyway.
 
-> 🛑 **DO NOT pre-create the "Generate visual panel sheets" task while the storyboard is still being refined.** If you use `task_create` to lay out the workflow plan, list ONLY the tasks up to and including "Refine storyboard in the visor". Adding the downstream tasks before the user has confirmed the storyboard creates an open pending-task list that pressures you to auto-progress through it. Create them AFTER the user picks "Looks good", in the same turn as you start Step 2.
+> 🛑 **DO NOT pre-create the "Generate keyframe sheets" task while the storyboard is still being refined.** If you use `task_create` to lay out the workflow plan, list ONLY the tasks up to and including "Refine storyboard in the visor". Adding the downstream tasks before the user has confirmed the storyboard creates an open pending-task list that pressures you to auto-progress through it. Create them AFTER the user picks "Looks good", in the same turn as you start Step 2.
 
 The storyboard JSON is the handoff artifact for Step 2 in BOTH branches — the only difference is that in the "Go straight to the visual sheets" branch you wrote it once and immediately returned, while in the refinement branch the user iterated on it via the visor. Either way, Step 2 reads the same JSON path.
 
@@ -382,20 +382,20 @@ When this fires:
 
 Even here, NEVER invent a `@`-handle that wasn't already attached or named by the user — describe the character / product generically in prose instead.
 
-### Step 2 — Build the visual panels(s)
+### Step 2 — Build the keyframes(s)
 
-This step turns the approved storyboard JSON (from Step 1b) into the **second mandatory artifact** (per Hard Rule #17): the polished 4K panel SHEET image(s). **The full playbook lives in the `visual-panels` skill** — activate it and follow its SKILL.md. Do NOT re-derive the sheet anatomy, the chunking math, the style presets or the consistency rules from memory; the skill body (and its `references/`) is the only source of truth.
+This step turns the approved storyboard JSON (from Step 1b) into the **second mandatory artifact** (per Hard Rule #17): the polished 4K panel SHEET image(s). **The full playbook lives in the `keyframes` skill** — activate it and follow its SKILL.md. Do NOT re-derive the sheet anatomy, the chunking math, the style presets or the consistency rules from memory; the skill body (and its `references/`) is the only source of truth.
 
 > 🛑 **TWO non-negotiable invariants at this step** (both already enforced in `STORYBOARD_ANATOMY.md`, repeated here so the planner can't miss them):
 >
 > 1. **Panels = JSON shots, 1:1, in order.** The visual sheet is a projection of the JSON. If the JSON has 5 shots, the sheet has 5 panels. NEVER add panels to "hit the per-type 8–10 range" — that range was already applied at Step 1b's planning, the JSON's shot count is the final word.
 > 2. **Sheet K ≥ 2 MUST receive every prior approved sheet as `referenceImages`** with aliases `sheet_part_1` … `sheet_part_{K-1}`, anchored positionally in the prompt (`Image 1` …), AND with a continuity block telling the model to preserve character/wardrobe/lighting/palette/legend/footer from those references. Skipping this is the reported bug *"para el segundo storyboard visual no ha puesto el primero como referencia"* — characters drift, the legend wobbles, the palette re-rolls.
 
-> 🛑 **HARD STOP — NO `.md` PANEL DESCRIPTION DOCS.** The deliverable of Step 2 is a set of 4K PNG sheet image(s), produced by `generate_image` calls the `visual-panels` skill prescribes (`label: "visual_storyboard"`, `resolution: "4K"`, `aspectRatio: "16:9"`, etc.). NOT a `sheets.md` listing the panels in prose. NOT a `storyboard-spec.md`. NOT a "visual breakdown" doc. If you find yourself about to `write_file` a `.md` here, STOP — you're about to violate Hard Rule #17 and skip the skill that knows how to render the panel grid at 4K. The user wants to SEE the storyboard, not read a description of it.
+> 🛑 **HARD STOP — NO `.md` PANEL DESCRIPTION DOCS.** The deliverable of Step 2 is a set of 4K PNG sheet image(s), produced by `generate_image` calls the `keyframes` skill prescribes (`label: "visual_storyboard"`, `resolution: "4K"`, `aspectRatio: "16:9"`, etc.). NOT a `sheets.md` listing the panels in prose. NOT a `storyboard-spec.md`. NOT a "visual breakdown" doc. If you find yourself about to `write_file` a `.md` here, STOP — you're about to violate Hard Rule #17 and skip the skill that knows how to render the panel grid at 4K. The user wants to SEE the storyboard, not read a description of it.
 >
-> ⚠ **MANDATORY: activate `visual-panels` FIRST, AS ITS OWN BATCH.** Skipping the activation and calling `generate_image` directly with a hand-written prompt produces an off-brand panel grid (wrong font sizes, missing footer columns, broken legend, wrong style preset phrasing) that fails the Quality Checks at the bottom of this file. The skill body holds the panel anatomy, the 4 style preset blocks, the per-type footer column 4 copy, and the continuity rules for multi-sheet videos — every one of those is mandatory and none of them is derivable from priors.
+> ⚠ **MANDATORY: activate `keyframes` FIRST, AS ITS OWN BATCH.** Skipping the activation and calling `generate_image` directly with a hand-written prompt produces an off-brand panel grid (wrong font sizes, missing footer columns, broken legend, wrong style preset phrasing) that fails the Quality Checks at the bottom of this file. The skill body holds the panel anatomy, the 4 style preset blocks, the per-type footer column 4 copy, and the continuity rules for multi-sheet videos — every one of those is mandatory and none of them is derivable from priors.
 
-> 1. **Turn A — activate only.** Emit `activate_skill` for `visual-panels` and STOP the batch (no `read_file`, no `generate_image`, no `return` in the same batch). The activation result lands the skill body in `# Active Skill Instructions` AND returns the skill's absolute `directory` + `resources` — you need both before you can read the anatomy/style/per-type references it owns.
+> 1. **Turn A — activate only.** Emit `activate_skill` for `keyframes` and STOP the batch (no `read_file`, no `generate_image`, no `return` in the same batch). The activation result lands the skill body in `# Active Skill Instructions` AND returns the skill's absolute `directory` + `resources` — you need both before you can read the anatomy/style/per-type references it owns.
 > 2. **Turn B — build, following the skill.** With the skill body now visible, follow it literally:
 >    - `read_file` the storyboard JSON at the path the previous step returned (`~/.koi/storyboards/<id>.json`). It is the source of truth — if chat and JSON disagree, the JSON wins (the user may have hand-edited the visor).
 >    - **Chunk** the shots into sheets per the skill's § STEP B (each sheet ≤ 15 s and ≤ 10 panels; minimize sheet count; end on beat boundaries; the last sheet may be short).
@@ -404,7 +404,7 @@ This step turns the approved storyboard JSON (from Step 1b) into the **second ma
 
 The per-sheet approval loop itself is Step 3 below. Do NOT show the image prompt to the user — feed it to `generate_image`.
 
-### Step 3 — Show and refine the visual panels
+### Step 3 — Show and refine the keyframes
 
 1. `show_result` the generated sheet.
 2. Ask for refinement, frame-by-frame if needed:
@@ -416,17 +416,17 @@ The per-sheet approval loop itself is Step 3 below. Do NOT show the image prompt
 
 **Re-validate the invariant after every refinement:** `sum(panel_durations) === sheet's own clip duration` (within tool-reported `[D_min, D_max]`, Hard Rule #18) must still hold per sheet, AND `sum(sheet_clip_durations) === total_video_duration` across sheets must still hold. If the user added a 5-second beat to sheet 2, either another panel in sheet 2 shrinks, OR the sheet itself grows (still ≤ `D_max`) and another sheet shrinks, OR the total grows by 5 s — confirm which one with the user.
 
-Before finishing this task, save a `step5_output.json` inside the **Workflow workspace** from your RUNTIME CONTEXT (per Hard Rule #14). The full target path is `<value of the "Workflow workspace" row from RUNTIME CONTEXT>/step5_output.json` — copy the workspace value verbatim, do NOT use a relative path and do NOT derive the path from the WORKFLOW.md location. The file contains everything Step 4 needs: type, total_duration_seconds, sheet_count, sheets[] (each with index, absolute path, panels[] of n/label/duration_s/dialogue, AND the sheet's own clip_duration_s — the whole-second value within the tool-reported `[D_min, D_max]` that the `visual-panels` skill assigned the PART), voiceover_lines_by_sheet, any subject reference aliases+paths, audio_plan from the per-type spec (`VIDEO_TYPE_<TYPE>.md`'s "Audio cue" section — whether music is needed + brief), **platform** + **aspect_ratio** (driving the `create_timeline` shape in Step 4), and **storyboard_path** (absolute path to the `~/.koi/storyboards/<id>.json` — Step 4's `visual-panels-to-video` skill uses it as the per-clip timing + per-shot audio authority). Use absolute paths throughout.
+Before finishing this task, save a `step5_output.json` inside the **Workflow workspace** from your RUNTIME CONTEXT (per Hard Rule #14). The full target path is `<value of the "Workflow workspace" row from RUNTIME CONTEXT>/step5_output.json` — copy the workspace value verbatim, do NOT use a relative path and do NOT derive the path from the WORKFLOW.md location. The file contains everything Step 4 needs: type, total_duration_seconds, sheet_count, sheets[] (each with index, absolute path, panels[] of n/label/duration_s/dialogue, AND the sheet's own clip_duration_s — the whole-second value within the tool-reported `[D_min, D_max]` that the `keyframes` skill assigned the PART), voiceover_lines_by_sheet, any subject reference aliases+paths, audio_plan from the per-type spec (`VIDEO_TYPE_<TYPE>.md`'s "Audio cue" section — whether music is needed + brief), **platform** + **aspect_ratio** (driving the `create_timeline` shape in Step 4), and **storyboard_path** (absolute path to the `~/.koi/storyboards/<id>.json` — Step 4's `keyframes-to-video` skill uses it as the per-clip timing + per-shot audio authority). Use absolute paths throughout.
 
 ### Step 4 — Generate the final video
 
-This step is generic: it animates the approved visual panel sheet(s) into the final video. **The full playbook lives in the `visual-panels-to-video` skill** — activate it and follow its SKILL.md. Don't re-derive the per-sheet render rules, the audio contract, the per-clip duration logic or the timeline assembly from memory; that skill (and the `timeline-assembler` skill it delegates to) is the source of truth.
+This step is generic: it animates the approved keyframe sheet(s) into the final video. **The full playbook lives in the `keyframes-to-video` skill** — activate it and follow its SKILL.md. Don't re-derive the per-sheet render rules, the audio contract, the per-clip duration logic or the timeline assembly from memory; that skill (and the `timeline-assembler` skill it delegates to) is the source of truth.
 
-> 1. **Turn A — activate only.** Emit `activate_skill` for `visual-panels-to-video` and STOP the batch. The activation lands the skill body in `# Active Skill Instructions`.
+> 1. **Turn A — activate only.** Emit `activate_skill` for `keyframes-to-video` and STOP the batch. The activation lands the skill body in `# Active Skill Instructions`.
 > 2. **Turn B — render + assemble, following the skill.**
 >    - `read_file` `step5_output.json` from `<Workflow workspace from RUNTIME CONTEXT>/step5_output.json` (Hard Rule #14) — it holds the inputs the skill expects: the ordered sheet paths, panel data, voiceover lines, subject references, `audio_plan`, `type`, `platform` / `aspect_ratio`, and the storyboard JSON path. Don't search the disk; if the file is missing, surface the error.
 >    - Hand the skill its inputs: the **sheets** (in order), the **references** manifest (characters / products / settings to lock identity), and the **storyboard JSON** path — which is the AUTHORITY for per-clip timing and per-shot action / dialogue / SFX / music. Per the skill: render ONE `generate_video` per sheet (each clip's `duration` taken from the storyboard, NOT a hardcoded 15), pass the platform `aspectRatio` and `withAudio: true` on every clip, generate a single full-length music track only when the plan needs it and there are ≥ 2 sheets, then concatenate every clip back-to-back on a timeline (each at its OWN duration, cumulative cursor) and render.
->    - Assembly mechanics (tracks, music ducking to ≈ −28 dB, subtitles, the preview → render → show_result hand-off) come from the `timeline-assembler` skill, which `visual-panels-to-video` points you to. **Always create a NEW timeline for the video, and END by `show_result`-ing that timeline** (it's where the finished video lives — the user lands there to play / tweak / re-render).
+>    - Assembly mechanics (tracks, music ducking to ≈ −28 dB, subtitles, the preview → render → show_result hand-off) come from the `timeline-assembler` skill, which `keyframes-to-video` points you to. **Always create a NEW timeline for the video, and END by `show_result`-ing that timeline** (it's where the finished video lives — the user lands there to play / tweak / re-render).
 
 The video is assembled on a TIMELINE only — never `ffmpeg concat` or any other glue tool.
 
@@ -482,7 +482,7 @@ The only nudge: for very long videos (**≥ 5 minutes**, i.e. lots of sheets), c
 
 **If the user asks for a different aspect ratio** (9:16, 1:1, 4:5):
 
-> *"The visual panels is 16:9 by design — that's what gives the panels space. The FINAL video can be reframed to 9:16 / 1:1 / 4:5 at the per-frame `generate_video` step. Want me to proceed with the sheet in 16:9 and render the clips in your target ratio?"*
+> *"The keyframes is 16:9 by design — that's what gives the panels space. The FINAL video can be reframed to 9:16 / 1:1 / 4:5 at the per-frame `generate_video` step. Want me to proceed with the sheet in 16:9 and render the clips in your target ratio?"*
 
 ---
 
@@ -532,13 +532,13 @@ When calling `generate_image` to generate a sheet, verify both the tool-call par
 - [ ] Character described consistently across every frame AND every sheet
 - [ ] Mix of action shots and product / detail close-ups appropriate to the video type
 
-When calling `generate_video` per SHEET (one call per sheet, NOT per panel — handled by the `visual-panels-to-video` skill), verify:
+When calling `generate_video` per SHEET (one call per sheet, NOT per panel — handled by the `keyframes-to-video` skill), verify:
 
 - [ ] `referenceImages` populated with the sheet itself as the first entry (alias `sheet_part_K` or `storyboard` for single-sheet)
 - [ ] For sheet K ≥ 2: every prior approved sheet is ALSO in `referenceImages` (`sheet_part_1`, …, `sheet_part_{K-1}`)
 - [ ] `duration` = the sheet's OWN clip duration (the whole-second value from the storyboard / `clip_duration_s`, within the tool-reported `[D_min, D_max]` — see Hard Rule #18), NOT a hardcoded number
 - [ ] Total `generate_video` calls = sheet count (NOT panel count)
-- [ ] Prompt includes a per-shot direction block from the storyboard JSON — each shot's framing, camera movement, action, timing and sound (per the `visual-panels-to-video` skill). It does NOT re-describe the visual STYLE or the subjects' appearance (sheet + refs carry those).
+- [ ] Prompt includes a per-shot direction block from the storyboard JSON — each shot's framing, camera movement, action, timing and sound (per the `keyframes-to-video` skill). It does NOT re-describe the visual STYLE or the subjects' appearance (sheet + refs carry those).
 - [ ] If the sheet has dialogue lines in any panel, they appear in the prompt in panel order
 - [ ] **Audio block bullet (c) — conditional**: present when `audio_plan` generates a separate A2 music track (prompt forbids the model adding music in the clip), OMITTED when there's no separate music track (no contradiction to prevent)
 

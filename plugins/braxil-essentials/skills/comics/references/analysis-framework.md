@@ -30,7 +30,7 @@ Before creating a comic, thoroughly analyze the source material to:
 
 **Evidence & Examples**
 - What concrete examples, data, or stories support the main ideas?
-- Which examples translate well to visual panels?
+- Which examples translate well to keyframes?
 - What can be shown rather than told?
 
 ### 2. Context & Background (Understanding "Why")

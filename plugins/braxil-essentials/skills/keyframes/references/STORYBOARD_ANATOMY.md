@@ -1,6 +1,6 @@
 # Storyboard Anatomy: Phase 1 Spec
 
-Authoritative spec for building a 4K visual panel SHEET from a story idea + character refs. `visual-panels` `SKILL.md` delegates here, read THIS first. Output = one composite image (the SHEET) via `generate_image` at 4K. **Never deliver the raw prompt text; the artefact is the rendered image.**
+Authoritative spec for building a 4K keyframe SHEET from a story idea + character refs. `keyframes` `SKILL.md` delegates here, read THIS first. Output = one composite image (the SHEET) via `generate_image` at 4K. **Never deliver the raw prompt text; the artefact is the rendered image.**
 
 ---
 
@@ -84,7 +84,7 @@ Happens BEFORE Step 4. Stops a 28 s storyboard being silently cropped to 15 s. *
 - **Clips**: contiguous shot groups, each **≤ 15 s** (`generate_video` `duration` enum = whole seconds 4–15, plus `"auto"`); each → ONE downstream video clip (video unit; old spec's "PART").
 - **Sheets**: a 4K storyboard image (= ONE `generate_image` = the cost); holds up to **12 panels**, can carry **several WHOLE clips** (image/cost unit).
 
-Win: a sheet is no longer tied to one clip: a 30 s storyboard of 3 short scenes = 3 clips on ONE 12-panel sheet (fewer calls = less money). `visual-panels-to-video` reads `metadata.clips` to know which panels feed which clip and renders one `generate_video` per clip, concatenating. Hard limits: clip ≤15 s, sheet ≤12 panels, a clip NEVER spans two sheets.
+Win: a sheet is no longer tied to one clip: a 30 s storyboard of 3 short scenes = 3 clips on ONE 12-panel sheet (fewer calls = less money). `keyframes-to-video` reads `metadata.clips` to know which panels feed which clip and renders one `generate_video` per clip, concatenating. Hard limits: clip ≤15 s, sheet ≤12 panels, a clip NEVER spans two sheets.
 
 **Read `totalDurationSeconds` from the JSON root, DON'T hand-sum.** The app stamps it (+ `shotCount`) on every save; authoritative, always in sync; overrides any duration in brief/form/task. Cross-check vs the visor's per-scene `SEG` labels. **Fallback only if absent** (older storyboard): sum `shot.duration` across EVERY shot of EVERY scene.
 
@@ -112,7 +112,7 @@ At least `ceil(totalSeconds/15)` clips. **Cap each clip at ≤12 PANELS too** (c
 
 **One prompt PER sheet.** When >1 sheet: section A title carries THIS sheet's PART tag; section F lists ONLY this sheet's panels (may span several clips); B/C/D/E/G/H stay essentially identical across sheets (same style/characters/grid) for continuity.
 
-**🧷 Every sheet's `metadata` MUST carry the `clips` map** (else `visual-panels-to-video` falls back to "1 sheet = 1 clip" and drops scenes):
+**🧷 Every sheet's `metadata` MUST carry the `clips` map** (else `keyframes-to-video` falls back to "1 sheet = 1 clip" and drops scenes):
 ```
 clips: [
   { clipIndex: 1, shotIds: ["sh1","sh2","sh3"], panels: [1,2,3,4], durationSec: 12 },
@@ -231,15 +231,15 @@ Required call shape (per sheet):
 - **`aspectRatio`**: the SHEET aspect matching your grid (`sheetAspect = videoAspect × cols/rows`); don't pass the VIDEO aspect unless your grid implies it.
 - **`resolution`**: `4k`. MANDATORY (≈3312×2480 px or portrait twin). At 1080p panels compress to mush.
 - **`saveTo`**: a locatable dir (`~/.koi/images/` default; the project folder when active).
-- **`summary`**: single: "`<title>`: visual panel sheet, `<duration>`s, `<panel-count>` panels, `<aspect>`"; multi-PART: "`<title>`: PART K / K_total, `<duration>`s, `<panel-count>` panels".
-- **`metadata`**: with a JSON input, stamp the clips metadata per Chunking Step B above (`sourceStoryboard`, `storyboardPart`/`storyboardParts`, `clips`). `visual-panels-to-video` uses these to re-attach the JSON and resolve each clip's duration. Omit only with no source JSON.
+- **`summary`**: single: "`<title>`: keyframe sheet, `<duration>`s, `<panel-count>` panels, `<aspect>`"; multi-PART: "`<title>`: PART K / K_total, `<duration>`s, `<panel-count>` panels".
+- **`metadata`**: with a JSON input, stamp the clips metadata per Chunking Step B above (`sourceStoryboard`, `storyboardPart`/`storyboardParts`, `clips`). `keyframes-to-video` uses these to re-attach the JSON and resolve each clip's duration. Omit only with no source JSON.
 
 After each success, `show_result` with the saved path (per PART, not just at the end).
 
 ---
 
 ## Step 6: Companion note
-After the image lands, a short (3–5 sentence) note: style choices made for anything unspecified; which character details came from uploaded refs vs inferred; one or two refinement suggestions (e.g. "if panels blend together, I can re-render with stronger black borders"); handoff: "When you're happy with this sheet, I can render the final video (per-clip prompts + clips + assembled timeline) via `visual-panels-to-video`."
+After the image lands, a short (3–5 sentence) note: style choices made for anything unspecified; which character details came from uploaded refs vs inferred; one or two refinement suggestions (e.g. "if panels blend together, I can re-render with stronger black borders"); handoff: "When you're happy with this sheet, I can render the final video (per-clip prompts + clips + assembled timeline) via `keyframes-to-video`."
 
 ---
 
