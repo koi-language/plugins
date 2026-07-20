@@ -1,7 +1,7 @@
 {
   "name": "braxil-essentials",
   "description": "All BRAXIL skills in one plugin: guide, screenwriting, logo creator, infographics, comics, product photography, slide decks, social media carousels, social publishing, the image/video/audio model contracts (which model + which parameters), and the full video-production suite (storyboard, keyframes, timeline assembler, flight-path-to-video). Install this single plugin to get everything.",
-  "version": "1.1.88",
+  "version": "1.1.89",
   "author": {
     "name": "Braxil",
     "email": "support@braxil.ai"

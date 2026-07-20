@@ -68,11 +68,21 @@ The `generate_image` `model` param covers **generation** and **editing** only. P
 
 ## Choosing within a category
 
-Once the category is fixed, several models usually qualify. Decide from the data — neutrally, with no default favourite:
+**DEFAULT MODEL — always GPT Image 2 unless a concrete reason below forces another.** It is the standard pick for both categories:
+- **Text-to-image** → `openai/gpt-image-2`.
+- **Edit / image-to-image** → `openai/gpt-image-2/edit`.
 
-- Compare the candidates' cards in `references/models.md` on the traits your task needs: max reference images, aspect ratios, resolution ceiling, output formats, and whether they take `cameraAngles` or `quality`.
-- **What the labels mean — use them to pick the best-suited model.** A model's labels (the Catalog table's **Labels** column) mark the content, subject or style that model is the BEST-SUITED for. If the user's request matches a label, **strongly prefer that model** over an unlabelled one in the same category — that is exactly what the label is telling you. Examples: a model labelled `cities` is the best pick for a city / urban photo; `manga` → the best for manga-style drawing; `portrait` → portraits; `logo` → logos; `anime`, `watercolor`, `product`, etc. → their named style/subject. Read every candidate's labels against what the user asked for and route to the model whose label fits. When no label matches your task, ignore labels and choose on quality / price.
-- Some capabilities live on a single model (camera-rotation, masked inpaint, outpaint, transparent cut-out). Find that model by the param / label it supports in the table + `references/models.md` — never by memory.
+Reach for GPT Image 2 first, every time. Do NOT switch to Nano-Banana, Seedream, Krea, Qwen, Bria or any other model just because it "might look better" or "is newer" — that is exactly the wrong reason. Only deviate when ONE of these is true:
+
+1. **The operation is impossible on GPT Image 2.** Camera-rotation (`fal-ai/qwen-image-edit-2511-multiple-angles`), an exact-pixel canvas (Seedream family / Qwen-Image-Edit accept explicit `width`+`height`), or the separate no-model tools (outpaint, upscale, background-removal). If GPT Image 2 cannot physically do it, use the one model that can.
+2. **The user explicitly names another model** ("use Nano-Banana", "hazla con Seedream"). Honour the request.
+3. **A catalog Label matches a genuinely specialized style the user asked for** AND GPT Image 2 is not itself labelled for it — e.g. the user asks for `manga`/`anime`/`watercolor`/`logo` and another model carries that exact label. A generic "realistic photo / recreate this / make an image" request is NOT a specialized style — keep GPT Image 2.
+
+If none of the three applies, use GPT Image 2. When in doubt, GPT Image 2.
+
+- Compare the candidates' cards in `references/models.md` only for the parameters GPT Image 2 accepts/rejects (aspect ratios, resolution ceiling, output formats, `quality`) — GPT Image 2 is the only model that reads `quality`.
+- **What the labels mean.** A model's labels (the Catalog table's **Labels** column) mark the content/subject/style it is best-suited for. They only override the GPT Image 2 default under exception 3 above — a specialized style the user explicitly asked for that GPT Image 2 isn't labelled for. Never let a label pull you off GPT Image 2 for a generic request.
+- Some capabilities live on a single model (camera-rotation, masked inpaint, outpaint, transparent cut-out). Find that model by the param / label it supports in the table + `references/models.md` — never by memory (this is exception 1).
 
 ## Gotchas
 
