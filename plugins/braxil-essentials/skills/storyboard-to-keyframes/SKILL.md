@@ -1,10 +1,10 @@
 ---
-name: keyframes
+name: storyboard-to-keyframes
 description: >
   Render a 4K KEYFRAME SHEET (a single composite IMAGE: a clean full-bleed grid of panels, each cell is the panel image edge-to-edge, with NO rendered numbers: the app's viewer overlays numbering) by composing the image-generation prompt (a single multi-section block tuned for a high-fidelity text-to-image model) and calling `generate_image`. The deliverable is the rendered image, never a raw prompt for the user to copy. This skill does NOT author or plan a story: the editable SOURCE storyboard is the `storyboard` JSON, and this skill renders that finished JSON into a visual sheet. THE CYCLE is always: storyboard → keyframes → video, do NOT skip the storyboard. If the user wants panels (or a video) for a multi-shot story but there is NO storyboard yet, author the `storyboard` FIRST; render straight from a bare idea (no storyboard) ONLY when the user EXPLICITLY asks for just the image/sheet and not a storyboard. Use ONLY when the user explicitly wants the VISUAL / IMAGE output: a "panel sheet", "keyframes", "panel layout", "render the storyboard as an image", "break this story into panels", panels they can SEE, or when they pair "storyboard" with any image / video generation tool or model, or upload character references for a visual. Do NOT use this skill for a bare "make me a storyboard" / "shot list" / "scene plan" with no mention of images: that is the storyboard JSON (`storyboard`), not this skill. Works for any visual style: 3D animation, live-action, anime, 2D animation, stop-motion, editorial, comic book, or any other aesthetic. To animate the approved sheet into the final video (per-clip prompt + rendering + timeline assembly), see `keyframes-to-video`.
 ---
 
-# Keyframes
+# Storyboard → Keyframes
 
 Story idea + character refs → **4K panel sheet**: one composite image, full-bleed grid (each cell = panel edge-to-edge; NO rendered numbers, viewer overlays its own). End-to-end: compose the image prompt AND call `generate_image`. Deliverable = rendered image, NOT a prompt to copy.
 

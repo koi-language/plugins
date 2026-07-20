@@ -7,7 +7,7 @@ This file documents two things:
 1. **How to map a total duration to one or more panel sheets**, given the per-sheet caps from `STORYBOARD_ANATOMY.md`.
 2. **The render pipeline** for the final video — the chain of `generate_video` + timeline calls that stitches per-frame clips into the final file.
 
-> 📍 Files referenced below by bare name — `STORYBOARD_ANATOMY.md` and any `VIDEO_TYPE_<TYPE>.md` — are owned by the **`keyframes` skill** and live in its `references/` directory (NOT next to this file). To read one: `list_skills` → the `keyframes` entry's `directory` → `read_file` `<directory>/references/<file>`. The actual sheet-chunking logic also lives in that skill (SKILL.md § STEP B); the duration→sheet-count table below is the create-video workflow's quantized view of it.
+> 📍 Files referenced below by bare name — `STORYBOARD_ANATOMY.md` and any `VIDEO_TYPE_<TYPE>.md` — are owned by the **`storyboard-to-keyframes` skill** and live in its `references/` directory (NOT next to this file). To read one: `list_skills` → the `storyboard-to-keyframes` entry's `directory` → `read_file` `<directory>/references/<file>`. The actual sheet-chunking logic also lives in that skill (SKILL.md § STEP B); the duration→sheet-count table below is the create-video workflow's quantized view of it.
 
 ---
 

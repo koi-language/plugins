@@ -1,6 +1,6 @@
 # Storyboard Anatomy: Phase 1 Spec
 
-Authoritative spec for building a 4K keyframe SHEET from a story idea + character refs. `keyframes` `SKILL.md` delegates here, read THIS first. Output = one composite image (the SHEET) via `generate_image` at 4K. **Never deliver the raw prompt text; the artefact is the rendered image.**
+Authoritative spec for building a 4K keyframe SHEET from a story idea + character refs. `storyboard-to-keyframes` `SKILL.md` delegates here, read THIS first. Output = one composite image (the SHEET) via `generate_image` at 4K. **Never deliver the raw prompt text; the artefact is the rendered image.**
 
 ---
 

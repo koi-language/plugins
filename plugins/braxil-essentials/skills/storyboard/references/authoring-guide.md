@@ -62,7 +62,7 @@ Rules:
 
 Optional `references` array on root, each `scenes[]`, each `scenes[].shots[]`. Each entry a STRING: `@mention` handle (gallery asset, `"@hero_pose"`) or absolute path to an IMAGE. Visor → thumbnails/chips; user adds via `@handles` or dropping images.
 
-Scope cascade (specific wins, broader still applies): root → EVERY shot; scene → every shot in scene; shot → that shot. At render, keyframes skills collect in-scope refs per shot, pass as `referenceImages` (`@handles`→paths) to lock identity. Omit when empty; never `"references": []`.
+Scope cascade (specific wins, broader still applies): root → EVERY shot; scene → every shot in scene; shot → that shot. At render, the `storyboard-to-keyframes` / `keyframes-to-video` skills collect in-scope refs per shot, pass as `referenceImages` (`@handles`→paths) to lock identity. Omit when empty; never `"references": []`.
 - **IMAGES ONLY, never source video.** Video/audio path (`.mp4`/`.mov`/`.mp3`) = BUG, can't decode, crashes sheet render. From a source video, WATCH it with `read_file` (from-video.md); clip is NOT a ref. For a still, save frame as image first, ref that path.
 - **Describe the person in the photo; never invent, never keep OLD look.** User gives a photo to DEFINE/RECTIFY a char → `read_file` that exact image BEFORE writing; base `characters` entry on what you SEE (hair or none + colour, facial hair, build, skin, clothing, accessories). Rectifying: new photo OVERRIDES storyboard; don't carry old desc forward, don't describe existing pencil sketches (OLD look being replaced). Read pixels; photo wins.
 

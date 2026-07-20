@@ -22,7 +22,7 @@ Panels are reference stills of a moment WITHIN each shot, not start frames: say 
 
 ## Hard limits (Seedance 2.0)
 
-- Output: 4–15 seconds per generation. A clip over 15 s MUST be split upstream (`keyframes` chunking) BEFORE composing — never here.
+- Output: 4–15 seconds per generation. A clip over 15 s MUST be split upstream (`storyboard-to-keyframes` chunking) BEFORE composing — never here.
 - Camera setups: reliable up to ~5 per generation; more = the clip was mis-chunked.
 - Keep the SAME scene line and lighting phrasing on every clip of the piece.
 
