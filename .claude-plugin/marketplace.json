@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "braxil-plugins",
-  "version": "1.2.90",
+  "version": "1.2.92",
   "description": "Official plugin marketplace for BRAXIL: agents, skills, and workflows maintained by the Braxil team.",
   "owner": {
     "name": "Braxil",
