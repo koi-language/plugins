@@ -53,6 +53,19 @@ Sheet = ONE image; panels = VIRTUAL cells (tools auto-detect grid from gutter li
 >
 > (Separate case: a **STRUCTURAL** story change — shots/clips added, removed or reordered so the panel→clip mapping itself changed, gate 00 — is a **fresh render from the storyboard with a NEW `sheetSetId`**, not an "edit the old sheet" pass at all.)
 
+> 🚨🔴 **A CHANGE TO THE SET / DÉCOR / BACKGROUND MUST REGENERATE THE SET PLATE — not just the panels. THIS IS THE HALF THAT GETS FORGOTTEN AND IT BREAKS THE VIDEO.**
+>
+> The set plate is a **PERSISTED reference** (`scene.references` / the `locations` Library asset), and `keyframes-to-video` **re-attaches it to Seedance on every clip**. So if you repaint the affected panels but leave the OLD plate in place, **the stale décor is what actually reaches the video**: the sheet looks correct, the user approves it, and then the render silently comes back with the set they just asked you to change. The panels are right and the video is wrong — and it looks like the video model ignored the brief when in fact you fed it the old room.
+>
+> **Order, always, no exceptions:**
+> 1. **Regenerate the SET PLATE first**, with the change applied — same canonical wide view of the location, same `lighting` design as the rest of the piece.
+> 2. **PERSIST it OVER the old one** (`save_storyboard` → `scene.references`, and/or update the `locations` Library asset). The superseded plate must no longer be reachable by any later run — a leftover old plate re-enters on the next regeneration/agenda run.
+> 3. **THEN regenerate the affected panels**, anchored to the **NEW** plate (positional `Image N`), per the panel-by-panel rule above.
+>
+> **Same failure mode for the CAST — treat it identically.** A change to a character's look, wardrobe, hair or age must **regenerate that character's TURNAROUND (with Seedream) and persist it over the old one BEFORE fixing the panels**. Otherwise `keyframes-to-video` attaches the old turnaround and the video keeps the old identity, no matter how the panels look.
+>
+> Rule of thumb: **if a change outlives one panel, it lives in a reference — so fix the REFERENCE first, then the panels.**
+
 **00. 🚦 STORY GATE FIRST: story or only pixels?** Storyboard JSON = SINGLE SOURCE OF TRUTH; sheets are derived, must NEVER contradict it.
 - **VISUAL-ONLY** (render error: orientation, drifted background/set, proportions, character wrong, style glitch, `action`/`dialogue`/`continuity` stay TRUE) → panel flow; storyboard untouched.
 - **STORY-AFFECTING** (WHAT happens, who appears, what's said, changing scene/setting, add/remove/reorder shots or clips, retiming) → FIRST update the storyboard (invoke `storyboard`, which chains `screenwriting` per its rule 1), THEN visuals: fix cuadros, or re-render affected sheet(s) with a NEW `sheetSetId` when structure changed (shot add/remove/reorder changes panel→clip mapping; single-panel fixes can't express that). Storyboard↔visual consistency ABSOLUTE.

@@ -140,6 +140,27 @@ do not fabricate it. Shape:
 Related top-level clip fields for AI keyframe wiring (round-trip verbatim):
 `aiStartFrameClipId`, `aiEndFrameClipId`, `aiStartFrameMode`.
 
+### 🚨 SWAPPING a clip's `path` (replacing a clip with a re-rendered / edited version) — RESET THE SOURCE WINDOW
+
+**Whenever you point an existing clip at a DIFFERENT media file — an AI edit of that clip, a re-render, a swapped take — you MUST also reset the source window in the same write:**
+
+```jsonc
+"path": "<the new file>",
+"sourceInMs": 0,        // the new file is STANDALONE and starts at 0
+"sourceTotalMs": 0,     // unknown → let the app re-probe the real length
+"sourceWidthPx": 0,     // unknown → re-probe (the render may have other dims)
+"sourceHeightPx": 0
+```
+
+**Why — this is a 100%-reproducible freeze if you skip it.** `sourceInMs` is an offset into the **OLD** source. A re-rendered clip is a brand-new file that begins at 0, so the old offset now points somewhere inside (or past) it. Real reported case: a clip trimmed as the tail of a 7142 ms take (`sourceInMs 3250` + `durationMs 3892`) had its `path` swapped to the 3752 ms rendered edit while `sourceInMs` stayed `3250` → the player seeked 3250 ms into a 3752 ms file, leaving ~500 ms of content for a 3892 ms clip, and **froze on the last frame for the remaining ~3.4 s**. The timeline looked right; playback was broken.
+
+Also mind these, in the same edit:
+- **`durationMs` vs the new file's real length.** If the render came back shorter than the slot (asked 3892 ms, got 3752 ms), the tail is a frozen frame. Either shorten `durationMs` to the real length (and close the gap / ripple the rest yourself — it moves everything after it), or accept the short freeze deliberately. Never leave it unnoticed.
+- **The linked AUDIO peer** (same `linkId`): decide explicitly whether it follows the new file (swap its `path` and reset its `sourceInMs` too) or keeps the ORIGINAL audio (leave it — its own `sourceInMs`/`durationMs` still refer to the old source and stay valid). Both are legitimate; silently half-updating them is not.
+- **`aiState`**: set `lastRenderedPath` to the new file and keep `placeholderPath` / `placeholderSourceInMs` untouched — they describe the ORIGINAL, and the inspector's "AI ↔ Rendered" toggle needs them to restore it.
+
+ℹ️ The `assign_generated_media_to_clip` tool already does all of the above for you — **prefer it** over hand-editing the JSON for this case. This section is for when you're rewriting the object yourself via `update_timeline`.
+
 ### Other
 | Field | Type | Notes |
 |---|---|---|
