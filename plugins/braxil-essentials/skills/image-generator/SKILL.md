@@ -20,7 +20,7 @@ The gateway hard-errors on an unknown slug and silently drops fields a model doe
 - `prompt` (required) — **always English** (models degrade on non-English captions). The ONLY exception is literal on-image text (a sign, a label, UI copy, speech-bubble dialogue): keep that verbatim in the user's language, wrapped in quotes inside the otherwise-English prompt.
 - `aspectRatio` — the frame ratio. **Accepted values are per-model** — some have a fixed enum (e.g. `auto·16:9·1:1·9:16·…`), others accept any `W:H`. See the model's table; omit to let it default.
 - `resolution` — output size as a **semantic label**. **Per-model** — some use labels (`1K/2K/4K`), others size buckets (`low/medium/high/ultra`). A few cap the render unless you pass a high value — the table lists the default and the ceiling.
-- `width` + `height` — an **exact pixel canvas** (both required together), used instead of the `resolution` label when you need a precise size. **Only the Seedream family and Qwen-Image-Edit honour them**; every other model ignores them and uses `aspectRatio`/`resolution`. Each model caps the **total AREA** (not per-side): Seedream edit tops at ~4.2 MP (= 2048²), so one side may exceed 2048 if the other shrinks (`4096×1024` ✓), but true 4K (~8.3 MP) does not fit — edit then upscale, or use a 4K-capable text-to-image model. Nothing is clamped client-side; the provider enforces its own area/aspect limits. Video has no width/height (its models size by `resolution` tier + `aspectRatio`).
+- `width` + `height` — an **exact pixel canvas** (both required together), used instead of the `resolution` label when you need a precise size. **Only the Seedream family and Qwen-Image-Edit honour them**; every other model ignores them and uses `aspectRatio`/`resolution`. Each model caps the **total AREA** (not per-side): Seedream edit tops at ~4.2 MP (= 2048²), so one side may exceed 2048 if the other shrinks (`4096×1024` ✓), but true 4K (~8.3 MP) does not fit — edit then upscale, or use a 4K-capable text-to-image model. Nothing is clamped client-side; the provider enforces its own area/aspect limits. Video has no width/height (its models size by `resolution` tier + `aspectRatio`). **If the user asks for an exact pixel size on a model WITHOUT `width`/`height`, do NOT render at the default and shrink — approximate it with the closest `resolution` label + closest `aspectRatio`; see the "Exact pixel size requested" section below.**
 - `quality` — sampling effort (`low | medium | high | auto`), decoupled from pixel count. **Only some models consume it** (their table lists it); most ignore it. `low` for thumbnails, `high` for finals.
 - `n` — number of images. **Max is per-model** (see the table — commonly 4, some 6).
 - `seed` — reproducibility seed: same seed + same prompt ⇒ the same image **on models that honour it** (Krea 2 Turbo and the Nano-Banana 2 / Pro models; GPT Image 2 and Seedream Lite ignore it). Omit for a fresh random result.
@@ -32,6 +32,18 @@ The gateway hard-errors on an unknown slug and silently drops fields a model doe
 - `model` — **REQUIRED. YOU pick the exact slug.** There is no auto-router — omitting it (or passing `"auto"`) makes the tool error out. Read the **Catalog table** in the tool's own description (or `references/models.md`) and pick a slug whose **Categories** column contains the bucket for your operation (see "Categories" below). The gateway hard-errors on an unknown slug, so don't invent one.
 
 Returns `{ success, provider, model, images: [{ url?, b64?, savedTo?, exportedTo? }] }`.
+
+## Exact pixel size requested but the model has NO `width`/`height` — MANDATORY rule
+
+When the user asks for a **concrete pixel size** (e.g. "1024×1024", "512px", "a 1080p", "4K", "un icono de 1024"):
+
+1. **If the chosen model accepts `width`+`height`** (ONLY the Seedream family and Qwen-Image-Edit) → set them to the exact size. Done.
+2. **If it does NOT** (GPT Image 2, Nano-Banana, Krea, Bria… — every other model) → you **CANNOT** pass an exact canvas, so you MUST APPROXIMATE it from the two labels the model *does* accept — **do NOT just render at the default size and shrink it**:
+   - **`resolution`** → pick the label whose pixel size (in that model's card — e.g. GPT Image 2: `low`=1280, `medium`=1920, `high`=2560, `ultra`=3840 long edge) is **CLOSEST to the requested size**. For 1024 that is `low` (1280), NOT the default `high` (2560).
+   - **`aspectRatio`** → pick the ratio **CLOSEST to the requested one** (1024×1024 → `1:1`; 1920×1080 → `16:9`; etc.). If the model takes any `W:H`, pass the exact ratio.
+   - **Only then**, if the user needs the pixels to be *exact*, resize the returned file DOWN to that size locally (a lossless downscale of the closest render) — never upscale past what the model produced, and never claim the model "renders at a fixed internal resolution": it doesn't, you chose the closest label.
+
+Same token cost whichever label you pick (the price is per call, independent of size), so **always choose the closest label rather than the default** — a 1024 target rendered from `low` (1280) is far better than from `high` (2560).
 
 ## Multiple images at once — use `batch`, never many separate calls
 
@@ -88,6 +100,7 @@ If none of the three applies, use GPT Image 2. When in doubt, GPT Image 2.
 
 - **Never pick a slug from the wrong category** — a text-to-image (`image_generation`) slug given `referenceImages`, or an editing slug asked to upscale, fails at the adapter. Match the operation to its category first, then choose within it.
 - **Some models cap resolution unless you ask** — for a few, omitting `resolution` returns a low render even for a "4K" request. Always set `resolution` (`high`/`ultra`) for high-res work; check the model's card.
+- **Exact pixel size on a model without `width`/`height`** — approximate with the CLOSEST `resolution` label + CLOSEST `aspectRatio`, then downscale locally if it must be exact. Never render at the default size and shrink, and never say the model "always renders at a fixed internal resolution". See the "Exact pixel size requested" section.
 - **Seed only works on the models whose card lists it** — check the card before promising reproducibility.
 - **`referenceImages` for edits, not `startFrame`** — startFrame is a video concept.
 - Read the model's card in `references/models.md` before setting `quality` or `cameraAngles` — only specific models consume them.
