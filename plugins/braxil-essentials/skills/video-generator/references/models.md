@@ -143,6 +143,7 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 
 ### Gemini Omni Flash — Image-to-Video — `google/gemini-omni-flash/image-to-video`
 - needs `startFrame` + `prompt`. Fast & cheap.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (prompting technique, image-role tags, audio).
 
 | `video` param | Req? | Accepted values | Notes |
 |---|---|---|---|
@@ -155,6 +156,7 @@ Talking-head **avatar** is a separate tool with no `model` pick (see the last se
 
 ### Gemini Omni Flash — Reference-to-Video — `google/gemini-omni-flash/reference-to-video`
 - composes from `referenceImages` (up to 10). Fast & cheap.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (how to bind refs with `<IMAGE_REF_N>` tags, prompting technique, audio).
 
 | `video` param | Req? | Accepted values | Notes |
 |---|---|---|---|
@@ -181,6 +183,7 @@ The server picks the editor; you pass `sourceVideo` + `prompt`.
 | sourceVideo | required | path/@mention to the clip | |
 | prompt | required | edit instruction ≤20000 chars | tip: append "Keep everything else the same." |
 - Output dims/length follow the source. Unavailable in EEA/CH/UK.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (edit prompting technique, audio keep-vs-regenerate, gotchas).
 
 ### Luma Ray 3.2 — Video-to-Video — `luma/agent/ray/v3.2/video-to-video`  *(operation `"edit"`)*
 Restyle / transform an existing clip.

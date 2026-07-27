@@ -9,7 +9,7 @@ Runbook for producing video through BRAXIL's `generate_video` tool. **Do not rei
 
 **Where to find what — it's already in your context, don't go searching:**
 - **Categories & Labels of every model → the `video` tool's OWN description (the "Catalog" table).** Already in your context — read it RIGHT THERE to pick a model. **Never grep files, `references/`, or the backend for models / categories / labels.**
-- **Per-model PARAMETERS → `references/models.md`** (what each model accepts + input shape). Read a model's card before choosing a slug or setting a non-obvious field (startFrame vs referenceImages, duration enums, audio).
+- **Per-model PARAMETERS → `references/models.md`** (what each model accepts + input shape). Read a model's card before choosing a slug or setting a non-obvious field (startFrame vs referenceImages, duration enums, audio). A model's card also links its **USAGE guide** (`references/usage/<model>.md`) when one exists — READ it before composing the prompt.
 
 Choosing a slug whose adapter rejects your request shape (e.g. an image-to-video slug for a text-only prompt) fails loudly.
 
@@ -47,7 +47,9 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 | `video_avatar` | talking head | lip-syncing a face image to an audio track (`imageUrl` + `audioUrl`) |
 | `video_lipsync` | re-voice a clip | re-articulating the lips of an EXISTING video to a new audio track (`videoUrl` + `audioUrl`) |
 
-**Hard rule:** editing a clip ⇒ pick a `video_editing` slug; extending ⇒ `video_extend`; an avatar (face photo → talking video) ⇒ `generate_avatar_video`; dubbing/re-voicing an existing clip (video → same clip, new lips) ⇒ `lipsync_video`. And never pin an image-to-video slug for a text-only prompt (or a text-to-video slug when you pass a `startFrame`) — the shapes must line up. (No video background-removal or synced-Foley model is currently enabled.)
+**Hard rule:** editing a clip ⇒ **`operation:"edit"` with `model` UNSET** (server-routed to the `video_editing` pool — the best/default editor is **Gemini Omni Flash**); extending ⇒ `video_extend`; an avatar (face photo → talking video) ⇒ `generate_avatar_video`; dubbing/re-voicing an existing clip (video → same clip, new lips) ⇒ `lipsync_video`. And never pin an image-to-video slug for a text-only prompt (or a text-to-video slug when you pass a `startFrame`) — the shapes must line up. (No video background-removal or synced-Foley model is currently enabled.)
+
+> ⚠ **"Edit / modify / change / add / remove X in THIS clip" is NEVER a generation model.** Do NOT reach for a `reference-to-video` or `image-to-video` slug (Seedance, Gemini Omni image-to-video, etc.) to change an existing video — that generates a NEW clip from a still/refs, it does not edit the source. Any request that starts from an existing clip and wants it modified in place is `operation:"edit"`, model UNSET. (`referenceVideos` on a Seedance `reference-to-video` generation is for *chaining a new shot* off a prior clip, not for editing that clip.)
 
 **Avatar vs lip-sync — different tools, don't confuse them:** you have a face PHOTO and want it to speak → `generate_avatar_video` (OmniHuman). You already have a VIDEO and want its speech replaced/dubbed → `lipsync_video` (veed/lipsync/v2).
 
@@ -80,7 +82,7 @@ Once the category and input shape are fixed, several models may qualify. **Choos
 | **Gemini Omni Flash** `google/gemini-omni-flash/image-to-video` · `…/reference-to-video` | **Fast & cheap** image-to-video and reference-to-video (compose from up to 10 refs). Good for quick iteration / social hooks. | Minimal controls: `16:9`/`9:16` only, `3–10s`, no `seed`/`resolution`. Lower fidelity than the cinematic models. |
 | **WAN 2.7** `fal-ai/wan/v2.7/image-to-video` | A fallback image-to-video when the others can't serve the shape. | **Last resort — pricey and weaker.** No audio. Don't pick it over Seedance/Kling/Veo/Luma just because one of them errored; retry the better ones first. |
 
-**Decision in one line:** refs or text-only → **Seedance** (or **Gemini Omni Flash** for a fast/cheap take); animating a photo → **Seedance**, then **Kling** (product/controlled), **Veo** (max photoreal realism) or **Luma** (elegant b-roll); only if none fit → **WAN**. (Need 4k? Both Seedance and Veo deliver it.)
+**Decision in one line (this table is GENERATION only — new clips):** refs or text-only → **Seedance** (or **Gemini Omni Flash** for a fast/cheap take); animating a photo → **Seedance**, then **Kling** (product/controlled), **Veo** (max photoreal realism) or **Luma** (elegant b-roll); only if none fit → **WAN**. (Need 4k? Both Seedance and Veo deliver it.) **Editing an EXISTING clip is not here → `operation:"edit"`, model UNSET, best editor Gemini Omni Flash (next section).**
 
 ### Editing an existing clip — the editor is auto-picked, but here's who's best
 

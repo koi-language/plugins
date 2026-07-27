@@ -10,9 +10,6 @@ Runbook for producing images through BRAXIL's `generate_image` tool. **Do not re
 **Where to find what — it's already in your context, don't go searching:**
 - **Categories & Labels of every model → the `generate_image` tool's OWN description (the "Catalog" table).** It is already in your context. Read it RIGHT THERE to pick a model. **Never grep files, `references/`, or the backend for models / categories / labels** — they live in the tool description, immediately available.
 - **Per-model PARAMETERS → `references/models.md`** (what each model accepts). Read a model's card before setting a non-obvious param (`cameraAngles`, `quality`).
-- **Per-model USAGE guides → `references/usage/<model>.md`** (how to prompt and work that specific model well — technique, not parameters). **MANDATORY: once you have picked a model, if its guide exists below, READ it BEFORE composing the prompt / calling `generate_image`.** Guides available so far (the list will grow to cover every model):
-  - Any **Gemini Omni** slug (slug contains `gemini-omni`) → `references/usage/gemini-omni.md`
-
 The gateway hard-errors on an unknown slug and silently drops fields a model doesn't understand.
 
 ## The tool: `generate_image`
