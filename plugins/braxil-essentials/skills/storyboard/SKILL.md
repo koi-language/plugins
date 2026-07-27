@@ -9,7 +9,7 @@ description: >
 App-owned JSON the GUI visor watches and renders as editable pencil-sketch shot cards.
 
 - **Path (MANDATORY):** `~/.koi/storyboards/<id>.json`. `<id>` = stable kebab slug (`sb-<unix-ms>` or human like `mafiosos-restaurante`); the `id` INSIDE the JSON == filename. NEVER write anywhere else (cwd/Desktop/project = invisible; visor only watches that folder).
-- Always write/update via **`save_storyboard`** (derives `version`/`createdAt`/`updatedAt`/path, validates, escapes JSON). NEVER `write_file`/`edit_file` a storyboard.
+- Always write via the storyboard tools, NEVER `write_file`/`edit_file`: **`update_storyboard`** for content edits (diff-style: only the changed fields, only the affected panels re-render), **`save_storyboard`** for create/restructure (derives `version`/`createdAt`/`updatedAt`/path, validates, escapes JSON).
 
 ## Schema (v6) skeleton
 
@@ -113,8 +113,8 @@ The working storyboard is set by the CONVERSATION, not by focused tab: whichever
 
 0. **Invoke `screenwriting` first for ANY content change** (rule 1); skip only for purely mechanical edits.
 1. **`read_file` the working storyboard first** (conversation-established; active tab only as fallback). It may have been edited inline in the visor, always re-read. Parse it; **keep its `id` EXACTLY** (same id = in-place, new id = duplicate).
-2. Mutate the object (no partial-edit API: `save_storyboard` takes the whole updated object).
-3. **`save_storyboard`** with the full object (preserves `createdAt`, bumps `updatedAt`).
+2. **CONTENT edits (changing field values) → `update_storyboard`, ALWAYS.** Send ONLY the deltas, addressed by scene/shot id: `{ id, set?: {…root…}, scenes?: [{id, set}], shots?: [{id, set}] }`. Never re-send unchanged fields "for safety" — every field that differs from disk counts as an edit and re-renders that panel's sketch (a root field re-renders ALL panels). The result's `affectedPanels` lists exactly which sketches will redraw: tell the user.
+3. **STRUCTURAL edits (add/remove/reorder scenes or shots, renumber, change ids) → `save_storyboard`** with the full mutated object (preserves `createdAt`, bumps `updatedAt`). Copy every field you are not changing VERBATIM from the read — re-wording an untouched `shot`/`action` re-renders that panel for nothing. Verify the result's `editorialChanges` matches your intent; if it lists fields you didn't mean to touch, re-save restoring them verbatim.
 4. Keep `number` sequential across ALL scenes after reorder/insert/delete (tool rejects otherwise).
 5. Verify `success: true`; on false, fix and retry. Don't tell the user it's done until it is. Visor picks up disk changes; no `show_result` for updates.
 6. **Propagate to visual sheets (rule 10):** if rendered sheets exist, update affected cuadros (or re-render affected sheets) this same turn; never leave the panel grafico contradicting the saved storyboard.
@@ -133,7 +133,7 @@ Read your payload back; if any check fails, fix BEFORE saving:
 ## Don't
 
 - Call `generate_image` for shots (rule 11).
-- Write storyboard JSONs outside `~/.koi/storyboards/` (and only via `save_storyboard`).
+- Write storyboard JSONs outside `~/.koi/storyboards/` (and only via `update_storyboard`/`save_storyboard`).
 - Fabricate fields not in the schema (`mediaRef`, `cacheKey`...).
 - Write English into editorial fields; translate the user's text.
 - Put `@handles` in `action`/`characters` text unless the user confirmed they exist in the gallery (visor strips them at compose time).

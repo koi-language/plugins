@@ -51,7 +51,7 @@ Per uploaded ref extract: **Identifying features** (face structure, skin tone, h
 
 **Multi-ref of the SAME subject: NEVER collapse.** Multiple photos of one char (front/side/back, outfits, expressions, candids) are ALL load-bearing. NEVER dedupe at SUBJECT level to one "best" photo. Pass EVERY ref with its own position and anchor the subject across all positions ("Match `HERO_A` to `Image 1,2,3,4`: five photos of the same character; use all jointly to lock face/hair/build/wardrobe; do not invent features absent from the references"). Dedupe by PATH only, never by subject.
 
-**Order (decide before writing, keep):** 1) hero/most-used char, all its photos contiguous (front, then alt angles, then outfits/expressions); 2) secondary chars, same pattern, all of one before the next; 3) products/objects together; 4) setting/location plates last. Write the mapping now (one line per position, "Image 1=HERO_A front; …; Image 6=PRODUCT_BOTTLE") and reuse verbatim in section C.
+**Order (decide before writing, keep):** 1) hero/most-used char, all its photos contiguous (front, then alt angles, then outfits/expressions); 2) secondary chars, same pattern, all of one before the next; 3) extras GROUP sheets; 4) products/objects together; 5) setting/location plates last. Write the mapping now (one line per position, "Image 1=HERO_A front; …; Image 6=PRODUCT_BOTTLE") and reuse verbatim in section C.
 
 ---
 
@@ -67,14 +67,22 @@ Per uploaded ref extract: **Identifying features** (face structure, skin tone, h
   - User photo of that character → pass it as **Image 1** (identity match). No photo → drop the "Match the face…" line and build from the roster description.
 - **PERSIST it** — `save_storyboard` into `references` (root) and/or a `characters` Library asset — so every later regeneration / agenda run re-collects the SAME turnaround instead of inventing a new face.
 
+**1b. EXTRAS — one GROUP SHEET per recurring group of background people, generated with SEEDREAM.**
+- **Who counts:** any UNNAMED group that appears in more than one panel or is story-relevant — a caravan of riders, a crowd, soldiers, waiters, a film crew, villagers. **No group sheet → every panel (and later every clip) re-invents their number, faces, wardrobe and ethnicity from scratch** — the same drift bug as an actor without a turnaround, multiplied by the whole group.
+- **Seedream specifically** (same reason as the actors: extras have FACES, and only a Seedream-born image clears Seedance's face filter downstream — `keyframes-to-video` attaches this sheet as-is).
+- **Layout = group lineup, one row, wide (16:9)**: 4–6 representative extras standing side by side, full body, front view, plain neutral seamless grey studio backdrop, even flat studio lighting. For a large crowd DON'T render dozens: the sheet locks the LOOK (wardrobe, era, palette, types), not the headcount — the panel/clip prompt states the real number. **Prompt template:**
+  > `A photorealistic group reference sheet of <4–6> background extras on a plain neutral seamless grey studio backdrop, even flat studio lighting. Layout: one row, all extras standing side by side, full body, front view. <GROUP DESCRIPTION: who they are, age/build variety, wardrobe/uniform, era, props they carry>. Distinct faces, consistent wardrobe style across the group. Clean production character-reference sheet aesthetic, photorealistic, no text, no numbers, no logos, no watermark.`
+- **Anchor it like a character** (`EXTRAS_CARAVANA`, `EXTRAS_CROWD`…): every panel where the group appears anchors it positionally ("The riders match the extras in Image N — same wardrobe, same types; the count comes from the action text").
+- **PERSIST it** (root `references` and/or Library) and reuse — regenerating drifts the group's look, exactly like an actor.
+
 **2. SETS — one establishing PLATE per recurring location, with the image model of YOUR choice.**
 - No face on a room → no filter concern → **pick whatever model renders that look best** (Nano Banana Pro, GPT Image 2, Seedream… your call per the `image-generator` skill). This is the deliberate difference vs the actors, which are Seedream-only.
 - One wide canonical view of the location, obeying the storyboard's `lighting` design, so every panel set in it matches.
 - Reuse if it exists; otherwise generate and **persist** it (`scene.references` and/or a `locations` Library asset).
 
-**3. THEN render the panels FROM them.** Every panel prompt anchors the cast turnarounds and the set plate(s) **positionally** (`Image N`, per the anchoring rule above) and includes them in `referenceImages`. The sheet is composed from these references — cast + sets — not from description alone.
+**3. THEN render the panels FROM them.** Every panel prompt anchors the cast turnarounds, the extras group sheet(s) and the set plate(s) **positionally** (`Image N`, per the anchoring rule above) and includes them in `referenceImages`. The sheet is composed from these references — cast + extras + sets — not from description alone.
 
-⚡ Cast and sets are independent: **generate them in PARALLEL**; the sheet render waits for both.
+⚡ Cast, extras and sets are independent: **generate them in PARALLEL**; the sheet render waits for all.
 
 > 🔴 **These assets are PERSISTED and re-used downstream — so a later change to the set or to a character must UPDATE THEM, not just the panels.** `keyframes-to-video` re-attaches the set plate and the turnarounds to Seedance on every clip; a stale plate/turnaround silently drags the OLD décor or the OLD identity into the video even when the sheet looks correct. When the user changes the set/décor/background → regenerate the PLATE and persist it over the old one FIRST; when they change a character's look → regenerate that TURNAROUND (Seedream) and persist it FIRST. Then re-render the affected panels against the new reference. See the set/cast rule in `SKILL.md` § Fixing panels.
 

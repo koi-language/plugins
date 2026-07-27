@@ -62,7 +62,7 @@ Sheet = ONE image; panels = VIRTUAL cells (tools auto-detect grid from gutter li
 > 2. **PERSIST it OVER the old one** (`save_storyboard` → `scene.references`, and/or update the `locations` Library asset). The superseded plate must no longer be reachable by any later run — a leftover old plate re-enters on the next regeneration/agenda run.
 > 3. **THEN regenerate the affected panels**, anchored to the **NEW** plate (positional `Image N`), per the panel-by-panel rule above.
 >
-> **Same failure mode for the CAST — treat it identically.** A change to a character's look, wardrobe, hair or age must **regenerate that character's TURNAROUND (with Seedream) and persist it over the old one BEFORE fixing the panels**. Otherwise `keyframes-to-video` attaches the old turnaround and the video keeps the old identity, no matter how the panels look.
+> **Same failure mode for the CAST — treat it identically.** A change to a character's look, wardrobe, hair or age must **regenerate that character's TURNAROUND (with Seedream) and persist it over the old one BEFORE fixing the panels**. Otherwise `keyframes-to-video` attaches the old turnaround and the video keeps the old identity, no matter how the panels look. **And for the EXTRAS too:** a recurring unnamed group (crowd, caravan, soldiers, crew…) has its own Seedream GROUP SHEET (Step 2b §1b) — a change to the group's look regenerates and persists THAT sheet first, same rule.
 >
 > Rule of thumb: **if a change outlives one panel, it lives in a reference — so fix the REFERENCE first, then the panels.**
 
