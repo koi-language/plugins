@@ -47,11 +47,17 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 | `video_avatar` | talking head | lip-syncing a face image to an audio track (`imageUrl` + `audioUrl`) |
 | `video_lipsync` | re-voice a clip | re-articulating the lips of an EXISTING video to a new audio track (`videoUrl` + `audioUrl`) |
 
-**Hard rule:** editing a clip ⇒ **`operation:"edit"` with `model` UNSET** (server-routed to the `video_editing` pool — the best/default editor is **Gemini Omni Flash**); extending ⇒ `video_extend`; an avatar (face photo → talking video) ⇒ `generate_avatar_video`; dubbing/re-voicing an existing clip (video → same clip, new lips) ⇒ `lipsync_video`. And never pin an image-to-video slug for a text-only prompt (or a text-to-video slug when you pass a `startFrame`) — the shapes must line up. (No video background-removal or synced-Foley model is currently enabled.)
+**Hard rule:** editing a clip ⇒ **`operation:"edit"` with `model` UNSET** (server-routed to the `video_editing` pool — the best/default editor is **Gemini Omni Flash**); extending ⇒ `video_extend`; an avatar (face photo → talking video) ⇒ `video` `operation:"new"` with `startFrame` (the face photo) + `audioFile` (the driving audio) + a **REQUIRED** `model` from `video_avatar`; dubbing/re-voicing an existing clip (video → same clip, new lips) ⇒ `lipsync_video`. And never pin an image-to-video slug for a text-only prompt (or a text-to-video slug when you pass a `startFrame`) — the shapes must line up. (No video background-removal or synced-Foley model is currently enabled.)
 
 > ⚠ **"Edit / modify / change / add / remove X in THIS clip" is NEVER a generation model.** Do NOT reach for a `reference-to-video` or `image-to-video` slug (Seedance, Gemini Omni image-to-video, etc.) to change an existing video — that generates a NEW clip from a still/refs, it does not edit the source. Any request that starts from an existing clip and wants it modified in place is `operation:"edit"`, model UNSET. (`referenceVideos` on a Seedance `reference-to-video` generation is for *chaining a new shot* off a prior clip, not for editing that clip.)
 
-**Avatar vs lip-sync — different tools, don't confuse them:** you have a face PHOTO and want it to speak → `generate_avatar_video` (OmniHuman). You already have a VIDEO and want its speech replaced/dubbed → `lipsync_video` (veed/lipsync/v2).
+**Avatar vs lip-sync — different shapes, don't confuse them:** you have a face PHOTO and want it to speak → the SAME `video` tool, `operation:"new"`, with `startFrame` = the photo, `audioFile` = the audio, and `model` = a `video_avatar` slug (REQUIRED, you pick it — cards in `references/models.md`). You already have a VIDEO and want its speech replaced/dubbed → `lipsync_video` (veed/lipsync/v2).
+
+> ⚠ **If the user ATTACHED a spoken-audio file, THAT file is the `audioFile` — pass it straight in. Do NOT synthesise a new one.** The two shapes, by what else is attached:
+> - **Attached AUDIO + PHOTO** → talking-head avatar **driven by the attached audio**: one `video` call, `operation:"new"`, `startFrame` = photo, `audioFile` = the attached clip, `model` from `video_avatar`.
+> - **Attached AUDIO + VIDEO** ("haz que el personaje del vídeo hable este audio") → **lip-sync**: `lipsync_video` with `video` = the attached clip + `audioFile` = the attached audio (**that same audio and that same video** — no model, nothing regenerated).
+>
+> In BOTH cases the attached audio already IS the voice and the words: do NOT call `generate_audio` (TTS) to re-create it. TTS / `create_voice` only enter when there is **no audio and you have the TEXT** to speak (or you must reuse a cloned voice for NEW words). Never invent a voice for audio you were handed.
 
 ## Routing: pick the slug yourself
 
@@ -64,7 +70,7 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 | Continue from the previous clip (multi-shot chaining) | `video` `"new"`, `model` = `bytedance/seedance-2.0/reference-to-video` | `prompt` + `referenceImages` (e.g. the panel sheet) + `referenceVideos` (the previous clip) |
 | Edit an existing clip | `video` `operation:"edit"` — **no model** (server-routed) | `sourceVideo` + `prompt` |
 | Extend a clip (+7s) | `video` `operation:"extend"` — **no model** | `sourceVideo` + `prompt` |
-| Talking-head avatar (face photo speaks) | `generate_avatar_video` — **no model** | `image` + `audioFile` (+`aspectRatio`) |
+| Talking-head avatar (face photo speaks) | `video` `"new"`, `model` from `video_avatar` | `startFrame` (face photo) + `audioFile` (**the ATTACHED audio if given — never re-synthesise it**; +`prompt` hint, optional) |
 | Lip-sync / dub an existing clip | `lipsync_video` — **no model** | `video` + `audioFile` |
 
 ⚠ **Motion transfer (Kling Motion-Control)** needs a reference motion video + `characterOrientation`, which the `video` tool doesn't expose — it isn't usable through the standard tool right now.

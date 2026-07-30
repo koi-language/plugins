@@ -60,6 +60,8 @@ When the user asks to clone a voice and hasn't provided a sample, don't just wai
 
 ## Routing
 
+> ⚠ **Don't synthesise audio you were already given.** If the user ATTACHED a spoken-audio file and wants it applied to something — a photo/person "speaking it" (talking-head avatar), or an existing clip re-voiced (lip-sync) — that attached file IS the audio: hand it straight to the `video_avatar` / `lipsync_video` path (see the **video-generator** skill). Do NOT run `generate_audio` (TTS) to re-create it. Speech mode is ONLY for turning **your TEXT into new spoken audio** (no audio in hand); `create_voice` is ONLY for reusing a voice on NEW words. Never invent a voice to replace audio the user handed you.
+
 | I want… | Category → mode + fields |
 |---|---|
 | Spoken narration / dialogue | `audio_tts` → `speech`, `text` (+voice/emotion/speed) |

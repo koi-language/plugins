@@ -75,7 +75,8 @@ The `generate_image` `model` param covers **generation** and **editing** only. P
 | Outpaint / extend the canvas | `outpaint_image` — **no model** | `image` + `padTop/padBottom/padLeft/padRight` (+`prompt`) |
 | Upscale | `upscale_image` — **no model** | `image` (+`upscaleFactor`/`prompt`/`creativity`/`faceEnhancement`) |
 | Remove background | `background_removal` — **no model** | `image` |
-| Inpaint a masked region | — | not available via the MCP tools |
+| Remove an object (masked) | `generate_image` (`model` = `fal-ai/ideogram/object-removal`) | `referenceImages` = `[source, B/W mask]` (white = remove; build the mask with an edit model first — see its card) |
+| Inpaint a masked region (fill with new content) | — | not available via the MCP tools |
 
 ## Choosing within a category
 
@@ -96,6 +97,8 @@ If none of the three applies, use GPT Image 2. When in doubt, GPT Image 2.
 - Some capabilities live on a single model (camera-rotation, masked inpaint, outpaint, transparent cut-out). Find that model by the param / label it supports in the table + `references/models.md` — never by memory (this is exception 1).
 
 ## Gotchas
+
+- **Provider chokes on a HEAVY source image** ("Failed to download the file", size/timeout errors on `referenceImages`) → run **`optimize_image({ image })`** (LOSSLESS PNG shrink, default ≤2 MB / ≤2048px) and retry with its `savedTo`. **NEVER convert to JPEG via shell (sips/ffmpeg)** — lossy re-encoding is forbidden; this tool is the sanctioned path.
 
 - **Never pick a slug from the wrong category** — a text-to-image (`image_generation`) slug given `referenceImages`, or an editing slug asked to upscale, fails at the adapter. Match the operation to its category first, then choose within it.
 - **Some models cap resolution unless you ask** — for a few, omitting `resolution` returns a low render even for a "4K" request. Always set `resolution` (`high`/`ultra`) for high-res work; check the model's card.

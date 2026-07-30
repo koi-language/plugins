@@ -106,6 +106,21 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 
 - **Rejects**: referenceImages, cameraAngles, quality.
 
+### MAI Image 2.5 Pro — `microsoft/mai-image-2.5-pro`  *(text-to-image)*
+
+- Microsoft MAI · create from a prompt · no references.
+
+
+| `generate_image` param | Req?     | Accepted values                              | Notes                                              |
+| ---------------------- | -------- | -------------------------------------------- | -------------------------------------------------- |
+| prompt                 | required | string                                       | English.                                           |
+| aspectRatio            | optional | `auto·1:1·4:3·3:4·16:9·9:16·3:2·2:3`         | fixed enum, clamped to closest. Omit → `auto` (the model decides from the prompt). |
+| outputFormat           | optional | `jpeg·png·webp`                              | default png.                                       |
+| n                      | optional | default 1                                    | the schema publishes no max.                       |
+
+
+- **Rejects / ignored**: referenceImages (use the /edit slug), `seed` (accepted, ignored — no reproducibility), `resolution` / `width`+`height` / `quality` (NO size knobs at all: the model sizes output from the aspect ratio alone — for an exact pixel size follow the "Exact pixel size requested" rule with aspectRatio only, then downscale locally), cameraAngles.
+
 ### GPT Image 2 — Edit — `openai/gpt-image-2/edit`  *(image-to-image)*
 
 - edit reference images · **needs** `referenceImages`.
@@ -191,6 +206,22 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 
 - **Rejects**: cameraAngles, quality, outputFormat (forced png). `seed` is NOT a field on this model.
 
+### MAI Image 2.5 Pro — Edit — `microsoft/mai-image-2.5-pro/edit`  *(image-to-image)*
+
+- Microsoft MAI · instruction edit of ONE image · **needs** `referenceImages` **(exactly 1)**.
+
+
+| `generate_image` param | Req?     | Accepted values                              | Notes                                              |
+| ---------------------- | -------- | -------------------------------------------- | -------------------------------------------------- |
+| prompt                 | required | string                                       | the edit instruction, English.                     |
+| referenceImages        | required | exactly 1 image                              | SINGLE-reference model — it cannot compose from several refs (logo+mug etc. → use a multi-ref editor like Seedream/Nano-Banana edit). |
+| aspectRatio            | optional | `auto·1:1·4:3·3:4·16:9·9:16·3:2·2:3`         | default `auto` = match the input. Setting another value REFRAMES the output. |
+| outputFormat           | optional | `jpeg·png·webp`                              | default png.                                       |
+| n                      | optional | default 1                                    | the schema publishes no max.                       |
+
+
+- **Rejects / ignored**: `seed` (no reproducibility), `resolution` / `width`+`height` / `quality` (no size knobs — output size follows the input/aspect), cameraAngles, maskImage.
+
 ### Qwen Image Edit 2511 — Multiple Angles — `fal-ai/qwen-image-edit-2511-multiple-angles`  *(camera re-angle)*
 
 - re-render a subject from a new camera angle · **needs** `referenceImages` **(exactly 1) +** `cameraAngles`.
@@ -205,6 +236,20 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 
 
 - **Rejects / forced**: aspectRatio, resolution, outputFormat (hardcoded png), quality. Throws if no camera axis is set.
+
+### Ideogram Object Removal — `fal-ai/ideogram/object-removal`  *(masked object removal)*
+
+- erase an object from a photo and re-synthesise the hole from context · **needs** `referenceImages` **(exactly 2: [source, mask])**.
+
+
+| `generate_image` param | Req?     | Accepted values                        | Notes                                                                                                                                     |
+| ---------------------- | -------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| referenceImages        | required | exactly 2: `[source, mask]`            | **refs[0] = the photo** (≤10 MB). **refs[1] = a black-and-white MASK at the SAME dimensions: WHITE = remove, BLACK = keep.** Use aliases (`source`, `mask`). |
+
+
+- **Rejects / ignored**: prompt (the model takes none — removal is mask-driven), aspectRatio, resolution, n (always 1 output), seed, outputFormat, width/height, quality.
+- **Where does the mask come from?** The agent BUILDS it with any edit model first — e.g. GPT Image 2 Edit with the source as reference and a prompt like *"Output a black-and-white mask of this image at the exact same dimensions: the `<object>` as a solid WHITE silhouette, everything else solid BLACK. No gray, no anti-aliasing halo, no other content."* — then passes `[source, that mask]` here. Make the white region slightly GENEROUS (cover shadows/reflections of the object) for clean removal.
+- Prefer this over a prompted edit ("remove the X") when the edit model keeps regenerating the whole image or drifting the scene: this endpoint touches ONLY the white region and leaves every other pixel byte-identical.
 
 ---
 
@@ -222,7 +267,7 @@ These do NOT go through `generate_image`; you don't choose a model.
 
 - `quality` is consumed ONLY by GPT Image 2 (/edit); every other model ignores it.
 - `cameraAngles` is consumed ONLY by Qwen Multiple-Angles.
-- `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2 and Seedream 5 Lite** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `loras` **are NOT parameters** — the agent cannot set them here.
+- `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2, Seedream 5 Lite and the MAI Image 2.5 Pro family** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `loras` **are NOT parameters** — the agent cannot set them here.
 - `width` + `height` (an exact px canvas, both together) are consumed ONLY by the **Seedream family** and **Qwen-Image-Edit**; every other model ignores them and uses `aspectRatio`/`resolution`. Always stay under the model's area cap (Seedream edit = 2048² ≈ 4.2 MP).
 - **Resolution matters**: Nano-Banana caps low unless you send `high`/`ultra`.
 

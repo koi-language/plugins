@@ -6,7 +6,7 @@ Only models **enabled in the BRAXIL backend** are listed, and each table uses th
 
 `cameraMovement` (optional): `static`, `pan_left`, `pan_right`, `zoom_in`, `dolly_in`, `orbit_right`, … — a motion hint honoured by some models, ignored by others.
 
-Talking-head **avatar** is a separate tool with no `model` pick (see the last section).
+Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a REQUIRED `model` from the `video_avatar` cards (see the Avatar section).
 
 > Each model's **categories** and **labels** are NOT repeated here — they are backend-managed and shown per model in the live **Catalog table** in the tool's own description. This file is the parameter contract only.
 
@@ -216,11 +216,51 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 
 ---
 
-## Avatar — dedicated tool (no `model` pick)
+## Avatar (`video_avatar`) — talking video from a face PHOTO, via the SAME video tool
 
-Talking-head avatar (a face PHOTO speaks) goes through **`generate_avatar_video`**, not `video`:
+**ONLY for making a still face photo SPEAK a driving audio — never for anything else.** Same `video` tool, `operation:"new"`; the avatar mode switches on when you pass `audioFile`:
 
-- **`generate_avatar_video({ image, audioFile, prompt?, aspectRatio? })`** → serves `fal-ai/bytedance/omnihuman/v1.5`. `image` = face photo; `audioFile` = the voice the avatar speaks; `aspectRatio` `1:1/16:9/9:16`. Synthesises the whole performance from one still image.
+- **`model` is REQUIRED, you pick it** from the cards below (all carry the `video_avatar` category) — exactly like every other generation, no auto-pick.
+- **`startFrame`** = the face photo (front-facing portraits work best). Output dimensions FOLLOW THE PHOTO — crop/frame it to the shape you want BEFORE calling (`aspectRatio` is ignored by these models).
+- **`audioFile`** = the audio the avatar speaks. The clip's length follows the audio.
+- **`prompt`** is OPTIONAL here (English scene/style hint; some models ignore it). No duration, no withAudio (the audio IS the track), no referenceImages/Videos.
+
+### Creatify Aurora — `fal-ai/creatify/aurora`  *(avatar — DEFAULT pick)*
+
+| param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | face photo | output dims follow it |
+| audioFile | required | ~≤60 s | |
+| resolution | optional | `480p·720p` (default 720p) | maps low→480p, medium+→720p |
+| prompt | optional | English scene hint | |
+
+- **The preferred avatar model — reach for it first** unless the user names another or needs 1080p output.
+- Same source-photo size behaviour as the others (worker download cap — see OmniHuman's note; the engine auto-shrinks, and on a "Failed to download" error you run `optimize_image`).
+
+### OmniHuman v1.5 — `fal-ai/bytedance/omnihuman/v1.5`  *(avatar — 1080p alternative)*
+
+| param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | face photo | output dims follow it |
+| audioFile | required | **≤30 s** (1080p) / ≤60 s (720p) | fal-documented; the strict 30 s cap applies at the default 1080p |
+| resolution | optional | `720p·1080p` (default 1080p) | fal's own docs: 720p is faster AND allows 60 s audio |
+| prompt | optional | English scene hint | |
+
+- Pick it over Aurora when the user asks for 1080p or a full-body performance.
+- **Source-photo size — NOT in fal's schema, learned in production:** the avatar worker fails to DOWNLOAD multi-MB source images (`body.image_url: Failed to download the file` — a 5 MB 2560px PNG fails, a 234 KB 1280px JPEG works). The engine now auto-shrinks the photo to ≤2 MB / ≤2048px before upload, so do NOT pre-process it yourself (no sips/ffmpeg resizing). If you still see that error, retrying the identical call is pointless — run **`optimize_image({ image })`** (LOSSLESS PNG shrink to ≤2 MB / ≤2048px) and retry with its `savedTo`. **NEVER convert the photo to JPEG with sips/ffmpeg — that destroys quality.**
+
+### Kling AI Avatar v2 Pro — `fal-ai/kling-video/ai-avatar/v2/pro`  *(avatar)*
+
+| param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | face photo | output dims follow it |
+| audioFile | required | ~≤60 s | |
+| prompt | optional | English scene hint | |
+
+- Takes ONLY photo + audio + prompt — every other param is ignored.
+- Same source-photo size behaviour as OmniHuman (worker download cap, engine auto-shrinks to ≤2 MB / ≤2048px).
+
+- **Practical caps whatever the model**: driving audio ≤30 s per call keeps you safe on every card; longer speeches → several avatar calls stitched on a timeline. Source photos are auto-shrunk by the engine to the worker's real download cap (≤2 MB / ≤2048px) — never pre-resize them yourself. Dubbing an EXISTING video is `lipsync_video`, never an avatar model.
 
 ---
 
@@ -236,7 +276,7 @@ Re-voicing / dubbing an EXISTING video goes through its own tool, **`lipsync_vid
 | audioFile | required | the new audio the video should speak (fal field `audio_url`). |
 
 - Takes ONLY those two inputs — no prompt, aspectRatio, duration or seed (veed/lipsync/v2 exposes none). Output follows the source video's own dimensions and length.
-- **Avatar vs lip-sync:** a face PHOTO → `generate_avatar_video`; an existing VIDEO → `lipsync_video`. Different tools, different inputs.
+- **Avatar vs lip-sync:** a face PHOTO → the `video` tool in avatar mode (`startFrame` + `audioFile` + a `video_avatar` model); an existing VIDEO → `lipsync_video`. Different shapes, different inputs.
 
 ---
 
