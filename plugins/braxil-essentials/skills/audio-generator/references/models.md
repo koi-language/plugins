@@ -89,6 +89,12 @@ Clone a voice, then use its name as `voice` in later `mode: 'speech'` calls.
 
 - *Not settable via the tool:* noise reduction, volume normalization, accuracy, preview text, model variant (the adapter supports them, but `create_voice` exposes only the four params above).
 
+**Using a cloned voice in `mode: 'speech'` (applies to ANY clone model, not just MiniMax):**
+- Pass the **name you gave `create_voice`** as `voice` (its returned local id or the provider voice id also resolve — but the name is the simplest).
+- For `model`, keep picking the provider's normal **TTS (`audio_tts`) speech model** — e.g. the MiniMax clone is spoken with `fal-ai/minimax/speech-2.8-hd`. The runtime substitutes the provider's real voice id under the hood; you don't handle it.
+- **Never pass the `…/voice-clone` slug as `model` for speech** — a clone model is not a TTS model and the call will be rejected. The clone slug is only for `create_voice`.
+- A cloned voice can only be spoken by a TTS model from the **same provider** that minted it (a MiniMax clone needs a MiniMax TTS model). If you ever have TTS models from several providers, match the provider.
+
 ---
 
 ## Notes
