@@ -19,7 +19,12 @@ Full semantics/examples/gotchas: [references/authoring-guide.md](references/auth
 {
   "id": "sb-… | kebab-slug",        // == filename
   "name": "Human-readable title",
-  "aspect": "16:9",                 // "1:1" "16:9" "9:16" "4:3" "3:4" "3:2" "2:3" "21:9"
+  // ⛔ NO "aspect" / format field. Aspect ratio is NOT a storyboard property —
+  // it belongs to the VIDEO, and ONE storyboard can be turned into videos in
+  // MANY formats (16:9, 9:16, 1:1…). Never author it here, never ask the user
+  // about format at storyboard time. The panels render on a neutral reading
+  // surface; the final video format/resolution is chosen ONLY when the video
+  // is generated (see keyframes-to-video / video-generator).
   "seed": 7382913,                  // int, pick ONCE: same seed = consistent look
   "characters": "- HERO_A: tall slim faceless woman, long dark coat...", // roster: LABEL + silhouette desc (no faces)
   "lighting": "Luz dura de mediodía, sombras profundas.",  // ONE design for whole piece
@@ -50,7 +55,7 @@ Full semantics/examples/gotchas: [references/authoring-guide.md](references/auth
 
 ## Hard rules (each = a reported bug)
 
-1. **ALWAYS invoke `screenwriting` FIRST**, every time the user writes/modifies guion/story/storyboard content (Skill tool `braxil-essentials:screenwriting`, or `activate_skill screenwriting`). A storyboard IS the script made visible: story, `action`, `dialogue`, timing/rhythm, add/remove/reorder shots, "mejora el guion", "arregla los tiempos", "hazlo profesional" = screenwriting work. Apply its craft, then express in JSON. Its ref .md files mirrored below (reading complements, does NOT substitute invoking). ONLY exception: purely mechanical edits, zero story content (`aspect`, `references` paths, renaming, fixing a rejected field, re-numbering).
+1. **ALWAYS invoke `screenwriting` FIRST**, every time the user writes/modifies guion/story/storyboard content (Skill tool `braxil-essentials:screenwriting`, or `activate_skill screenwriting`). A storyboard IS the script made visible: story, `action`, `dialogue`, timing/rhythm, add/remove/reorder shots, "mejora el guion", "arregla los tiempos", "hazlo profesional" = screenwriting work. Apply its craft, then express in JSON. Its ref .md files mirrored below (reading complements, does NOT substitute invoking). ONLY exception: purely mechanical edits, zero story content (`references` paths, renaming, fixing a rejected field, re-numbering).
 2. **`action` = zero ambiguity.** Models render literally and invent whatever is open. Every object/count/target/position → exactly ONE thing: exact count ("una única moneda"), specific target ("el botón de abajo, de una fila de 6"), concrete identifiers ("la maleta ROJA a su izquierda", never "su maleta"), the HOW (grip/finger/posture), ONE physical action per shot. No exempt shots (product/logo/establishing need the same precision).
 3. **Carry-forward state (#1 continuity rule).** Once a shot establishes a NON-default state (standing on stacked cans, holding something, machine open, prop moved/broken), EVERY later shot where it still holds must restate it in `action`; the renderer silently resets otherwise. Splitting into micro-cuts is FREE; resetting state across a cut is broken. Back with per-shot `continuity` {characters, objects, place} (fill `place` on EVERY shot of a strong-setting scene so close-ups stay anchored; fill characters/objects wherever non-default state holds) + storyboard-level `continuity` LOCK (invariants + negatives).
 4. **`stylePrompt` = `""`** unless the user's literal words request a style ("en estilo anime", "make it Pixar", "como Sin City", a ref image + "make it look like this"). Topic NEVER implies style (ninjas/mafiosos/dragones stay pencil sketch). Don't announce a style choice for plain requests.
@@ -102,7 +107,7 @@ The working storyboard is set by the CONVERSATION, not by focused tab: whichever
 
 1. **Invoke `screenwriting` first** (rule 1); develop the story (concrete want+obstacle, turning point at center, last shots answer the first, every shot a unit of change). Even a 20s ad reads better as a tiny five-act story.
 2. **Pick a UNIQUE id** (descriptive kebab; suffix `-v2`/date if collision-prone). Reusing an id = "new storyboard shows old shots" bug; on collision `save_storyboard` auto-renames and returns the new id, use it after.
-3. **Build as a STRUCTURED OBJECT** (a tool argument, never hand-serialized JSON): id, name, aspect (default "16:9"), `synopsis` (almost always), `continuity` LOCK (any story with physical logic), characters roster, lighting, stylePrompt `""`, scenes/shots with all editorial fields in user's language, per-shot `continuity` rows, durations. Carry reference photos into `references` (rule 5). Do NOT set `version`/`createdAt`/`updatedAt` or compute path.
+3. **Build as a STRUCTURED OBJECT** (a tool argument, never hand-serialized JSON): id, name (NO aspect/format — it is NOT a storyboard property; see the schema note), `synopsis` (almost always), `continuity` LOCK (any story with physical logic), characters roster, lighting, stylePrompt `""`, scenes/shots with all editorial fields in user's language, per-shot `continuity` rows, durations. Carry reference photos into `references` (rule 5). Do NOT set `version`/`createdAt`/`updatedAt` or compute path.
 4. **`save_storyboard`** with the object. On `success: false`, read `error`, fix that field, retry.
 5. **Verify**: success true, AND if a reference photo was given, at least one `references` entry carries it; if missing, add and save again BEFORE moving on.
 6. **`show_result`** with `resourceType: 'file'`, the returned absolute path, and the name (opens the visor tab). Tell the user it's ready (name + shot count) and ask for tweaks.

@@ -31,7 +31,7 @@ User adds direction, can `@`-reference gallery assets. After return: resolve eve
 ### Optional inputs (apply if given in the initial message, else default, NOT in the form)
 - **Panel count**: default 15; allowed 9,12,15,20.
 - **Duration**: default 15 s.
-- **Aspect/grid**: YOU pick the grid per sheet (any uniform cols×rows fitting the count, 12 panels max). RECOMMENDED: cells approximate the VIDEO aspect: `sheetAspect = videoAspect × cols/rows` (16:9→3×4 on `4:3`; 9:16→4×3 on portrait `3:4`) → no implied crops. Whatever you pick: pass sheet aspect as `aspectRatio` + `resolution:"4k"`, keep the grid UNIFORM with straight pure-black gutters, stamp `metadata.grid`. Tools + viewer auto-detect the grid from pixels; no shape mandatory.
+- **Aspect/grid**: YOU pick the grid per sheet (any uniform cols×rows fitting the count, 12 panels max). The sheet is a NEUTRAL READING SURFACE, **NOT the video's format** — aspect ratio is a VIDEO decision made later (one storyboard → many formats), so do NOT tie the sheet to a target platform. Default to comfortable landscape cells (≈`3:2`/`16:9`) with a tidy grid; the video model reframes to whatever format the user picks at generation time. Whatever you pick: pass sheet aspect as `aspectRatio` + `resolution:"4k"`, keep the grid UNIFORM with straight pure-black gutters, stamp `metadata.grid`. Tools + viewer auto-detect the grid from pixels; no shape mandatory.
 - **Video type**: ad/explainer/tutorial/demo/social-post; when named, ALSO read `VIDEO_TYPE_<TYPE>.md` for its caption style, shot mix, audio cue (never all five).
 - **Target image model**: default Nano Banana Pro; GPT Image 2 also works (slightly more explicit layout phrasing).
 - **Story overview**: usually already in the message; use directly. Zero narrative content → ask ONCE via `prompt_user` ("What's the story/topic?"), then proceed.
@@ -262,7 +262,7 @@ Required call shape (per sheet):
 - **`prompt`**, the full composed block from Step 4 for THIS PART (long-form intentional).
 - **`referenceImages`**: EVERY user ref, no exceptions, no subject-level dedup. Absolute paths or `@handles`, in the exact Step 2 order (hero + ALL photos → secondary chars + ALL photos → products → locations). Array position IS `Image N`. Identical across PARTs. **PART1/single:** `[ …every user ref (Step 2 order)… ]` (no template entry: the clean-grid format is described IN PROSE, section E). **PART K≥2:** `[ sheet_part_1 … sheet_part_{K-1}, …every user ref… ]`.
   - **Pre-flight count check (every time):** count user-attached refs (JSON root + every scene + every shot, deduped, `@handles` resolved) + form picker uploads. `referenceImages.length` MUST equal: PART1/single = exactly that user count (no extras); PART K≥2 = user count + (K-1). If SHORT, you collapsed several photos of one subject OR dropped a prior sheet: redo.
-- **`aspectRatio`**: the SHEET aspect matching your grid (`sheetAspect = videoAspect × cols/rows`); don't pass the VIDEO aspect unless your grid implies it.
+- **`aspectRatio`**: the SHEET aspect matching your grid (a neutral reading surface — NOT a video format; aspect is chosen per video later).
 - **`resolution`**: `4k`. MANDATORY (≈3312×2480 px or portrait twin). At 1080p panels compress to mush.
 - **`saveTo`**: a locatable dir (`~/.koi/images/` default; the project folder when active).
 - **`summary`**: single: "`<title>`: keyframe sheet, `<duration>`s, `<panel-count>` panels, `<aspect>`"; multi-PART: "`<title>`: PART K / K_total, `<duration>`s, `<panel-count>` panels".
@@ -282,5 +282,5 @@ After the image lands, a short (3–5 sentence) note: style choices made for any
 - **Only a logline:** decompose into a full beat sheet (three-act) first; briefly show the breakdown so the user can redirect.
 - **Iterate on specific panels:** re-call with the same references and a revised prompt adjusting only the affected panels; keep the rest unchanged.
 - **Different panel count:** redistribute beats across more/fewer sheets (12 max) and pick any uniform grid. Fewer = more weight each; more = transitional/reaction shots across added PART sheets.
-- **Vertical (9:16) video:** prefer a PORTRAIT sheet (`aspectRatio:"3:4"`, 4×3 grid) so cells are natively vertical; stamp the grid in `metadata.grid`.
+- The sheet grid is a reading surface, not a format commitment: pick a tidy uniform grid (landscape cells are fine and default). The video's aspect ratio is asked from the user AT VIDEO GENERATION and the model reframes — do NOT pre-shape the sheet to a target platform.
 - **Mixed/hybrid style:** build section B to call out the hybrid ("anime-influenced but rendered in 3D", "live-action with animated elements") and which elements follow which rules.
