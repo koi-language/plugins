@@ -41,6 +41,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | n                      | optional | 1–4                                                               |                                         |
 
 
+- **Limits (fal schema):** `prompt` **3–50000 chars**; `n` 1–4.
 - **Rejects**: referenceImages, cameraAngles, quality. `safetyTolerance` is not a tool param. `**seed` — honoured** (reproducibility: same seed + prompt ⇒ same image).
 
 ### Nano Banana Pro — `fal-ai/nano-banana-pro`  *(text-to-image)*
@@ -57,6 +58,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | n                      | optional | 1–4                                               |                                                   |
 
 
+- **Limits (fal schema):** `prompt` **3–50000 chars**; `n` 1–4.
 - **Rejects**: referenceImages, cameraAngles, quality. `**seed` — honoured** (reproducibility).
 
 ### Seedream 5 Lite — `fal-ai/bytedance/seedream/v5/lite/text-to-image`  *(text-to-image)*
@@ -119,6 +121,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | n                      | optional | default 1                                    | the schema publishes no max.                       |
 
 
+- **Limits (fal schema):** `prompt` **3–5000 chars**; `n` 1–4.
 - **Rejects / ignored**: referenceImages (use the /edit slug), `seed` (accepted, ignored — no reproducibility), `resolution` / `width`+`height` / `quality` (NO size knobs at all: the model sizes output from the aspect ratio alone — for an exact pixel size follow the "Exact pixel size requested" rule with aspectRatio only, then downscale locally), cameraAngles.
 
 ### GPT Image 2 — Edit — `openai/gpt-image-2/edit`  *(image-to-image)*
@@ -154,6 +157,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | n                      | optional | 1–4                                                               |                    |
 
 
+- **Limits (fal schema):** `prompt` **3–50000 chars**; `n` 1–4.
 - **Rejects**: cameraAngles, quality. `safetyTolerance` is not a tool param. `**seed` — honoured** (reproducibility).
 
 ### ~~Nan~~o Banana Pro — Edit — `fal-ai/nano-banana-pro/edit`  *(image-to-image / upscaling-capable)*
@@ -171,6 +175,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | n                      | optional | 1–4                                               |                    |
 
 
+- **Limits (fal schema):** `prompt` **3–50000 chars**; `referenceImages` 1–14; `n` 1–4.
 - **Rejects**: cameraAngles, quality. `**seed` — honoured** (reproducibility).
 
 ### Seedream 5 Lite — Edit — `fal-ai/bytedance/seedream/v5/lite/edit`  *(image-to-image)*
@@ -220,6 +225,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | n                      | optional | default 1                                    | the schema publishes no max.                       |
 
 
+- **Limits (fal schema):** `prompt` **3–5000 chars**; `referenceImages` exactly 1; `n` 1–4.
 - **Rejects / ignored**: `seed` (no reproducibility), `resolution` / `width`+`height` / `quality` (no size knobs — output size follows the input/aspect), cameraAngles, maskImage.
 
 ### Qwen Image Edit 2511 — Multiple Angles — `fal-ai/qwen-image-edit-2511-multiple-angles`  *(camera re-angle)*
@@ -258,7 +264,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 These do NOT go through `generate_image`; you don't choose a model.
 
 - **Remove background** → `background_removal({ image })` → serves `fal-ai/bria/background/remove`. Returns a transparent PNG. No other params.
-- **Outpaint / extend the canvas** → `outpaint_image({ image, padTop?, padBottom?, padLeft?, padRight?, prompt? })` → serves `fal-ai/flux-2-pro/outpaint`. `prompt` describes only the NEW margins; per-side pad in pixels.
+- **Outpaint / extend the canvas** → `outpaint_image({ image, padTop?, padBottom?, padLeft?, padRight?, prompt? })` → serves `fal-ai/flux-2-pro/outpaint`. `prompt` describes only the NEW margins; per-side pad in pixels, **each side 0–2048** (fal schema max).
 - **Upscale** → `upscale_image({ image, upscaleFactor 1–4 (default 2), prompt?, creativity 0–1?, faceEnhancement?, outputFormat png/webp/jpeg })`. `prompt`/`creativity` only affect generative upscalers.
 
 ---
@@ -270,4 +276,5 @@ These do NOT go through `generate_image`; you don't choose a model.
 - `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2, Seedream 5 Lite and the MAI Image 2.5 Pro family** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `loras` **are NOT parameters** — the agent cannot set them here.
 - `width` + `height` (an exact px canvas, both together) are consumed ONLY by the **Seedream family** and **Qwen-Image-Edit**; every other model ignores them and uses `aspectRatio`/`resolution`. Always stay under the model's area cap (Seedream edit = 2048² ≈ 4.2 MP).
 - **Resolution matters**: Nano-Banana caps low unless you send `high`/`ultra`.
+- **Respect each model's HARD limits** (in its card, from the fal schema): the `prompt` char cap (GPT Image 32000, Nano-Banana 50000, Krea/MAI 5000, …), max `referenceImages`, and `n`. Exceeding a limit — most often a prompt over the model's max — **fails the call**; compress the prompt, don't truncate blindly.
 

@@ -8,6 +8,11 @@ Only models **enabled in the BRAXIL backend** are listed, and each table uses th
 
 Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a REQUIRED `model` from the `video_avatar` cards (see the Avatar section).
 
+**Multi-shot** (one generation renders several hard-cut shots mapped to reference panels — the storyboard→video path): the **Seedance 2.0 family** AND the **MiniMax H3 family**. **Every other video model produces ONE continuous shot per call.** Each card states it explicitly. When a clip needs several hard-cut shots you MUST pick a multi-shot model; choose it on this capability + fit (read the cards), not from any fixed label. **Multi-shot is a model BEHAVIOUR, not a schema field** — it isn't in the fal openapi, so it's curated per card from testing/docs, not auto-derived.
+- **For storyboards with REAL human faces, prefer MiniMax H3 reference-to-video:** it accepts photoreal references directly, with NO Seedance-style tricks (no Seedream face-laundering pass, no blurred previous-clip). Seedance needs those to clear its likeness filter; MiniMax doesn't — simpler and fewer calls. Pick Seedance when its craft/look is what you want or MiniMax's 2K/limits don't fit.
+
+Every card lists that model's **hard limits (from the fal schema)** — prompt char cap, max references, duration range, enums. Respect them: exceeding a limit (e.g. a prompt over the model's max) fails the call. If your prompt is over the cap, compress it, don't truncate blindly.
+
 > Each model's **categories** and **labels** are NOT repeated here — they are backend-managed and shown per model in the live **Catalog table** in the tool's own description. This file is the parameter contract only.
 
 ---
@@ -26,6 +31,7 @@ Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
+- **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** — native (several hard-cut shots in one clip, shots mapped to reference panels; the storyboard→video model).
 - **Rejects**: startFrame, endFrame, referenceImages. ▶ activate `braxil-essentials:seedance-2-0`.
 
 ### Seedance 2.0 — Image-to-Video — `bytedance/seedance-2.0/image-to-video`
@@ -42,6 +48,7 @@ Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
+- **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** (native, hard-cut shots → panels).
 - **Rejects**: referenceImages. ▶ activate `braxil-essentials:seedance-2-0`.
 
 ### Seedance 2.0 — Reference-to-Video — `bytedance/seedance-2.0/reference-to-video`
@@ -57,7 +64,54 @@ Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
-- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (encoder bitrate mode). ▶ activate `braxil-essentials:seedance-2-0`.
+- **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤9**, `referenceVideos` **≤3**, reference audio ≤3 — **combined ≤12 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model).
+- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`). ▶ activate `braxil-essentials:seedance-2-0`.
+
+### MiniMax H3 — Text-to-Video — `minimax/h3/text-to-video`
+- text-only (no frames). MiniMax Hailuo-03; fixed 2K output.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string | English. |
+| aspectRatio | optional | `21:9·16:9·4:3·1:1·3:4·9:16` | clamped to nearest; NO `auto` — omit → 16:9. |
+| resolution | optional | `2K` only | fixed by the model; any other value is ignored (always 2K). |
+| duration | optional | 5–15 s (integer) | omit → 5s. |
+
+- **Limits (fal schema):** `prompt` **1–2000 chars** (HARD max 2000 — over that the call is rejected; compress, keep the key beats). **Multi-shot: YES** — several hard-cut shots in one generation.
+- **Audio: NATIVE and always ON** — the model generates synced sound/dialogue itself (usually very good). There's no `withAudio` toggle in the schema, so you can't turn it off or steer it here — but it DOES come out with sound; do NOT warn the user that audio is "uncontrollable" or might be missing. (For a project that needs music on a separate track, add that track later; the clip's own diegetic audio is fine.)
+- **Rejects**: startFrame, endFrame, referenceImages, referenceVideos. *Not settable:* `seed` (not in the schema).
+
+### MiniMax H3 — Image-to-Video — `minimax/h3/image-to-video`
+- needs `startFrame` (optional `endFrame`). Fixed 2K output.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | image | literal first frame; output dims follow it. |
+| endFrame | optional | image | first→last keyframe interpolation. |
+| prompt | required | string | motion description — REQUIRED on this slug. |
+| resolution | optional | `2K` only | fixed (always 2K). |
+| duration | optional | 5–15 s (integer) | omit → 5s. |
+
+- **Limits (fal schema):** `prompt` **1–2000 chars** (HARD max 2000 — compress if over). **Multi-shot: YES** — several hard-cut shots in one generation.
+- **Audio: NATIVE and always ON** — the model produces synced sound itself (no `withAudio` toggle in the schema; you can't turn it off or steer it, but it DOES come out with audio — don't warn the user it's missing/uncontrollable).
+- No `aspectRatio` (output follows the image). **Rejects**: referenceImages, referenceVideos. *Not settable:* `seed`.
+
+### MiniMax H3 — Reference-to-Video — `minimax/h3/reference-to-video`
+- composes from `referenceImages` (+ `referenceVideos`). Fixed 2K output.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string; refs cited as `Image N` / `Video N` / `Audio N` (the engine rewrites the runtime's `@refN` for you) | |
+| referenceImages | optional | up to 9 images | |
+| referenceVideos | optional | up to 3 clips (2–15 s each, combined ≤ 15 s) | continuation / composition refs. |
+| aspectRatio | optional | `adaptive·21:9·16:9·4:3·1:1·3:4·9:16` | omit → adaptive. |
+| resolution | optional | `2K` only | fixed (always 2K). |
+| duration | optional | 5–15 s (integer) | omit → 5s. |
+
+- **Limits (fal schema):** `prompt` **1–2000 chars** (HARD max 2000 — compress if over); `referenceImages` **≤9**, `referenceVideos` **≤3** (2–15 s each, combined ≤15 s), reference audio ≤3. **Multi-shot: YES** — several hard-cut shots in one generation, shots mapped to the reference panels (a storyboard→video path, like Seedance).
+- **✅ Accepts REAL human faces in references directly — NO tricks.** Unlike Seedance (which needs the Seedream face-laundering pass + a blurred previous-clip to clear a likeness filter), MiniMax takes photoreal character/panel references AS-IS. This makes it the **simpler, preferred multi-shot path for storyboards with real people** — attach the raw panels/turnarounds, no Seedream laundering, no blur.
+- **Audio: NATIVE and always ON** — the model generates synced sound/dialogue itself (no `withAudio` toggle in the schema; you can't turn it off or steer it, but it DOES come out with audio — don't warn the user it's missing/uncontrollable).
+- The model also accepts up to 3 reference AUDIO clips (each needs at least one image or video ref) but that is **not settable via the tool** (`video` exposes no `audioUrl`). **Rejects**: startFrame, endFrame. *Not settable:* `seed`.
 
 ### Veo 3.1 — Image-to-Video — `fal-ai/veo3.1/image-to-video`
 - needs `startFrame` + `prompt`.
@@ -223,7 +277,9 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 - **`model` is REQUIRED, you pick it** from the cards below (all carry the `video_avatar` category) — exactly like every other generation, no auto-pick.
 - **`startFrame`** = the face photo (front-facing portraits work best). Output dimensions FOLLOW THE PHOTO — crop/frame it to the shape you want BEFORE calling (`aspectRatio` is ignored by these models).
 - **`audioFile`** = the audio the avatar speaks. The clip's length follows the audio.
-- **`prompt`** is OPTIONAL here (English scene/style hint; some models ignore it). No duration, no withAudio (the audio IS the track), no referenceImages/Videos.
+- **`prompt`** is OPTIONAL but **SUPPORTED by every current avatar model** — Aurora, OmniHuman v1.5 AND Kling AI Avatar v2 Pro all expose a `prompt` field on fal, and it's plumbed end-to-end (the `video` tool → gateway → adapter → fal). Use it to STEER the performance: expression, emotion, gesture, camera framing, background/scene. Write it in English. Do NOT leave it blank just because it's optional — a short scene/style hint measurably shapes the result; skipping it is the common mistake. No duration, no withAudio (the audio IS the track), no referenceImages/Videos.
+
+- **Picking WHICH person speaks in a multi-person photo — pass the FULL image + a `mask_url` (OmniHuman only). NEVER crop.** Always keep the whole frame as `startFrame`. Avatar models animate the single face they detect and the `prompt` does NOT choose the speaker, BUT **OmniHuman v1.5** exposes a native `mask_url` — *"only the person in the white area of the mask will speak"*. Pass it via `extraParams` as a LOCAL mask image path: `extraParams: { "mask_url": "/path/to/mask.png" }` — the engine uploads it to fal and swaps in the URL for you. Build the mask by segmenting the target subject (SAM smart-select / the mask tools) so their area is WHITE and everyone else BLACK, over the full-frame dimensions. Aurora and Kling AI Avatar have NO mask param, so subject selection there isn't possible — use OmniHuman when the user points at one of several people.
 
 ### Creatify Aurora — `fal-ai/creatify/aurora`  *(avatar — DEFAULT pick)*
 
@@ -232,7 +288,7 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 | startFrame | required | face photo | output dims follow it |
 | audioFile | required | ~≤60 s | |
 | resolution | optional | `480p·720p` (default 720p) | maps low→480p, medium+→720p |
-| prompt | optional | English scene hint | |
+| prompt | optional | English scene/style hint | accepted & used — steers expression, gesture, framing & background; pass it, don't leave it blank |
 
 - **The preferred avatar model — reach for it first** unless the user names another or needs 1080p output.
 - Same source-photo size behaviour as the others (worker download cap — see OmniHuman's note; the engine auto-shrinks, and on a "Failed to download" error you run `optimize_image`).
@@ -244,7 +300,8 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 | startFrame | required | face photo | output dims follow it |
 | audioFile | required | **≤30 s** (1080p) / ≤60 s (720p) | fal-documented; the strict 30 s cap applies at the default 1080p |
 | resolution | optional | `720p·1080p` (default 1080p) | fal's own docs: 720p is faster AND allows 60 s audio |
-| prompt | optional | English scene hint | |
+| prompt | optional | English scene/style hint | accepted & used — steers expression, gesture, framing & background; pass it, don't leave it blank |
+| extraParams.mask_url | optional | LOCAL mask image path | **subject selector** — only the person in the WHITE area speaks; everyone else BLACK. Full-frame dims. Pass a local path in `extraParams`; the engine uploads it to fal. OmniHuman ONLY (Aurora/Kling ignore it). Use it to make one of several people talk WITHOUT cropping. |
 
 - Pick it over Aurora when the user asks for 1080p or a full-body performance.
 - **Source-photo size — NOT in fal's schema, learned in production:** the avatar worker fails to DOWNLOAD multi-MB source images (`body.image_url: Failed to download the file` — a 5 MB 2560px PNG fails, a 234 KB 1280px JPEG works). The engine now auto-shrinks the photo to ≤2 MB / ≤2048px before upload, so do NOT pre-process it yourself (no sips/ffmpeg resizing). If you still see that error, retrying the identical call is pointless — run **`optimize_image({ image })`** (LOSSLESS PNG shrink to ≤2 MB / ≤2048px) and retry with its `savedTo`. **NEVER convert the photo to JPEG with sips/ffmpeg — that destroys quality.**
@@ -255,7 +312,7 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 |---|---|---|---|
 | startFrame | required | face photo | output dims follow it |
 | audioFile | required | ~≤60 s | |
-| prompt | optional | English scene hint | |
+| prompt | optional | English scene/style hint | accepted & used — steers expression, gesture, framing & background; pass it, don't leave it blank |
 
 - Takes ONLY photo + audio + prompt — every other param is ignored.
 - Same source-photo size behaviour as OmniHuman (worker download cap, engine auto-shrinks to ≤2 MB / ≤2048px).
@@ -277,6 +334,29 @@ Re-voicing / dubbing an EXISTING video goes through its own tool, **`lipsync_vid
 
 - Takes ONLY those two inputs — no prompt, aspectRatio, duration or seed (veed/lipsync/v2 exposes none). Output follows the source video's own dimensions and length.
 - **Avatar vs lip-sync:** a face PHOTO → the `video` tool in avatar mode (`startFrame` + `audioFile` + a `video_avatar` model); an existing VIDEO → `lipsync_video`. Different shapes, different inputs.
+
+---
+
+## Background removal (`video_background_removal`) — via the SAME `video` tool
+
+Strip the backdrop from an EXISTING video → a transparent-background clip. Rides the `video` tool with **`operation:"bg-remove"`** (NOT the image `background_removal` tool, which is image-only):
+
+- **`operation:"bg-remove"`** + **`sourceVideo`** (the clip) + **`model`** = a `video_background_removal`-category slug. No prompt, no audio.
+
+### Bria Video Background Removal — `bria/video/background-removal`
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"bg-remove"` | |
+| sourceVideo | required | path/@mention to the existing clip | fal field `video_url`. |
+| model | required | `bria/video/background-removal` | agent-picked (the `video_background_removal` slug). |
+
+- **Output is TRANSPARENT by default** in an alpha-capable codec (`webm_vp9`) — that's what makes "remove the background" actually transparent. `mp4_h264`/`mp4_h265` CANNOT carry alpha (a transparent request bakes to BLACK).
+- **`extraParams` (this model's knobs):**
+  - `background_color` — default `Transparent`. Enum: `Transparent·Black·White·Gray·Red·Green·Blue·Yellow·Cyan·Magenta·Orange` (a solid colour instead of alpha).
+  - `output_container_and_codec` — default `webm_vp9` (alpha). Enum: `mp4_h265·mp4_h264·webm_vp9·mov_h265·mov_proresks·mkv_h265·mkv_h264·mkv_vp9·gif`. **Alpha-capable ones: `webm_vp9`, `mov_proresks`, `mkv_vp9`.** Use `mp4_h264` only with a SOLID `background_color` (opaque delivery).
+  - e.g. opaque white-background mp4: `extraParams: { "output_container_and_codec": "mp4_h264", "background_color": "White" }`.
+- Audio: kept by default; drop it with `withAudio: false` (maps to `preserve_audio: false`).
 
 ---
 
