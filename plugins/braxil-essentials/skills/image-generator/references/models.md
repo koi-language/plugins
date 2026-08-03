@@ -19,7 +19,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | ---------------------- | -------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | prompt                 | required | 2–32000 chars                                                 | English.                                                                          |
 | aspectRatio            | optional | any `W:H` (converted to pixels)                               | edges multiple of 16, max edge 3840, ratio ≤3:1. Omit → `auto`.                   |
-| resolution             | optional | `low·medium·high·ultra` → long edge 1280 / 1920 / 2560 / 3840 | default high. `ultra` = 4K long edge.                                             |
+| resolution             | optional | `low·medium·high·ultra` → long edge 1280 / 1920 / 2560 / 3840 | default high. `ultra` = 4K long edge (3840); `high` = QHD (2560).                  |
 | quality                | optional | `low·medium·high·auto`                                        | sampling effort (auto→high). **This is the only model that reads** `quality`**.** |
 | outputFormat           | optional | `png·jpeg·webp`                                               | default png.                                                                      |
 | n                      | optional | 1–4                                                           | default 1.                                                                        |

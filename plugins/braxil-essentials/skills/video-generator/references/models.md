@@ -32,7 +32,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
 - **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** — native (several hard-cut shots in one clip, shots mapped to reference panels; the storyboard→video model).
-- **Rejects**: startFrame, endFrame, referenceImages. ▶ activate `braxil-essentials:seedance-2-0`.
+- **Rejects**: startFrame, endFrame, referenceImages. ▶ **When you pick this model, activate `braxil-essentials:seedance-2-0` and follow it** — it routes to its own craft sub-skills (prompt shape, camera, motion, anti-slop, continuation, characters); read whatever it directs.
 
 ### Seedance 2.0 — Image-to-Video — `bytedance/seedance-2.0/image-to-video`
 - needs `startFrame` (optional `endFrame`).
@@ -49,7 +49,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
 - **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** (native, hard-cut shots → panels).
-- **Rejects**: referenceImages. ▶ activate `braxil-essentials:seedance-2-0`.
+- **Rejects**: referenceImages. ▶ **When you pick this model, activate `braxil-essentials:seedance-2-0` and follow it** — it routes to its own craft sub-skills (prompt shape, camera, motion, anti-slop, continuation, characters); read whatever it directs.
 
 ### Seedance 2.0 — Reference-to-Video — `bytedance/seedance-2.0/reference-to-video`
 - composes from `referenceImages`.
@@ -65,7 +65,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
 - **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤9**, `referenceVideos` **≤3**, reference audio ≤3 — **combined ≤12 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model).
-- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`). ▶ activate `braxil-essentials:seedance-2-0`.
+- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`). ▶ **When you pick this model, activate `braxil-essentials:seedance-2-0` and follow it** — it routes to its own craft sub-skills (prompt shape, camera, motion, anti-slop, continuation, characters); read whatever it directs.
 
 ### MiniMax H3 — Text-to-Video — `minimax/h3/text-to-video`
 - text-only (no frames). MiniMax Hailuo-03; fixed 2K output.
