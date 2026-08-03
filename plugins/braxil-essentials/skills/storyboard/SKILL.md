@@ -26,7 +26,10 @@ Full semantics/examples/gotchas: [references/authoring-guide.md](references/auth
   // surface; the final video format/resolution is chosen ONLY when the video
   // is generated (see keyframes-to-video / video-generator).
   "seed": 7382913,                  // int, pick ONCE: same seed = consistent look
-  "characters": "- HERO_A: tall slim faceless woman, long dark coat...", // roster: LABEL + silhouette desc (no faces)
+  "characters": [                   // recurring-cast roster: ARRAY of { name, description?, characterId? }
+    { "name": "HERO_A", "description": "tall slim faceless woman, long dark coat (no face)" },
+    { "name": "SIDEKICK", "description": "short stocky man, red cap", "characterId": "sidekick-bob" } // characterId links a saved ~/.koi/characters/<id>.json card
+  ], // name = SHORT_UPPERCASE label reused verbatim in action/dialogue; visor renders each as a clickable row. (Legacy free-text string still accepted, but EMIT THE ARRAY.)
   "lighting": "Luz dura de mediodía, sombras profundas.",  // ONE design for whole piece
   "stylePrompt": "",                // EMPTY unless user literally asked for a style
   "synopsis": "Premise + physical logic the renders must respect.",

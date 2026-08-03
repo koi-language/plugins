@@ -29,11 +29,11 @@ Never `generate_image` here without one shape. Downstream tools + `image-lineage
 
 ## Model
 
-**Choose the BEST text-to-image model for the sheet — YOUR judgment from the `image-generator` model cards, not a fixed label.** The sheet is a dense multi-panel composite, so pick a strong, **4K-capable** text-to-image model that renders fine detail and text-free panels well, matched to the style. Full sheets render at `resolution: "4k"`.
+**Pass `label: "visual_storyboard"` in the `generate_image` call.** The router ranks any model carrying that catalog label first and picks it (e.g. GPT Image 2), which is the model curated for dense multi-panel sheets. If no model carries the label the router falls back on its own to a good 4K-capable text-to-image model, so the label is always safe to pass. Full sheets render at `resolution: "4k"`.
 
 ## High-level flow
 
-Activate (remember the returned absolute directory) → `read_file` `STORYBOARD_ANATOMY.md` → `read_file` `STYLE_PRESETS.md` (chosen style's phrasing / custom flow) → `read_file` `VIDEO_TYPE_<TYPE>.md` IF a type is named else skip → follow ANATOMY's 6 steps verbatim → `generate_image` (best 4K-capable text-to-image model of YOUR choice from the cards, `resolution: "4k"`, plus the `metadata` block) → show_result + companion note.
+Activate (remember the returned absolute directory) → `read_file` `STORYBOARD_ANATOMY.md` → `read_file` `STYLE_PRESETS.md` (chosen style's phrasing / custom flow) → `read_file` `VIDEO_TYPE_<TYPE>.md` IF a type is named else skip → follow ANATOMY's 6 steps verbatim → `generate_image` (`label: "visual_storyboard"`, `resolution: "4k"`, plus the `metadata` block) → show_result + companion note.
 
 ## 🛑 Multi-sheet = STRICTLY SEQUENTIAL, never parallel
 

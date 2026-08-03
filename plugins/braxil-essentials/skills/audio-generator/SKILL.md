@@ -9,7 +9,7 @@ Runbook for producing audio through BRAXIL's `generate_audio` tool (+ `create_vo
 
 **Where to find what — it's already in your context, don't go searching:**
 - **Categories & Labels of every model → the `generate_audio` tool's OWN description (the "Catalog" table).** Already in your context — read it RIGHT THERE to pick a model. **Never grep files, `references/`, or the backend for models / categories / labels.**
-- **Per-model PARAMETERS → `references/models.md`** (what each model accepts). Read a model's card before setting a non-obvious field.
+- **Per-model PARAMETERS → `references/models.md`** (what each model accepts). Read a model's card before setting a non-obvious field. A card also links its **USAGE guide** (`references/usage/<model>.md`) when one exists — READ it before composing the prompt (e.g. ElevenLabs v3's audio tags).
 
 ## Categories — match your mode, ALWAYS
 

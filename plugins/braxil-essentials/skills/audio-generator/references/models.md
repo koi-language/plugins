@@ -26,6 +26,19 @@ Only models **enabled in the BRAXIL backend** are listed, and each table uses th
 
 - **Ignored here**: `durationSeconds` (length follows the text), `seed`, `promptInfluence`, `loop`.
 
+### ElevenLabs Eleven v3 — `fal-ai/elevenlabs/tts/eleven-v3`
+- text → speech. ElevenLabs' most **expressive** TTS: drive emotion with inline **audio tags** written into the text, e.g. `[laughs]`, `[whispers]`, `[sighs]`, `[sarcastic]`, `[excited]`.
+- 📖 **Usage guide → `references/usage/elevenlabs-v3.md`** — READ before composing the prompt (full audio-tag list, how tags depend on the voice, and how `stability` trades expressiveness for consistency).
+
+| `generate_audio` param | Req? | Accepted values (this model) | Notes |
+|---|---|---|---|
+| text | required | 1–5000 chars | kept in the user's language (reproduced verbatim). Embed audio tags like `[laughs]` / `[whispers]` for expressiveness. |
+| voice | optional | ElevenLabs voice **NAME** (`Rachel`, `Aria`, `Roger`, `Sarah`, `Laura`, `Charlie`, `George`, …) | a NAME, not an id. Omit → `Rachel`. |
+| language | optional | ISO-639-1 code (`en`, `es`, `fr`, …) | enforces the language; omit → auto-detect. |
+
+- **Ignored here**: `speed`, `emotion`, `pitch`, `volume`, `outputFormat` (this endpoint has none — expressiveness comes from the audio tags + `stability`), plus `durationSeconds`, `seed`, `loop`, `promptInfluence`.
+- **Extra params** (via `extra_params`, EXACT fal field names): `stability` (0–1, default 0.5 — lower = more expressive/variable, higher = more consistent), `timestamps` (bool — per-word timings), `apply_text_normalization` (`auto`·`on`·`off`).
+
 ---
 
 ## Sound effects — pick `model` with `mode: 'sfx'`
