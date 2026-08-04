@@ -9,7 +9,7 @@ Only models **enabled in the BRAXIL backend** are listed, and each table uses th
 Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a REQUIRED `model` from the `video_avatar` cards (see the Avatar section).
 
 **Multi-shot** (one generation renders several hard-cut shots mapped to reference panels — the storyboard→video path): the **Seedance 2.0 family** AND the **MiniMax H3 family**. **Every other video model produces ONE continuous shot per call.** Each card states it explicitly. When a clip needs several hard-cut shots you MUST pick a multi-shot model; choose it on this capability + fit (read the cards), not from any fixed label. **Multi-shot is a model BEHAVIOUR, not a schema field** — it isn't in the fal openapi, so it's curated per card from testing/docs, not auto-derived.
-- **For storyboards with REAL human faces, prefer MiniMax H3 reference-to-video:** it accepts photoreal references directly, with NO Seedance-style tricks (no Seedream face-laundering pass, no blurred previous-clip). Seedance needs those to clear its likeness filter; MiniMax doesn't — simpler and fewer calls. Pick Seedance when its craft/look is what you want or MiniMax's 2K/limits don't fit.
+- **Real human faces do NOT force the model choice — BOTH Seedance and MiniMax H3 handle photoreal faces perfectly.** ⚠️ Do NOT steer a live-action / real-face storyboard to MiniMax just because it has real faces — that is NOT a reason to avoid Seedance. **Seedance does real faces perfectly via its documented workaround: reproduce each character's turnaround through Seedream with a detailed re-description** (a Seedream reproduction clears Seedance's likeness filter; see the Seedance reference-to-video card's reference-PREP section / `references/usage/seedance.md`). MiniMax H3 accepts photoreal references directly — its ONLY edge here is skipping that one Seedream generation step, not any capability Seedance lacks. So pick the model on **craft, look, limits and fit** (Seedance's craft skill + look, its 4k reach, its reference caps, etc.), never on the mere presence of real faces.
 
 Every card lists that model's **hard limits (from the fal schema)** — prompt char cap, max references, duration range, enums. Respect them: exceeding a limit (e.g. a prompt over the model's max) fails the call. If your prompt is over the cap, compress it, don't truncate blindly.
 
@@ -32,8 +32,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
 - **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** — native (several hard-cut shots in one clip, shots mapped to reference panels; the storyboard→video model).
-- **Rejects**: startFrame, endFrame, referenceImages. ▶ **When you pick this model, activate `braxil-essentials:seedance-2-0` and follow it** — it routes to its own craft sub-skills (prompt shape, camera, motion, anti-slop, continuation, characters); read whatever it directs.
-
+- **Rejects**: startFrame, endFrame, referenceImages.
 ### Seedance 2.0 — Image-to-Video — `bytedance/seedance-2.0/image-to-video`
 - needs `startFrame` (optional `endFrame`).
 
@@ -49,8 +48,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
 - **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** (native, hard-cut shots → panels).
-- **Rejects**: referenceImages. ▶ **When you pick this model, activate `braxil-essentials:seedance-2-0` and follow it** — it routes to its own craft sub-skills (prompt shape, camera, motion, anti-slop, continuation, characters); read whatever it directs.
-
+- **Rejects**: referenceImages.
 ### Seedance 2.0 — Reference-to-Video — `bytedance/seedance-2.0/reference-to-video`
 - composes from `referenceImages`.
 
@@ -65,8 +63,9 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
 - **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤9**, `referenceVideos` **≤3**, reference audio ≤3 — **combined ≤12 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model).
-- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`). ▶ **When you pick this model, activate `braxil-essentials:seedance-2-0` and follow it** — it routes to its own craft sub-skills (prompt shape, camera, motion, anti-slop, continuation, characters); read whatever it directs.
-
+- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`).
+- **🛡️ Reference PREP — MANDATORY for photoreal human faces. 📖 Full guide → `references/usage/seedance.md`.** Seedance's likeness filter REJECTS the whole render (`"image_urls: may contain likenesses of real people"`) for a real-looking face. In short: **reproduce each character's turnaround 1:1 through Seedream with a FULL re-description** of the subject (Image 1 = the turnaround itself; the detailed re-description is what makes Seedream re-synthesise it and clear the filter — a bare "reproduce exactly" fails). The chained previous clip gets a **blurred copy** when it shows real faces. Stylized faces / set plates / props need nothing. Read the guide before rendering with a real-face storyboard.
+-
 ### MiniMax H3 — Text-to-Video — `minimax/h3/text-to-video`
 - text-only (no frames). MiniMax Hailuo-03; fixed 2K output.
 
@@ -109,9 +108,74 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | duration | optional | 5–15 s (integer) | omit → 5s. |
 
 - **Limits (fal schema):** `prompt` **1–2000 chars** (HARD max 2000 — compress if over); `referenceImages` **≤9**, `referenceVideos` **≤3** (2–15 s each, combined ≤15 s), reference audio ≤3. **Multi-shot: YES** — several hard-cut shots in one generation, shots mapped to the reference panels (a storyboard→video path, like Seedance).
-- **✅ Accepts REAL human faces in references directly — NO tricks.** Unlike Seedance (which needs the Seedream face-laundering pass + a blurred previous-clip to clear a likeness filter), MiniMax takes photoreal character/panel references AS-IS. This makes it the **simpler, preferred multi-shot path for storyboards with real people** — attach the raw panels/turnarounds, no Seedream laundering, no blur.
+- **✅ Accepts REAL human faces in references directly — NO tricks.** MiniMax takes photoreal character references AS-IS: attach the raw turnarounds, no Seedream laundering, no blur. ⚠️ This is a **convenience (fewer steps), NOT a reason to prefer it over Seedance for real faces** — Seedance handles real faces perfectly too, via its documented Seedream turnaround-(re)generation workaround (see its card's reference-PREP section). Real faces alone must NEVER decide the model; choose on craft/look/limits/fit.
 - **Audio: NATIVE and always ON** — the model generates synced sound/dialogue itself (no `withAudio` toggle in the schema; you can't turn it off or steer it, but it DOES come out with audio — don't warn the user it's missing/uncontrollable).
 - The model also accepts up to 3 reference AUDIO clips (each needs at least one image or video ref) but that is **not settable via the tool** (`video` exposes no `audioUrl`). **Rejects**: startFrame, endFrame. *Not settable:* `seed`.
+
+### Flux 3 — Text-to-Video — `blackforestlabs/flux-3/text-to-video`
+- text-only (no frames). Black Forest Labs Flux 3; caps at 1080p.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string, no char cap | |
+| aspectRatio | optional | `auto·21:9·2:1·16:9·4:3·1:1·3:4·9:16` | clamped to nearest. |
+| resolution | optional | `720p·1080p` (low→720p, medium/high/ultra→1080p) | omit → 1080p. NO 4k. |
+| duration | optional | `auto·5–20` s (whole seconds) | omit → auto. |
+| withAudio | optional | true/false | default true. Native audio at no extra cost. |
+
+- **Limits (fal schema):** `prompt` no char cap. **NO `seed` input** (the output reports a seed but it can't be pinned — true for EVERY Flux 3 video endpoint). `safety_tolerance` 0–4 (we send 4 = loosest). **Multi-shot: NO** — one continuous shot per call (for hard-cut storyboard shots use Seedance/MiniMax H3).
+- **Rejects**: startFrame, endFrame, referenceImages, referenceVideos.
+- **Pricing (fal):** $0.17/s @720p, $0.29/s @1080p.
+
+### Flux 3 — Image-to-Video — `blackforestlabs/flux-3/image-to-video`
+- needs `startFrame` + `prompt`.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string | motion description. |
+| startFrame | required | image (PNG/JPEG/WebP) → first frame | |
+| aspectRatio | optional | `auto·21:9·2:1·16:9·4:3·1:1·3:4·9:16` | |
+| resolution | optional | `720p·1080p` | omit → 1080p. |
+| duration | optional | `auto·5–20` s | omit → auto. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** no `seed`; no `end_image_url` on this slug (use the first-last sibling for two anchors). **Multi-shot: NO**.
+- **Rejects**: endFrame, referenceImages, referenceVideos.
+- **Pricing (fal):** $0.17/s @720p, $0.29/s @1080p.
+
+### Flux 3 — First-Last-Frame-to-Video — `blackforestlabs/flux-3/first-last-frame-to-video`
+- needs `startFrame` + `endFrame` + `prompt`.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string | |
+| startFrame | required | first frame image | |
+| endFrame | required | last frame image | |
+| aspectRatio | optional | `auto·21:9·2:1·16:9·4:3·1:1·3:4·9:16` | |
+| resolution | optional | `720p·1080p` | omit → 1080p. |
+| duration | optional | `5–20` s (INTEGER, EXPLICIT) | omit → 5s. NO `auto` — an explicit duration is required to place the end frame. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** no `seed`. **Multi-shot: NO**.
+- **Rejects**: referenceImages, referenceVideos.
+- **Pricing (fal):** $0.17/s @720p, $0.29/s @1080p.
+
+### Flux 3 — Keyframes-to-Video — `blackforestlabs/flux-3/keyframes-to-video`
+- needs `referenceImages` (1–10 stills) + `prompt`. Interpolates ONE continuous clip THROUGH the pinned images.
+- ⚠️ **Name collision, NOT the storyboard pipeline.** This is a fal MODEL that just tweens through a few pinned stills. It is NOT the `keyframes-to-video` SKILL (the storyboard→video orchestrator). Don't confuse them.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string | |
+| referenceImages | required | 1–10 images → pinned keyframes | pinned in ORDER, evenly spaced from frame 0 to `duration×24` (video is 24 fps). |
+| aspectRatio | optional | `auto·21:9·2:1·16:9·4:3·1:1·3:4·9:16` | |
+| resolution | optional | `720p·1080p` | omit → 1080p. |
+| duration | optional | `5–20` s (INTEGER, EXPLICIT) | omit → 5s. NO `auto` — needed to validate keyframe positions. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** `referenceImages` **≤10** (each becomes a keyframe pinned to a unique `frame_index` = frame position in the 24 fps clip, ≤ `duration×24`). no `seed`. **Multi-shot: NO** (one continuous interpolated shot).
+- **Rejects**: startFrame, endFrame, referenceVideos.
+- **Pricing (fal):** $0.17/s @720p, $0.29/s @1080p.
 
 ### Veo 3.1 — Image-to-Video — `fal-ai/veo3.1/image-to-video`
 - needs `startFrame` + `prompt`.
@@ -267,6 +331,20 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 | sourceVideo | required | 720p/1080p, 16:9 or 9:16 (no transcode) | |
 | prompt | required | describes the extension | |
 | duration | — | ignored — extension is a FIXED 7 s | |
+
+### Flux 3 — Extend Video — `blackforestlabs/flux-3/extend-video`  *(operation `"extend"`)*
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"extend"` | |
+| sourceVideo | required | MP4 **<50 MB and <15 s** (rides in `referenceVideos[0]`) | source constraints are the caller's to meet; no transcode here. |
+| prompt | required | how the clip continues from its final frames | |
+| aspectRatio | optional | `auto·21:9·2:1·16:9·4:3·1:1·3:4·9:16` | |
+| resolution | optional | `720p·1080p` | omit → 1080p. |
+| duration | optional | `auto·5–20` s | REAL extension length (unlike Veo's fixed 7 s). omit → auto. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** source MP4 <50 MB & <15 s. no `seed`. **Rejects**: startFrame, endFrame, referenceImages.
+- **Pricing (fal):** $0.41/s @720p, $0.53/s @1080p (pricier than the other Flux 3 endpoints).
 
 ---
 

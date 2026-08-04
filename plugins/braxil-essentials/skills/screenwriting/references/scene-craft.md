@@ -94,7 +94,7 @@ Sequencing:
 
 ## Compressing and expanding time (edit-aware)
 
-Spend screen time only on interest/meaning/emotion; trim in the script first (less dialogue plays better); if a beat can be implied by the cut, don't write it. Writing-side, **come in late/get out early** does this structurally by deleting set-ups and resolutions. The shot-side toolset (dissolve, reveal, cutaway, jump cut, exit-frame jump): visual-grammar.md "Compressing & expanding time".
+Spend screen time only on interest/meaning/emotion; trim in the script first (less dialogue plays better); if a beat can be implied by the cut, don't write it. Writing-side, **come in late/get out early** does this structurally by deleting set-ups and resolutions. The shot-side toolset (dissolve, reveal, cutaway, jump cut, exit-frame jump) is cinematography — `cinematic-video-prompt-engineer`'s domain, not the writer's.
 
 ## Surprise vs suspense (Hitchcock)
 

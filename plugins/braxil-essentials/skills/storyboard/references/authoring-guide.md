@@ -2,11 +2,11 @@
 
 Load when WRITING/EDITING. SKILL.md = schema skeleton, flows, hard gates; here = field semantics, precision bar, stylePrompt policy.
 
-## Field semantics (v6)
+## Field semantics (v7)
 
 - **`seed`**: int, picked ONCE; same seed all shots = consistent chars/palette. Never change on modify unless user asks a full visual reroll.
-- **`characters`** (roster): an ARRAY of `{ name, description?, characterId? }`, one entry per recurring character. **MANDATORY & COMPLETE**: you MUST list EVERY recurring character that appears in the story — read the whole story and enumerate who intervenes; the visor's cast list is EXACTLY this array (it does NOT and MUST NOT guess characters from the shot text, so anything you omit simply won't be there). If you open/edit a storyboard whose `characters` is empty or incomplete, REPAIR it: read the scenes and author the full roster. `name` = the LABEL `SHORT_UPPERCASE`+A/B/C (`HERO_A`), reused EXACTLY in every `action`/`dialogue`, never "she". `description` = silhouette desc (clothing, proportions, accessories, traits), NOT faces. `characterId` (optional) = the id of a saved character card `~/.koi/characters/<id>.json` when this cast member is backed by one, so the visor can open its card from the cast list (the USER assigns cards in the visor; you just author the roster). Compositor (render-time LLM) inflates label→inline English desc; define once, don't restate per shot. The visor renders each entry as a row. A legacy free-text roster STRING is still accepted (old boards, never parsed), but EMIT THE ARRAY on new/edited storyboards.
-- **`lighting`**: free text, user's language; ONE design for whole piece, injected+translated into every shot. No per-shot lighting in v6.
+- **`characters`** (roster): an ARRAY of `{ name, description?, sex?, age?, characterId? }`, one entry per recurring character. **MANDATORY & COMPLETE**: you MUST list EVERY recurring character that appears in the story — read the whole story and enumerate who intervenes; the visor's cast list is EXACTLY this array (it does NOT and MUST NOT guess characters from the shot text, so anything you omit simply won't be there). If you open/edit a storyboard whose `characters` is empty or incomplete, REPAIR it: read the scenes and author the full roster. `name` = the LABEL `SHORT_UPPERCASE`+A/B/C (`HERO_A`), reused EXACTLY in every `action`/`dialogue`, never "she". `description` = silhouette desc (clothing, proportions, accessories, traits), NOT faces. **`sex`** = canonical `female`|`male`|`nonbinary`|`other`, **`age`** = number (years): FILL both whenever the story tells you them — they are STRUCTURED fields that SEED the same fields on a character card created from this member (a description saying "hombre de 55" is NOT enough; set `sex:"male"`, `age:55`). `characterId` (optional) = the id of a saved character card `~/.koi/characters/<id>.json` when this cast member is backed by one, so the visor can open its card from the cast list (the USER assigns cards in the visor; you just author the roster). Compositor (render-time LLM) inflates label→inline English desc; define once, don't restate per shot. The visor renders each entry as a row. A legacy free-text roster STRING is still accepted (old boards, never parsed), but EMIT THE ARRAY on new/edited storyboards.
+- **`lighting`** (root): free text, user's language; the DEFAULT design for the whole piece, injected+translated into every shot. v7 also allows a **per-shot `lighting`** that refines/overrides this for one shot (see below) — leave it empty and every shot inherits the root design.
 - **`synopsis`** (root, optional per-scene): premise + physical/causal logic renders must never contradict (WHY, what's reachable, who wants what). Injected into EVERY shot. Fill always except a bare shot list. Scene-level adds per-scene logic. MANDATORY from a video (write real premise watched).
 - **`continuity`** (root LOCK, string[]): absolute story-wide INVARIANTS + NEGATIVE constraints, injected VERBATIM into every image/video prompt. `synopsis`=WHY; `continuity`=WHAT MUST NOT CHANGE. Spell out negatives ("do NOT lower the button", "cans stay INTACT") to stop renderer making unreachable reachable, resizing, breaking objects. Omit only for a bare shot list.
 
@@ -26,9 +26,12 @@ Compositor → CURRENT PANEL STATE + SHOT LOCATION → render shows exactly this
 - `dialogue`: lines/VO, quote each speaker to parse; a CUE for facial expression, words NOT rendered on-frame.
 - `sfx`/`music`: free-text audio cues, NOT used by image prompt (reserved for future audio); editing them doesn't invalidate rendered image cache.
 
-### `shot`, `movement`
-- `shot`: EXACTLY one app preset, verbatim; NOT free text, never invent/combine (invalid → no thumbnail). `save_storyboard` rejects invalid + lists valid presets in error; list grows, never hardcode/guess. Unsure → read error or `get_tool_info(save_storyboard)`.
-- `movement`: free text ("Static", "Pan left", "Dolly in", "Crane up", "Steadicam follow").
+### Cinematography fields: `shot`, `camera`, `composition`, `lighting` (all FREE TEXT)
+The cinematography is designed by `cinematic-video-prompt-engineer`; this skill only writes its decisions into these fields. None is a preset menu.
+- `shot`: framing = shot-size + angle, FREE TEXT ("Close-up, low angle", "Extreme wide shot, eye level"). No preset whitelist.
+- `camera` (was `movement`): camera work — movement + lens/focal + speed + focus ("Static", "Dolly in, 50mm", "Handheld, slow-motion", "Rack focus to foreground"). A legacy `movement` value is still read as `camera`.
+- `composition` (optional): in-frame layout — lead room, thirds, depth/foreground, subject screen-position, screen-direction / 180-axis / eyeline.
+- `lighting` (optional, per-shot): the light for THIS shot, refining/overriding the root `lighting`. Empty = inherit the root design.
 
 ## Writing `action`: PRECISE
 
@@ -62,7 +65,7 @@ Rules:
 
 Optional `references` array on root, each `scenes[]`, each `scenes[].shots[]`. Each entry a STRING: `@mention` handle (gallery asset, `"@hero_pose"`) or absolute path to an IMAGE. Visor → thumbnails/chips; user adds via `@handles` or dropping images.
 
-Scope cascade (specific wins, broader still applies): root → EVERY shot; scene → every shot in scene; shot → that shot. At render, the `storyboard-to-keyframes` / `keyframes-to-video` skills collect in-scope refs per shot, pass as `referenceImages` (`@handles`→paths) to lock identity. Omit when empty; never `"references": []`.
+Scope cascade (specific wins, broader still applies): root → EVERY shot; scene → every shot in scene; shot → that shot. At render, the `storyboard-to-video` skill collects in-scope refs per clip, passes them as `referenceImages` (`@handles`→paths) to lock identity. Omit when empty; never `"references": []`.
 - **IMAGES ONLY, never source video.** Video/audio path (`.mp4`/`.mov`/`.mp3`) = BUG, can't decode, crashes sheet render. From a source video, WATCH it with `read_file` (from-video.md); clip is NOT a ref. For a still, save frame as image first, ref that path.
 - **Describe the person in the photo; never invent, never keep OLD look.** User gives a photo to DEFINE/RECTIFY a char → `read_file` that exact image BEFORE writing; base `characters` entry on what you SEE (hair or none + colour, facial hair, build, skin, clothing, accessories). Rectifying: new photo OVERRIDES storyboard; don't carry old desc forward, don't describe existing pencil sketches (OLD look being replaced). Read pixels; photo wins.
 
@@ -82,7 +85,7 @@ Reported violated MORE THAN ONCE. Default = rough pencil animatic (B&W graphite,
 
 ## Language rules
 
-JSON is a USER-FACING document, not a prompt. Write EVERY free-text editorial field (`characters`, `lighting`, `action`, `movement`, `dialogue`, `sfx`, `music`, scene `title`/`notes`, `name`) in user's language; never translate later (rewrites their words). English at compositor only: render-time visor calls `storyboard_image_prompt` (small LLM) → final English image prompt. Agent NEVER writes English into JSON (unless user speaks English).
+JSON is a USER-FACING document, not a prompt. Write EVERY free-text editorial field (`characters`, `lighting`, `action`, `camera`, `composition`, `dialogue`, `sfx`, `music`, scene `title`/`notes`, `name`) in user's language; never translate later (rewrites their words). English at compositor only: render-time visor calls `storyboard_image_prompt` (small LLM) → final English image prompt. Agent NEVER writes English into JSON (unless user speaks English).
 
 ## Image generation is automatic
 
@@ -90,4 +93,4 @@ Every shot card auto-renders via `generate_image`: visor composes `<pencil pream
 
 ## Legacy schema fallback (read-only)
 
-Visor reads older shapes so old JSONs don't blank: v1 (`shotType`, `camera`, `visual`, `notes`, `audio`); v2 (`cameraShot`, `cameraAngle`, `cameraMovement`, `screenDirection`, `foreground`, `midground`, `background`, `continuityNotes`, `styleNotes`); v3 (`purpose`, `composition`, `cameraMove`, `subject`, `audioDirection`); v4.0 (per-shot `lighting`, →root in v4.1); v4.1/v5 (per-shot `imagePrompt`, dropped v6). All surface in v6 slots. When WRITING always emit v6; never author older shapes.
+Visor reads older shapes so old JSONs don't blank: v1 (`shotType`, `camera`, `visual`, `notes`, `audio`); v2 (`cameraShot`, `cameraAngle`, `cameraMovement`, `screenDirection`, `foreground`, `midground`, `background`, `continuityNotes`, `styleNotes`); v3 (`purpose`, `composition`, `cameraMove`, `subject`, `audioDirection`); v4.0 (per-shot `lighting`, →root in v4.1, back per-shot in v7); v4.1/v5 (per-shot `imagePrompt`, dropped v6); v6 (`movement`, → renamed `camera` in v7 — old `movement` still read). All surface in v7 slots. When WRITING always emit v7 (`shot`, `camera`, `composition`, `lighting`, …); never author older shapes.

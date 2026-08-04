@@ -1,6 +1,6 @@
 # Production Craft: Shooting for the Edit, Coverage, Planning
 
-Source: Filmmaker's Handbook (Ascher & Pincus, 4th ed.), ch. 9. What a writer/storyboarder must know about how footage is shot+cut so the paper plan survives production. Pair with visual-grammar reference.
+Source: Filmmaker's Handbook (Ascher & Pincus, 4th ed.), ch. 9. What a writer/storyboarder must know about how footage is shot+cut so the paper plan survives production.
 
 ## Shoot for the edit
 - Production = a means: give the edit room what it needs to tell the story.

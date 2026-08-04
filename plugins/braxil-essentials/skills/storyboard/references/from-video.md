@@ -12,7 +12,7 @@ Do NOT reconstruct the video piecemeal: NO `ffprobe`/`ffmpeg`, NO `extract_frame
 
 - **One shot per CUT, in order.** Segment at every hard cut. Every plano in the video = exactly ONE shot in the storyboard. Do not merge two shots, do not split one continuous take, do not add or drop any. 23 cuts = 23 shots.
 - **Exact timecodes.** Each shot's `duration` = its real on-screen length (out-second minus in-second). Track the running in/out as you go.
-- **The real camera, read off the footage.** `shot` = the actual framing (matched to a preset); `movement` = the actual camera move. Observe, do not guess.
+- **The real camera, read off the footage.** `shot` = the actual framing (free text: shot-size + angle); `camera` = the actual camera move (add the lens/speed/focus if legible). Observe, do not guess.
 - **The real action, precise.** `action` = exactly what happens on screen in that shot, at the zero-ambiguity bar (concrete identifiers, exact mechanics, carry-forward state).
 - **Dialogue and sound verbatim.** `dialogue` = the spoken lines exactly as said in that shot (you heard them when you watched; write them word for word, no separate transcription step); `sfx`/`music` = what is actually heard.
 - **Write the real `synopsis`**: the premise of the story you just watched. Mandatory in this flow.

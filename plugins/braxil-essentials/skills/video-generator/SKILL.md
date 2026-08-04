@@ -1,6 +1,6 @@
 ---
 name: video-generator
-description: MANDATORY before ANY video generation — activate this skill the moment a request involves creating, generating, animating, or editing a video, i.e. before EVERY `generate_video` call: text-to-video, image-to-video, reference-to-video, motion transfer, talking-head avatar, video-to-video edit, or extend. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category and matching input shape, and exactly which parameters each supported model accepts or rejects (and which specific models have their own optimization skill, e.g. Seedance). If you are about to generate/animate/edit a video and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "generate/create/make a video", "genera/crea/haz un vídeo", "animate this image/photo", "anima esta imagen/foto", "image to video", "talking head/avatar", "extend/make this clip longer", "restyle this video", "remove the background of this video", or any mention of a video model (Veo, Kling, Seedance, WAN, Gemini Omni Flash, OmniHuman).
+description: MANDATORY before ANY video generation — activate this skill the moment a request involves creating, generating, animating, or editing a video, i.e. before EVERY `generate_video` call: text-to-video, image-to-video, reference-to-video, motion transfer, talking-head avatar, video-to-video edit, or extend. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category and matching input shape, and exactly which parameters each supported model accepts or rejects (and any per-model reference PREP, e.g. Seedance's face-filter workaround in `references/usage/seedance.md`). If you are about to generate/animate/edit a video and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "generate/create/make a video", "genera/crea/haz un vídeo", "animate this image/photo", "anima esta imagen/foto", "image to video", "talking head/avatar", "extend/make this clip longer", "restyle this video", "remove the background of this video", or any mention of a video model (Veo, Kling, Seedance, WAN, Gemini Omni Flash, OmniHuman).
 ---
 
 # Video models
@@ -25,7 +25,7 @@ Choosing a slug whose adapter rejects your request shape (e.g. an image-to-video
 - `endFrame` — the LITERAL last frame. Pair with `startFrame` for "animate FROM image A TO image B" — the model interpolates. Don't collapse a FROM→TO request into a frameless prompt.
 - `referenceImages` — visual REFERENCES (style sheets, storyboards, character designs, subject photos) guiding look/composition/identity, NOT the literal first frame. Only reference-to-video models accept them.
 - `sourceVideo` — the existing clip, for `operation:"edit"`/`"extend"` (the ONLY reference for those — never re-attach the images the video was generated from).
-- `referenceVideos` — (operation `"new"` only) video REFERENCES for CONTINUITY / style / motion carry-over, e.g. the immediately-preceding clip of a multi-shot film so this new clip continues from it. NOT a v2v edit of them (that is `operation:"edit"`): the model renders the NEW scene in `prompt` and treats the videos as continuity anchors. Only reference-to-video / continuation-aware models honour them (e.g. `bytedance/seedance-2.0/reference-to-video`); others ignore them. Combine freely with `referenceImages` (e.g. the panel sheet + the previous clip). The tool auto-routes this as a continuation (keeps your pinned model, not a v2v editor).
+- `referenceVideos` — (operation `"new"` only) video REFERENCES for CONTINUITY / style / motion carry-over, e.g. the immediately-preceding clip of a multi-shot film so this new clip continues from it. NOT a v2v edit of them (that is `operation:"edit"`): the model renders the NEW scene in `prompt` and treats the videos as continuity anchors. Only reference-to-video / continuation-aware models honour them (e.g. `bytedance/seedance-2.0/reference-to-video`); others ignore them. Combine freely with `referenceImages` (e.g. the character turnarounds + the previous clip). The tool auto-routes this as a continuation (keeps your pinned model, not a v2v editor).
 - `withAudio` — generate an audio track (SFX/dialogue/VO/ambient). **Default true.** Set false only for a deliberately silent clip. Does NOT control background music (exclude music via prompt text).
 - `cameraMovement` — optional motion hint (`static`, `pan_left`, `zoom_in`, `dolly_in`, `orbit_right`, …); some models honour it, others ignore it.
 - `seed` — reproducibility seed (operation `"new"` only): same seed + prompt ⇒ the same clip **on models that honour it** (Seedance, Veo, WAN; Kling ignores it). Omit for a fresh result.
@@ -67,7 +67,7 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 | Animate one photo | `video` `"new"`, `model` from `image_to_video` | `prompt` + `startFrame` |
 | Frame A → frame B | `video` `"new"`, `model` that accepts a last frame | `prompt` + `startFrame` + `endFrame` |
 | Compose from image refs | `video` `"new"`, `model` = `bytedance/seedance-2.0/reference-to-video` | `prompt` + `referenceImages` |
-| Continue from the previous clip (multi-shot chaining) | `video` `"new"`, `model` = `bytedance/seedance-2.0/reference-to-video` | `prompt` + `referenceImages` (e.g. the panel sheet) + `referenceVideos` (the previous clip) |
+| Continue from the previous clip (multi-shot chaining) | `video` `"new"`, `model` = `bytedance/seedance-2.0/reference-to-video` | `prompt` + `referenceImages` (e.g. the character turnarounds) + `referenceVideos` (the previous clip) |
 | Edit an existing clip | `video` `operation:"edit"` — **no model** (server-routed) | `sourceVideo` + `prompt` |
 | Extend a clip (+7s) | `video` `operation:"extend"` — **no model** | `sourceVideo` + `prompt` |
 | Talking-head avatar (face photo speaks) | `video` `"new"`, `model` from `video_avatar` | `startFrame` (face photo) + `audioFile` (**the ATTACHED audio if given — never re-synthesise it**; +`prompt` hint, optional) |
@@ -81,7 +81,7 @@ Once the category and input shape are fixed, several models may qualify. **Choos
 
 | Model | Best at | Watch out for |
 |---|---|---|
-| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios, **reaches 4k** (all three endpoints; pass `resolution: "4k"`). | Has an optimization skill — activate it. |
+| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios, **reaches 4k** (all three endpoints; pass `resolution: "4k"`). | Photoreal faces need reference PREP → `references/usage/seedance.md`. |
 | **Kling v3 Pro** `fal-ai/kling-video/v3/pro/image-to-video` | Strong image-to-video for **product & controlled cinematic** shots; clean motion, start+end frame, up to 15s. Best pick when Seedance can't do it. | Image-to-video only. Inherits aspect from the start image (no `aspectRatio`/`resolution`), ignores `seed`. |
 | **Veo 3.1** `fal-ai/veo3.1/image-to-video` | Top-tier realism; reaches 4k. Reach for it when you need maximum photoreal polish (Seedance also does 4k, so pick Veo for the realism, not just the resolution). | Image-to-video only, no `endFrame`, durations locked to `4s/6s/8s`, 16:9 or 9:16 only. Priciest — use when the max-quality is the point. |
 | **Luma Ray v3.2** `luma/agent/ray/v3.2/text-to-video` · `…/image-to-video` | **Elegant, clean-motion b-roll / cinematic** clips; polished all-rounder. Does text-to-video AND image-to-video (start+end frame), most aspect ratios, up to 1080p. Also does **reframe** (change a clip's aspect ratio) and **video-to-video** — see below. | Only `5s`/`10s` durations. **No native audio.** Caps at 1080p. |
@@ -109,12 +109,6 @@ Rule of thumb: a **targeted instruction edit** ("remove the logo", "make it nigh
 - **Input shape is absolute.** Only choose among models that actually accept your shape (a text-only prompt can't go to an image-to-video slug; an `endFrame` needs a model that takes one). If the preferred model's variant can't take your input, step to the next that fits — don't force it.
 
 Some behaviours live on a single model (motion transfer, fixed-length extend, server-routed edit); find them by input shape in `references/models.md`, not by memory.
-
-## Per-model optimization skills
-
-Some models have a **dedicated skill** with the optimal way to prompt and drive them. This does NOT bias which model you choose — but the moment you DO choose one that has a skill, **activate that skill first** so you use the model optimally. A model's card in `references/models.md` names its skill when one exists.
-
-- **Seedance 2** (`bytedance/seedance-2.0/*`) → activate the `braxil-essentials:seedance-2-0` skill before building the prompt.
 
 ## Editing a clip longer than 10 seconds — ASK FOR THE SEGMENT FIRST
 

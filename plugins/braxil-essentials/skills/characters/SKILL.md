@@ -38,28 +38,44 @@ existing doc and pass its fields back (including `id`) so you update in place.
 
 ## Creation flow (do all three)
 
-1. **Create** the character: `save_character` with at least `name` + a strong
-   visual `description`, plus the structured attributes you know (`sex`, `age`,
-   `height`, `weight`, `build`) and any reference `photos`.
+1. **Create** the character: `save_character` with `name` + a strong visual
+   `description`, and **FILL EVERY structured attribute you can infer** —
+   `sex`, `age`, `height`, `weight`, `build` — plus `backstory` and any
+   reference `photos`. 🔴 **Do NOT leave attributes at their defaults when the
+   description or story tells you the value.** "Older man, around 60, heavy
+   build" → `sex: "male"`, `age: 60`, `build: "heavy"` (estimate `height`/
+   `weight` from the build when not stated); a woman in her 20s →
+   `sex: "female"`, `age: ~25`. The description text is NOT a substitute for the
+   structured fields: the GUI, voice-gender filtering and downstream tools read
+   the STRUCTURED attributes, so an empty `sex`/`age` with a full description is
+   a bug. Only leave an attribute unset when it is genuinely unknowable.
 2. **Turnaround**: `generate_character_sheet` (see below) — it builds the sheet
    and auto-attaches `sheet` + `sheetCells` to the character (pass `characterId`).
 3. **Voice**: assign one (see below) and `save_character` with `voiceId` + `ttsModel`.
    A character with no voice cannot speak in a video.
 
-## Turnaround sheet — the `characters`-labelled model (default GPT Image 2)
+## Turnaround sheet — real photos → GPT Image 2, invented → Seedream
 
 `generate_character_sheet({ description?, photos?, characterId?, model?, aspectRatio? })`
 renders a 4-columns × 2-rows sheet (top row = 4 full-body views; bottom row = 4
 face portraits) with thick pure-black gutter bars, detects the 8 cells, and
 attaches them to the character.
 
-- **Model**: the tool uses the catalog model tagged with the **`characters`
-  label**; if none is tagged it defaults to **GPT Image 2** (`openai/gpt-image-2/edit`
-  when reference photos are given, else `openai/gpt-image-2`). Don't override
-  `model` unless the user asks — pick the best identity/character model here.
-- **Seedance**: you do NOT need a Seedream sheet here. When the character is
-  later driven by **Seedance** video, the `seedance-2-0` skill handles making a
-  Seedream-compatible copy of the sheet itself before use.
+- **Model — AUTO by whether the character has reference photos** (don't override
+  `model` unless the user asks):
+  - **WITH reference photos** (a real person) → the **`characters`**-label
+    identity model (default **GPT Image 2** edit), which best matches the source.
+  - **NO reference photos** (a **100% invented** character) → the
+    **`characters-synthetic`**-label model (**Seedream** text-to-image). A
+    synthesised face is **Seedance-native**: it clears the reference-to-video
+    likeness filter with NO later laundering pass, so an invented character is
+    ready to drive Seedance video straight from its turnaround.
+- **Real-photo characters + Seedance**: their GPT Image 2 sheet is NOT
+  Seedance-native; when later driven by Seedance the video pipeline regenerates a
+  Seedream turnaround from the source first (see `video-generator` →
+  `references/usage/seedance.md`). Invented characters skip that — they are
+  already Seedream.
+- **Resolution**: the sheet renders at **2K** (`generate_character_sheet` requests `resolution: '2k'` = 2048).
 - Pass `characterId` so the sheet lands on the character automatically.
 
 ## Voice — list_voices + ElevenLabs, match the sex
@@ -75,6 +91,9 @@ attaches them to the character.
 
 ## Gotchas
 
+- **Fill the structured attributes, always** — `sex`, `age`, `height`, `weight`,
+  `build` must reflect what the description/story says; leaving them at defaults
+  while the description reads "a robust man of 60" is a reported bug.
 - **NEVER hand-write the JSON** — always `save_character`.
 - **Update in place**: to edit a character, read it, mutate, and `save_character`
   with the SAME `id` (and its `createdAt`) so you don't create a duplicate.
