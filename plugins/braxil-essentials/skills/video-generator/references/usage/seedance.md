@@ -16,6 +16,21 @@ turnaround) with a photoreal human face must be turned into a **Seedream image**
 before you attach it — by REPRODUCING its turnaround through Seedream with a
 detailed re-description (see below).
 
+### 🔎 STEP 0 — check the sheet's model BEFORE attaching it (mandatory gate)
+For EACH character sheet you are about to attach to a Seedance render, first
+find out what model made it:
+- `inspect_creation({ filePath: <the sheet path> })` → read `metadata.model`.
+- If the slug contains **`seedream`** (e.g. `bytedance/seedream/v5/pro/edit`),
+  it is Seedream-born → **attach it directly**, no second pass.
+- If it is ANYTHING ELSE (e.g. `openai/gpt-image-2` — the model a
+  no-reference-photo turnaround falls back to — or a user upload / external
+  image), it is **NOT** Seedream → you MUST first CLONE it through Seedream
+  (the "How to build it" step below) and attach **that Seedream clone**, never
+  the original. The clone becomes the character's Seedance reference from here on.
+
+Do this per character: some casts mix Seedream sheets (built with a photo) and
+GPT-Image-2 sheets (built from description only) — clone only the non-Seedream ones.
+
 ✅ **The trick that works: REPRODUCE the character's turnaround 1:1 through Seedream — but with a FULL RE-DESCRIPTION of the character.** A bare *"reproduce exactly, output the same image"* does NOT work (Seedream photocopies the real face → the filter still fires). What works is a 1:1 reproduction whose prompt ALSO re-describes the subject in detail (sex/age, every garment + accessory, hair, glasses, distinctive facial features) + the layout — that makes Seedream **RE-SYNTHESISE** the character (a Seedream-native image) instead of copying pixels, and THAT clears the filter.
 
 ### How to build it
