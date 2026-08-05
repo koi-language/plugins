@@ -7,9 +7,9 @@ description: "MANDATORY before creating or editing a reusable LOCATION / set (a 
 
 A **location** is a persisted, reusable set/place stored as ONE JSON file at
 `~/.koi/locations/<id>.json`, indexed as a first-class creation. Author and edit
-it ONLY through the `save_location` tool (never hand-write the JSON). Give it an
-establishing **plate** with `generate_location_plate`. A scene links one via
-`scene.locationId` on the storyboard.
+it ONLY through the `save_location` tool (never hand-write the JSON). Give it its
+establishing **plate views** with `generate_location_plate`. A scene links one
+via `scene.locationId` on the storyboard.
 
 ## The location JSON — every field
 
@@ -27,9 +27,8 @@ establishing **plate** with `generate_location_plate`. A scene links one via
 | `lighting` | string | the set's default light. |
 | `tags` | string[] | free tags. |
 | `photos` | string[] | ABSOLUTE paths to reference photos. `photos[0]` is the hero. POINTERS only. |
-| `plate` | string | path to the generated VIEWS SHEET (set by `generate_location_plate`). |
-| `plateCells` | array of `{x,y,w,h}` | the 4 row rects the visor slices the sheet by (set by the tool; never by hand). |
-| `layout` | object | the top-down FLOOR PLAN the plate was rendered from `{ room, objects:[{name,xPct,yPct,wPct,dPct,count,note}] }` (set by the tool; the spatial source of truth so views stay consistent). |
+| `plate` | string | path to the **FRONT** establishing view (set by `generate_location_plate`). |
+| `plateRear` | string | path to the **REAR** (reverse 180°) establishing view (set by `generate_location_plate`). |
 
 `createdAt` / `updatedAt` are managed by the tool — on an UPDATE, read the
 existing doc and pass its fields back (including `id`) so you update in place.
@@ -41,49 +40,74 @@ existing doc and pass its fields back (including `id`) so you update in place.
    story** — `locationType` (interior|exterior|mixed), `timeOfDay`, `palette`,
    `lighting`. Do NOT leave them empty when the scene description states them (an
    empty attribute next to a full description is a bug). Add any reference `photos`.
-2. **Views sheet**: `generate_location_plate` (pass `locationId`) — it builds the
-   sheet of the EMPTY set and auto-attaches `plate` + `plateCells`. It is the
-   world anchor reused across every clip set there. No face on a set, so no
-   likeness-laundering is needed.
+2. **Plate views** (the 2-step procedure below) with `generate_location_plate`.
 3. **Link it**: on the storyboard, set the scene's `locationId` to this location
    (and/or add it to the storyboard `locations` roster).
 
-## Views sheet (the SET analog of the character turnaround)
+## Plate views — the SET analog of the character turnaround
 
-- A **character** → a turnaround **sheet** (`generate_character_sheet`), a 4×2
-  8-cell grid at 4K, that locks a person's identity.
-- A **location** → a **views sheet** (`generate_location_plate`), **1 column × 4
-  ROWS (4 cells stacked)**: **4 WIDE PANORAMIC camera views** of the EMPTY set —
-  **FRONT, REAR, LEFT, RIGHT**, each labelled (`FRONT VIEW`, `REAR VIEW`, `LEFT
-  SIDE VIEW`, `RIGHT SIDE VIEW`).
-- **How the tool keeps the 4 views CONSISTENT (3D-lite):** four independent views
-  drift (chair counts change, the lamp moves). So the tool FIRST authors ONE
-  top-down **floor plan** (`layout`: labelled boxes with positions + counts) from
-  the description, draws it as a reference image, then renders EACH view FROM that
-  shared plan (attaching it) so every view shows the SAME objects in the SAME
-  places with the SAME counts, and composites the 4 into the sheet (exact cells).
-  The `layout` is saved on the card. You normally just call the tool — it does all
-  this. Pass your own `layout` only to re-render with an edited floor plan.
+A **character** → a turnaround **sheet** (`generate_character_sheet`) that locks a
+person's identity. A **location** → a small set of establishing **views** of the
+EMPTY set that lock the world's look, palette and light across every clip shot
+there. No face on a set, so no likeness-laundering is needed.
 
-### Change ONE view without touching the rest
-To edit a single view (e.g. "make the REAR view show the window open"), do **NOT
-regenerate the whole sheet**. Edit that one row in place, exactly like fixing a
-storyboard panel:
-1. `extract_panel({ sheet: <plate path>, panel: N, cols: 1, rows: 4 })` — N is the
-   1-based, top-to-bottom index: **1 FRONT, 2 REAR, 3 LEFT, 4 RIGHT**. Read the
-   returned path (you must SEE it).
-2. `generate_image` in EDIT mode with that row + the change + the set's
-   description (to keep the location's identity), at the aspect `extract_panel`
-   returned.
-3. `replace_panel({ sheet: <plate path>, panel: N, image: <new view>, cols: 1,
-   rows: 4 })` — it composites the new view back into the sheet in place (same
-   path); the visor picks it up automatically.
+**YOU (the agent) author the descriptions — `generate_location_plate` NEVER
+writes the prompt.** It only renders the image from the prompt YOU give it. This
+is a real authoring job; do it in TWO steps, one image per call:
+
+### Step 1 — FRONT view
+Write a **precise, faithful, element-by-element** description of the empty
+location, grounded in its `description`. Name EVERY concrete element the place has
+— every piece of furniture, the TV, the wall clock, the china cabinet, the
+azulejo tiling, the ceiling beams, the dining table (shape/wood), the exact
+number of chairs, the sideboard, the doors, the windows/balcony, the lamps, the
+plants, the paintings, the floor, the palette, and the light and how it falls.
+**Never a thin one-liner** like "a traditional dining room at night" — that is the
+main failure to avoid. Then call:
+
+```
+generate_location_plate({ view: "front", prompt: "<your precise FRONT description>", locationId })
+```
+
+It saves the image to `plate` and returns its path. **You must SEE it** before the
+next step (read the returned path).
+
+### Step 2 — REAR view (reverse shot FROM the front)
+Write a description of the SAME room seen from the **opposite side (camera rotated
+180°)**: the wall the FRONT camera stood at is now in front; the FRONT view's back
+wall / window / balcony is now **BEHIND the camera and NOT visible**. Then call it
+**attaching the FRONT image as reference** so the reverse view is the SAME room,
+not a re-invented one:
+
+```
+generate_location_plate({ view: "rear", prompt: "<your reverse-shot description>",
+  referenceImages: [ "<front plate path from step 1>" ], locationId })
+```
+
+It saves the image to `plateRear`.
+
+### Exteriors
+For an EXTERIOR that FRONT + REAR cannot capture (a building / house seen from
+outside where the sides matter), also author `view:"left"` and `view:"right"` the
+same way (attach the FRONT as reference). Interiors normally need only FRONT +
+REAR.
+
+## Regenerating / editing a view
+- To redo ONE view, just call `generate_location_plate` again for that `view`
+  (for `rear`/`left`/`right`, keep attaching the current `plate` as reference so
+  it stays the same room).
+- To tweak a view (e.g. "open the window in the REAR"), `generate_image` in EDIT
+  mode with that view's image as the reference + the change + the set's
+  description, then `save_location` writing the new path back to `plate`/`plateRear`.
 
 ## Gotchas
 
 - **NEVER hand-write the JSON** — always `save_location`.
 - **Update in place**: read the doc, mutate, `save_location` with the SAME `id`
   (and its `createdAt`) so you don't duplicate.
-- **`plate`** comes from `generate_location_plate`, not by hand.
-- Reference `photos` are the raw inputs the location was built FROM; the `plate`
-  is the generated establishing representation the video pipeline attaches.
+- **`plate` / `plateRear`** come from `generate_location_plate`, not by hand, and
+  the tool never writes the prompt — YOU author a precise, faithful description.
+- The REAR MUST attach the FRONT as `referenceImages` — that reference is what
+  keeps it the SAME room instead of a plausible but different one.
+- Reference `photos` are the raw inputs the location was built FROM; `plate` /
+  `plateRear` are the generated establishing views the video pipeline attaches.
