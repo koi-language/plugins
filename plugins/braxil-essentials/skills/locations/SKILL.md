@@ -27,7 +27,9 @@ establishing **plate** with `generate_location_plate`. A scene links one via
 | `lighting` | string | the set's default light. |
 | `tags` | string[] | free tags. |
 | `photos` | string[] | ABSOLUTE paths to reference photos. `photos[0]` is the hero. POINTERS only. |
-| `plate` | string | path to the generated establishing plate (set by `generate_location_plate`). |
+| `plate` | string | path to the generated VIEWS SHEET (set by `generate_location_plate`). |
+| `plateCells` | array of `{x,y,w,h}` | the 4 row rects the visor slices the sheet by (set by the tool; never by hand). |
+| `layout` | object | the top-down FLOOR PLAN the plate was rendered from `{ room, objects:[{name,xPct,yPct,wPct,dPct,count,note}] }` (set by the tool; the spatial source of truth so views stay consistent). |
 
 `createdAt` / `updatedAt` are managed by the tool — on an UPDATE, read the
 existing doc and pass its fields back (including `id`) so you update in place.
@@ -35,22 +37,47 @@ existing doc and pass its fields back (including `id`) so you update in place.
 ## Creation flow
 
 1. **Create** the location: `save_location` with `name` + a strong visual
-   `description`, plus the structured attributes you can infer (`locationType`,
-   `timeOfDay`, `palette`, `lighting`) and any reference `photos`.
-2. **Plate**: `generate_location_plate` (pass `locationId`) — it builds a clean
-   establishing shot of the EMPTY set and auto-attaches `plate` to the location.
-   The plate is the world anchor reused across every clip set there. No face on
-   a plate, so no likeness-laundering is needed.
+   `description`. 🔴 **FILL EVERY structured attribute you can infer from the
+   story** — `locationType` (interior|exterior|mixed), `timeOfDay`, `palette`,
+   `lighting`. Do NOT leave them empty when the scene description states them (an
+   empty attribute next to a full description is a bug). Add any reference `photos`.
+2. **Views sheet**: `generate_location_plate` (pass `locationId`) — it builds the
+   sheet of the EMPTY set and auto-attaches `plate` + `plateCells`. It is the
+   world anchor reused across every clip set there. No face on a set, so no
+   likeness-laundering is needed.
 3. **Link it**: on the storyboard, set the scene's `locationId` to this location
    (and/or add it to the storyboard `locations` roster).
 
-## Turnaround vs plate
+## Views sheet (the SET analog of the character turnaround)
 
-- A **character** → a turnaround **sheet** (`generate_character_sheet`), an 8-cell
-  grid, rendered at 2K, that locks a person's identity.
-- A **location** → an establishing **plate** (`generate_location_plate`), ONE
-  clean wide of the empty set, rendered at 2K, that locks the world's look /
-  palette / lighting.
+- A **character** → a turnaround **sheet** (`generate_character_sheet`), a 4×2
+  8-cell grid at 4K, that locks a person's identity.
+- A **location** → a **views sheet** (`generate_location_plate`), **1 column × 4
+  ROWS (4 cells stacked)**: **4 WIDE PANORAMIC camera views** of the EMPTY set —
+  **FRONT, REAR, LEFT, RIGHT**, each labelled (`FRONT VIEW`, `REAR VIEW`, `LEFT
+  SIDE VIEW`, `RIGHT SIDE VIEW`).
+- **How the tool keeps the 4 views CONSISTENT (3D-lite):** four independent views
+  drift (chair counts change, the lamp moves). So the tool FIRST authors ONE
+  top-down **floor plan** (`layout`: labelled boxes with positions + counts) from
+  the description, draws it as a reference image, then renders EACH view FROM that
+  shared plan (attaching it) so every view shows the SAME objects in the SAME
+  places with the SAME counts, and composites the 4 into the sheet (exact cells).
+  The `layout` is saved on the card. You normally just call the tool — it does all
+  this. Pass your own `layout` only to re-render with an edited floor plan.
+
+### Change ONE view without touching the rest
+To edit a single view (e.g. "make the REAR view show the window open"), do **NOT
+regenerate the whole sheet**. Edit that one row in place, exactly like fixing a
+storyboard panel:
+1. `extract_panel({ sheet: <plate path>, panel: N, cols: 1, rows: 4 })` — N is the
+   1-based, top-to-bottom index: **1 FRONT, 2 REAR, 3 LEFT, 4 RIGHT**. Read the
+   returned path (you must SEE it).
+2. `generate_image` in EDIT mode with that row + the change + the set's
+   description (to keep the location's identity), at the aspect `extract_panel`
+   returned.
+3. `replace_panel({ sheet: <plate path>, panel: N, image: <new view>, cols: 1,
+   rows: 4 })` — it composites the new view back into the sheet in place (same
+   path); the visor picks it up automatically.
 
 ## Gotchas
 
