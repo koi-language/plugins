@@ -11,6 +11,15 @@ App-owned JSON the GUI visor watches and renders as editable pencil-sketch shot 
 - **Path (MANDATORY):** `~/.koi/storyboards/<id>.json`. `<id>` = stable kebab slug (`sb-<unix-ms>` or human like `mafiosos-restaurante`); the `id` INSIDE the JSON == filename. NEVER write anywhere else (cwd/Desktop/project = invisible; visor only watches that folder).
 - Always write via the storyboard tools, NEVER `write_file`/`edit_file`: **`update_storyboard`** for content edits (diff-style: only the changed fields, only the affected panels re-render), **`save_storyboard`** for create/restructure (derives `version`/`createdAt`/`updatedAt`/path, validates, escapes JSON).
 
+## Project → Sequences → this storyboard
+
+One storyboard `.json` is ONE **sequence**: a run of scenes with a single purpose (a "mini-movie" in screenwriting terms). A whole story can be several sequences, and the ordered set of sequences is a **PROJECT** — a separate lightweight file the GUI manages (`~/.koi/projects/<id>.json`) that just points at the storyboards in order. The user reorders/renames/switches sequences from the "Sequences" dropdown at the top-left of the storyboard visor.
+
+What this means for you:
+- Keep authoring ONE storyboard per sequence. A storyboard's `scenes[]` are the scenes of THAT sequence, NOT the whole feature. Do NOT dump unrelated sequences into one storyboard file just to keep it in one place.
+- You do NOT create or edit project files — the GUI auto-creates the project and the user groups/orders sequences. Your job stays: author each storyboard well and `show_result` it.
+- When a story clearly spans several distinct sequences and the user asks for the next one, create it as its own storyboard (a new sequence); the user adds it to the project from the dropdown.
+
 ## Schema (v7) skeleton
 
 Full semantics/examples/gotchas: [references/authoring-guide.md](references/authoring-guide.md): load before authoring or editing content.
@@ -30,13 +39,17 @@ Full semantics/examples/gotchas: [references/authoring-guide.md](references/auth
     { "name": "HERO_A", "description": "tall slim woman, long dark coat", "sex": "female", "age": 30 },
     { "name": "SIDEKICK", "description": "short stocky man, red cap", "sex": "male", "age": 45, "characterId": "sidekick-bob" } // characterId links a saved ~/.koi/characters/<id>.json card
   ], // name = SHORT_UPPERCASE label reused verbatim in action/dialogue; sex = female|male|nonbinary|other, age = number — FILL both when the story tells you (they seed a character card made from this member); visor renders each as a clickable row. (Legacy free-text string still accepted, but EMIT THE ARRAY.)
+  "locations": [                    // reusable-SET roster: ARRAY of { name, description?, locationId? }
+    { "name": "COMEDOR", "description": "old family dining room, warm amber", "locationId": "comedor-nochevieja" } // locationId links a saved ~/.koi/locations/<id>.json card (with an establishing plate)
+  ], // a scene = its characters + its location(s); each scene points at ONE OR MORE via scene.locationIds (array) — rule 13
   "lighting": "Luz dura de mediodía, sombras profundas.",  // ONE design for whole piece
   "stylePrompt": "",                // EMPTY unless user literally asked for a style
   "synopsis": "Premise + physical logic the renders must respect.",
   "continuity": [ "The button stays high, out of reach until he climbs." ], // LOCK: story-wide invariants+negatives, injected verbatim into every shot prompt
   "references": ["@hero", "/abs/path/img.png"],   // IMAGES/@handles only, never video
   "scenes": [{
-    "id": "sc1", "title": "…", "location": "", "notes": "",
+    "id": "sc1", "title": "…", "location": "", "locationIds": ["comedor-nochevieja"],  // location = free-text place; locationIds = ARRAY of location-card ids (a scene can span SEVERAL sets)
+    "notes": "",
     "synopsis": "",                 // optional per-scene premise
     "references": [],               // scene-scope anchors (omit if empty)
     "shots": [{
@@ -81,6 +94,10 @@ Full semantics/examples/gotchas: [references/authoring-guide.md](references/auth
    - **Associate** → let the user pick the existing card(s); write each returned id into that roster entry's `characterId`.
    - **Invent** → for EACH unlinked member, via the `characters` skill: (1) `save_character` with the roster entry's `name` + `description` + `sex` + `age` (fill every attribute); (2) `generate_character_sheet` to build and attach its TURNAROUND IMAGE (pass `characterId`); (3) write the returned `characterId` back into the roster entry. Do all three — a character invented but with no card or no sheet is incomplete.
    Never silently skip the association; a storyboard headed for video with unlinked characters is a reported bug.
+13. **Every scene MUST be associated with a location card — MANDATORY (a scene = its characters + its location(s)).** Each scene needs a `scene.locationIds` ARRAY linking one or more saved `~/.koi/locations/<id>.json` cards (with generated establishing plates) — a scene can play across SEVERAL sets, so it's a list. The card + its plate are what lock each SET's look/palette/lighting across every clip of that scene (a text `location` string does not). Also build the storyboard `locations` roster (`[{ name, description?, locationId? }]`). When you author or finish a storyboard whose scenes have NO linked location, you MUST resolve it — ASK the user via `prompt_user`/`prompt_form` (NEVER a `print`): *"do you want to ASSOCIATE existing location(s), or shall I INVENT and create new ones?"*
+   - **Associate** → let the user pick the existing card(s); write each returned id into that scene's `locationIds` (and the roster).
+   - **Invent** → for EACH distinct location, via the `locations` skill: (1) `save_location` with a `name` + `description` (+ `locationType`/`timeOfDay`/`palette`/`lighting` when known); (2) `generate_location_plate` to build and attach its ESTABLISHING PLATE (pass `locationId`); (3) add the returned id to `locationIds` of every scene set there + the roster. Do all three — a location invented with no card or no plate is incomplete.
+   Never silently skip it; a storyboard headed for video with unlinked locations is a reported bug (the set drifts clip to clip without a plate anchor).
 
 ## The SCENE CONTENT — action, dialogue, planos → written by `cinematic-video-prompt-engineer`, not here
 

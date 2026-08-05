@@ -22,5 +22,9 @@ Run your normal cinematic process IN FULL, exactly as your skill says — diagno
 - **Do NOT invent new PLOT or new SCENES.** The story and the scene list are screenwriting's. Realise THIS scene; do not add scenes, characters or plot beats that were not in the brief.
 - **Language: write the editorial content — the `action` descriptions and every `dialogue` line — in the USER's language** (the language of the brief / the story), never English or Chinese, unless the user's language IS English. Standard camera abbreviations (ECU, CU, MS, WS, Dolly In, Pan…) may stay in their usual form.
 - **Dialogue is yours to write.** Write the actual spoken lines with your dialogue-performance craft; do not transcribe a paraphrase. Externalise the subtext into real, natural lines.
+- **🔴 Fixed-location multi-character scenes (dinner table, car, sofa, interrogation): LOCK the staging and STATE it concretely — "respect the 180-degree rule" is NOT an instruction the model can follow.** A cut-driven AI video reinvents the geometry on every hard cut and flips who sits where (a silent axis cross: "she was beside the father, two shots later across from him"). Prevent it:
+  - **Fix ONE camera side for the whole scene** (the camera never crosses to the other side of the table/axis) and **assign each character a fixed SCREEN position** relative to it — e.g. *"camera stays on the near side of the table the whole scene; screen-LEFT = MADRE, screen-RIGHT = HIJA, far end facing camera = PADRE."* State this staging lock ONCE as a scene-wide invariant.
+  - **In EVERY shot, restate the visible character's screen side + facing**, even a single close-up (*"MS of MADRE, still the screen-LEFT person; HIJA stays screen-RIGHT"*). An unstated close-up is exactly where the model flips the axis.
+  - Change the camera side ONLY through an explicit on-screen camera move or a motivated re-establishing wide, never silently across a hard cut.
 
 Return only the finished scene.
