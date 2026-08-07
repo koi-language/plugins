@@ -53,9 +53,28 @@ user upload or another (non-Seedream) model.
   the filter — skip it.
 - **Set/location plates and props carry no face** → never touched.
 
-## The chained previous clip also carries faces
-On clip K ≥ 2 you attach the immediately-previous clip as a reference. When it
-shows **photoreal faces**, attach a **BLURRED copy** instead of the raw clip —
-the blur defeats the likeness detector while preserving motion, pacing, palette
-and audio. Make it locally with ffmpeg (`gblur`), no model call. Stylized looks
-or clips with no people on screen → attach the raw clip.
+## The chained CONTINUITY SHEET carries faces too — launder it
+Chaining clip K ≥ 2 runs on the **continuity sheet** on every model, not just
+here: `build_continuity_sheet` on clip K-1 builds a grid of that clip's first
+and last frame per take, and it goes in as `prev_state`. The full flow lives in
+`storyboard-to-video`'s "Clip chaining" — read it there.
+
+**Seedance's extra step:** that grid is made of the clip's REAL frames, so it
+carries the same photoreal faces the likeness filter rejects. Launder it exactly
+like a turnaround — Image 1 = the sheet, plus a FULL re-description of what it
+shows (the grid layout, the characters, wardrobe, set, light). Same rule as
+above: a bare "reproduce exactly" fails; the detailed re-description is what
+makes Seedream re-synthesise it. Attach the LAUNDERED copy, and keep the
+`promptHint` verbatim. 🙈 `metadata: { "visible": false }` on both.
+
+**Do NOT pass the previous clip itself as a video reference here.** Raw, the
+filter rejects the whole render. Blurred — the old workaround — it clears the
+filter but preserves only *motion, pacing, palette and audio*: the blur destroys
+the character SCREEN POSITIONS, which is the entire point of chaining. That is
+the reported "the boy was on her right, next clip on her left" bug, and no
+wording in the prompt fixes it, because the information simply isn't in the
+reference.
+
+Stylized looks or clips with no people on screen don't trip the filter: there the
+sheet goes in as-is, and you may add the previous clip as a video reference if
+you want the extra pacing signal.

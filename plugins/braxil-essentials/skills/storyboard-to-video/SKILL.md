@@ -48,7 +48,7 @@ Render SEQUENTIALLY, not parallel: each clip continues from the one before it (t
 Every `generate_video` clip MUST attach:
 1. **The character TURNAROUND sheet of each character that PARTICIPATES in THIS clip — MANDATORY. Only the ones actually in this clip, NOT the whole cast.** Identity (face, hair, wardrobe, proportions) comes from these; WITHOUT them the characters drift. One per participating character. Plus the **EXTRAS GROUP SHEET** of any recurring unnamed group in the clip (crowd, caravan…) — without it the group re-rolls its look every clip.
 2. **The set/location PLATE + any objects/props that appear in THIS clip** — only what's in frame for this clip. These carry the world's look/palette.
-3. **🚫 NOT the composed panel sheet, and NOT extracted panels.** The composed sheet is NEVER put in `referenceImages` — composition comes from the cinematic prompt (the `cinematic-video-prompt-engineer` output), not from a panel image. And NEVER extract or attach panels one-by-one.
+3. **🚫 NOT the composed panel sheet, and NOT extracted panels.** The composed sheet is NEVER put in `referenceImages` — composition comes from the cinematic prompt (the `cinematic-video-prompt-engineer` output), not from a panel image. And NEVER extract or attach panels one-by-one. *(The ONE grid that is allowed is the CONTINUITY SHEET built from the previous clip's real frames — see "Clip chaining". It records where the last clip ENDED; it prescribes nothing about this clip's composition.)*
 
 **HOW each reference is PREPARED is dictated by the CHOSEN model's card** in `video-generator/references/models.md` — raw as-is, a transform (depth pass, face-laundering copy, blurred/processed previous clip), a file cap, etc. **This skill prescribes no specific prep — read the card and do what it says; if silent, attach as-is.** The WHAT above (anchors always; the composed sheet is NEVER a model reference; never one-by-one panels; never drop a character sheet) is non-negotiable on every model.
 
@@ -63,8 +63,8 @@ If a needed anchor is not already persisted:
 > On EVERY clip attach exactly what the UNIVERSAL rules list, prepared per the model card, and nothing more:
 > 1. **The TURNAROUND of each character in THIS clip** (aliased by label e.g. `HERO_A`) **+ the EXTRAS GROUP SHEET of each recurring group** (e.g. `EXTRAS_CARAVANA`). IDENTITY.
 > 2. **The set/location PLATE + props in frame** (e.g. `SET_suite`, `prop_bottle`). The world's look.
-> 3. **The immediately-previous clip (K ≥ 2 ONLY)** — chained per "Clip chaining", prepared per the card.
-> 🚫 **NOT the composed sheet** (composition = the cinematic prompt) and **NOT extracted panels**.
+> 3. **The immediately-previous clip's CONTINUITY SHEET (K ≥ 2 ONLY, every model)** — built with `build_continuity_sheet`, prepared per the card (Seedance: laundered through Seedream; every other model: as-is). See "Clip chaining".
+> 🚫 **NOT the composed PANEL sheet** (composition = the cinematic prompt) and **NOT extracted panels**. (The continuity sheet of item 3 is not this — it is the previous clip's end state, not a composition source.)
 > ⚠️ **These references must be the CURRENT ones.** If the user changed a set or a character's look, the plate/turnaround should have been regenerated upstream. If what you resolve still shows the OLD look while the story wants the new one, STOP and say so — attaching a stale reference is what makes the change come back missing. Never paper over it in the prompt.
 > ⚠️ **Respect the model card's file / reference caps.** Over the cap → drop the least-load-bearing object refs first, never a character turnaround. The tool REJECTS (`success:false`) if the prompt cites a reference not attached, so cite only what you attach.
 >
@@ -72,8 +72,8 @@ If a needed anchor is not already persisted:
 
 Per CLIP (global `clipIndex` order) call `generate_video` with:
 - **`prompt`**: authored SOLELY by `cinematic-video-prompt-engineer` (this skill feeds it the story brief + the mandatory constraints as input); used VERBATIM, never edited here. See "Per-clip prompt".
-- **`referenceImages`**: the turnaround of each character/group in the clip + the set/prop refs it needs (each prepared per the card). 🚫 NOT the composed sheet, no extracted panels, no other clips' sheets.
-- **`referenceVideos`** (K ≥ 2 ONLY, if the card supports a video reference): `[{ alias: "prev_clip", path: <K-1's savedTo> }]`. Card says no video ref → frame-anchoring ("Clip chaining").
+- **`referenceImages`**: the turnaround of each character/group in the clip + the set/prop refs it needs (each prepared per the card) + on K ≥ 2 the CONTINUITY SHEET of clip K-1 (alias `prev_state`, prepared per the card). 🚫 NOT the composed PANEL sheet, no extracted panels, no other clips' panel sheets.
+- **`referenceVideos`** (K ≥ 2, OPTIONAL, only if the card supports a video reference AND the model has no likeness filter): `[{ alias: "prev_clip", path: <K-1's savedTo> }]` — extra pacing/camera-energy signal on top of the sheet, never a replacement for it (see "Clip chaining").
 - **`duration`**: the CLIP's resolved value, whole second in `[D_min,D_max]`. NOT hardcoded.
 - **`aspectRatio`**: 🚨 the user's answer from Step 0a — NOT inferred from the storyboard. Same on every clip of a pass.
 - **`quality`**: the model card's highest sensible tier (e.g. `"high"`).
@@ -124,17 +124,23 @@ These are INPUT requirements handed to cinematic, NOT text this skill adds to th
 - For clips K ≥ 2: the **continuation line** (see "Clip chaining").
 
 ### Clip chaining (clips 2…N): continue from the previous clip
-Each clip after the first continues the one before it. Prepare the chain per the model's card:
-- **Model accepts a video reference** → attach the immediately-previous clip as `prev_clip` (`Video 1`) in `referenceVideos` (prepared per the card — some want it processed/blurred or trimmed to the last few seconds).
-- **Model does NOT accept a video reference** → FRAME-ANCHOR: pass the previous clip's extracted FINAL FRAME as the start frame/anchor of the next (per the card's mechanism).
+Each clip after the first continues the one before it. **The CONTINUITY SHEET is the chaining mechanism on EVERY model** — a still grid of the previous clip's real frames carries the character SCREEN POSITIONS precisely, which is the thing that drifts between clips (the reported "the boy was on her right, next clip on her left" bug):
+
+1. **`build_continuity_sheet`** on clip K-1, passing `cuts` = its INTERIOR shot boundaries in seconds (the cumulative shot durations you already have from the storyboard — shots of 3.5/3/3/3/2.5 s → `cuts: [3.5, 6.5, 9.5, 12.5]`; omit `cuts` for a single-take clip). It returns a 2-column × N-row grid (row = take, left cell = its first frame, right cell = its last) plus a `promptHint`.
+2. **PREP per the model card.** Only models with a **likeness filter (Seedance)** need one: **launder the sheet through Seedream** exactly like a character turnaround — a 1:1 reproduction with a FULL re-description of what the grid shows (per `video-generator/references/usage/seedance.md`). The raw sheet carries the same real faces the filter rejects. **Every other model takes the sheet AS-IS** — no clone, no blur, no processing.
+3. **Attach it as ONE reference image** (alias `prev_state`) and paste the tool's `promptHint` VERBATIM into the prompt — it describes the exact layout that was built, so the description can never drift from the image. The hint already tells the model these are frames of the immediately-preceding clip, which cell it continues from, and never to render the grid itself.
+
+- 🙈 `metadata: { "visible": false }` on the sheet (and on its laundered copy when there is one) — technical anchors, not deliverables.
+- This sheet is the ONE composed grid that IS a legitimate reference: it records the previous clip's END STATE, it does not prescribe this clip's composition (which still comes only from the cinematic prompt). The storyboard's composed PANEL sheet remains banned.
+- ⚠️ **Not the same thing as the storyboard's CONTINUITY MATRIX** (the per-shot `continuity` rows `{characters, objects, place}`, STEP 0). That matrix is TEXT inside the JSON and drives what state each brief restates; this sheet is an IMAGE of the previous clip's actual frames. Both are used, they never substitute for each other.
+- **Video reference of the previous clip: OPTIONAL, and never on a likeness-filter model.** When the card supports `referenceVideos` and the model has no filter, you MAY add the clip itself as `prev_clip` (`Video 1`) on top of the sheet for pacing/camera energy — the sheet still carries the positions. Never attach a blurred copy as the positional anchor: the blur preserves only motion, pacing, palette and audio, which is what made this fail before.
+
+**ALWAYS also SPELL OUT the opening state in words.** A reference SHOWS; the prompt is what the model OBEYS. "Do not reset the positions" is useless without saying what they are — and you authored the storyboard, so you know them. Take the last shot of clip K-1 and state its screen sides literally, e.g. *"abre exactamente donde terminó el clip anterior: HERMANA en screen-LEFT, HERMANITO en screen-RIGHT, manos de dentro cogidas, caminando hacia cámara, tramo central del pasillo"*. Screen sides, never a character's own left/right (see the axis/screen rules in `storyboard/references/authoring-guide.md`).
 
 Then add a short continuation line right after the scene line:
-> *"`Video 1` is the immediately preceding clip of this same film. This clip continues DIRECTLY from its last frame: same lighting, character positions, momentum and world-state at its end — do not reset. Match its pacing and camera energy. Do NOT repeat or re-enact its shots; render only the NEW shots below."*
+> *"`prev_state` is a grid of frames from the immediately preceding clip of this same film (see its description above). This clip continues DIRECTLY from that clip's end: same lighting, character screen positions, momentum and world-state — do not reset. Match its pacing and camera energy. Do NOT repeat or re-enact its shots; render only the NEW shots below."*
 
-If the card had you attach a PROCESSED (e.g. blurred) copy, say so and re-point identity at the turnarounds:
-> *"`Video 1` is a processed (blurred) version of the preceding clip — treat it as that clip: continue DIRECTLY from its final moment (same positions, momentum, lighting, world-state), match its pacing and camera energy, but take the blur as a delivery artifact, NOT the look: render this clip SHARP, with faces and identity from the character turnaround sheets. Do NOT repeat its shots; render only the NEW shots below."*
-
-Cite ONLY the immediately-previous clip (K-1). Omit the whole part for clip 1.
+If you ALSO attached the clip as a video reference, name it too (*"`Video 1` is that same preceding clip"*). Cite ONLY the immediately-previous clip (K-1). Omit the whole part for clip 1.
 
 ## STEP C: Music track (single, full-length, only when needed)
 Audio plan calls for music AND **≥ 2 clips** → ONE separate track (per-clip music thumps every boundary; independent renders can't keep a continuous melody across seams): ONE `generate_audio`, `type: "music"`, `duration: <total = sum of all clip durations>`, `prompt` from the type's music brief + tone. Single clip (no seams) → music inside the clip render is fine, skip. Voiceover-only / SFX-only → no music, skip.
@@ -159,17 +165,17 @@ Final length = sum of per-clip durations (= storyboard total when present). Conc
 ## Continuity across clips (multi-shot lock)
 Keep these verbatim across clips:
 1. **Identical subject nouns in every shot and every clip** — the SAME short noun phrase ("the three rock-skinned aliens"); re-describing re-casts them. (Part of the scene line cinematic copies verbatim.)
-2. **Same anchor discipline on every clip** — each clip attaches the turnaround of each character/group in it + the plates in frame (prepared per the card), plus the previous clip from K ≥ 2. (Never the composed sheet.) The turnarounds carry identity across the piece (reuse the SAME sheet per character everywhere).
+2. **Same anchor discipline on every clip** — each clip attaches the turnaround of each character/group in it + the plates in frame (prepared per the card), plus the previous clip's CONTINUITY SHEET from K ≥ 2. (Never the composed PANEL sheet.) The turnarounds carry identity across the piece (reuse the SAME sheet per character everywhere).
 3. **Lock the scene line + lighting phrasing verbatim** across all clips (cinematic copies, never paraphrases).
 4. **Respect the model's per-clip setup/complexity limits** (from its card). Exceed → re-chunk / split into two chained calls.
-5. **Clip chaining:** attach the immediately-previous clip (video ref or frame anchor, per the card) + the continuation line.
+5. **Clip chaining:** the previous clip's CONTINUITY SHEET on every model (`build_continuity_sheet`, prepped per the card) + the continuation line + the opening state SPELLED OUT in screen sides.
 6. **One master audio bed:** music OFF the clips (separate track), only diegetic SFX per shot.
 
 ## Voice consistency across clips (read once)
 With `withAudio: true` voiceover is per clip; models that match voice to the visible character give high-but-not-guaranteed consistency with the same character ref across clips. If voice audibly drifts, fallback: `withAudio: false` on every clip (silent), generate ONE TTS pass of the whole script via `generate_audio` with a fixed `voice`, lay as a second audio track. Trades lip-sync precision for identical voice; use only when drift shows.
 
 ## Iteration
-- **Clip re-roll:** `generate_video` again for that clip, same references, feed cinematic the SAME brief with only the affected shot(s) revised; keep the scene line, continuation line, closing note identical. K ≥ 2 `prev_clip` still points at K-1; if K-1 was re-rolled, propagate its NEW path.
+- **Clip re-roll:** `generate_video` again for that clip, same references, feed cinematic the SAME brief with only the affected shot(s) revised; keep the scene line, continuation line, closing note identical. K ≥ 2 `prev_state` still comes from K-1; **if K-1 was re-rolled, REBUILD its continuity sheet from the new render** (and re-launder it on Seedance) — a sheet from the discarded take anchors the wrong positions.
 - **Total duration change:** re-resolve per-CLIP durations (STEP A); relative weighting usually scales, don't uniformly scale unless the user said so.
 - **Model change:** re-read the new model's card (params + reference prep can differ) and re-render; the story brief you feed cinematic is unchanged, only the reference prep + tool params shift.
 
