@@ -53,19 +53,23 @@ user upload or another (non-Seedream) model.
   the filter — skip it.
 - **Set/location plates and props carry no face** → never touched.
 
-## The chained CONTINUITY SHEET carries faces too — launder it
-Chaining clip K ≥ 2 runs on the **continuity sheet** on every model, not just
-here: `build_continuity_sheet` on clip K-1 builds a grid of that clip's first
-and last frame per take, and it goes in as `prev_state`. The full flow lives in
-`storyboard-to-video`'s "Clip chaining" — read it there.
+## The chained CONTINUITY FRAMES carry faces too — launder each one
+Chaining clip K ≥ 2 runs on **SELECTIVE CONTINUITY FRAMES** on every model, not
+just here: full-res frames extracted from clip K-1's render, ONLY the takes the
+new clip must actually match (same place + same characters, or the opening
+continuation), each attached under its own role alias (`prev_end`,
+`prev_shot3`…). The full flow — need list, real-cut detection, per-frame legend
+lines — lives in `storyboard-to-video`'s "Clip chaining"; read it there. (The
+old wholesale first+last-frame GRID is retired: the mosaic confused the model
+with outdated mid-clip state.)
 
-**Seedance's extra step:** that grid is made of the clip's REAL frames, so it
-carries the same photoreal faces the likeness filter rejects. Launder it exactly
-like a turnaround — Image 1 = the sheet, plus a FULL re-description of what it
-shows (the grid layout, the characters, wardrobe, set, light). Same rule as
-above: a bare "reproduce exactly" fails; the detailed re-description is what
-makes Seedream re-synthesise it. Attach the LAUNDERED copy, and keep the
-`promptHint` verbatim. 🙈 `metadata: { "visible": false }` on both.
+**Seedance's extra step:** those frames are REAL render frames, so they carry
+the same photoreal faces the likeness filter rejects. Launder EACH selected
+frame exactly like a turnaround — Image 1 = the frame, plus a FULL
+re-description of what it shows (the characters, their screen positions,
+wardrobe, set, light). Same rule as above: a bare "reproduce exactly" fails;
+the detailed re-description is what makes Seedream re-synthesise it. Attach the
+LAUNDERED copies. 🙈 `metadata: { "visible": false }` on originals and copies.
 
 **Do NOT pass the previous clip itself as a video reference here.** Raw, the
 filter rejects the whole render. Blurred — the old workaround — it clears the
