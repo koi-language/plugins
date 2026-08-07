@@ -67,6 +67,53 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 - **🛡️ Reference PREP — MANDATORY for photoreal human faces. 📖 Full guide → `references/usage/seedance.md`.** Seedance's likeness filter REJECTS the whole render (`"image_urls: may contain likenesses of real people"`) for a real-looking face. In short: **reproduce each character's turnaround 1:1 through Seedream with a FULL re-description** of the subject (Image 1 = the turnaround itself; the detailed re-description is what makes Seedream re-synthesise it and clear the filter — a bare "reproduce exactly" fails). Stylized faces / set plates / props need nothing. Read the guide before rendering with a real-face storyboard.
 - **🔗 CHAINING clip K ≥ 2 — the CONTINUITY SHEET needs LAUNDERING too.** Chaining runs on the continuity sheet on EVERY model (`build_continuity_sheet` on clip K-1 → attach as `prev_state`; see `storyboard-to-video`'s "Clip chaining"). Seedance's extra step: the sheet is made of that clip's real frames, so it carries the same real faces the filter rejects — **launder it through Seedream** with a full re-description, exactly like a turnaround, and attach the laundered copy. And do NOT pass the previous clip as a video reference here: raw it trips the filter, and the blurred copy that used to clear it preserves only motion/pacing/palette/audio — it destroys the character screen positions, which is the whole point of the chain (the "the boy was on her right, next clip on her left" bug).
 -
+
+### Seedance 2.5 — Text-to-Video — `bytedance/seedance-2.5/text-to-video`
+- text-only (no frames). Newer Seedance generation: **longer clips (up to 30 s), but caps out at 720p** (no 1080p/4k, unlike 2.0).
+
+| `video` param | Req? | Accepted values (this model) | Notes |
+|---|---|---|---|
+| prompt | required | string | English. |
+| aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | clamped to nearest. |
+| resolution | optional | `480p·720p` | omit → 720p. **Max is 720p** (no 1080p/4k). |
+| duration | optional | 4–30 s | omit → auto. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** — native (several hard-cut shots in one clip). **No `seed`** (not in the 2.5 schema).
+- **Rejects**: startFrame, endFrame, referenceImages.
+
+### Seedance 2.5 — Image-to-Video — `bytedance/seedance-2.5/image-to-video`
+- needs `startFrame` (optional `endFrame`). **`prompt` is REQUIRED** here (2.0 made it optional).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | image | literal first frame. |
+| prompt | required | string | motion description. |
+| endFrame | optional | image | first+last interpolation. |
+| aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
+| resolution | optional | `480p·720p` | omit → 720p. **Max is 720p**. |
+| duration | optional | 4–30 s | omit → auto. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** `prompt` no char cap. **Multi-shot: YES** (native, hard-cut shots). **No `seed`** (not in the 2.5 schema).
+- **Rejects**: referenceImages.
+
+### Seedance 2.5 — Reference-to-Video — `bytedance/seedance-2.5/reference-to-video`
+- composes from `referenceImages`. **Much larger reference caps than 2.0.**
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string; `@refN` binds to the images by position | |
+| referenceImages | required | up to 30 images | via the tool, only IMAGE refs are settable. |
+| aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
+| resolution | optional | `480p·720p` | omit → 720p. **Max is 720p**. |
+| duration | optional | `auto·4–30` s | omit → auto. |
+| withAudio | optional | true/false | default true. |
+
+- **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤30**, `referenceVideos` **≤10** (each 1.8–30.2 s, combined ≤30.2 s), reference audio ≤10 — **combined ≤50 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model). **No `seed`** (not in the 2.5 schema).
+- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"`.
+- **🛡️ Reference PREP — MANDATORY for photoreal human faces** — same likeness filter as 2.0. 📖 Full guide → `references/usage/seedance.md`.
+
 ### MiniMax H3 — Text-to-Video — `minimax/h3/text-to-video`
 - text-only (no frames). MiniMax Hailuo-03; fixed 2K output.
 
