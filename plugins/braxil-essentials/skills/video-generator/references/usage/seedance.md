@@ -71,6 +71,12 @@ wardrobe, set, light). Same rule as above: a bare "reproduce exactly" fails;
 the detailed re-description is what makes Seedream re-synthesise it. Attach the
 LAUNDERED copies. 🙈 `metadata: { "visible": false }` on originals and copies.
 
+**Reference AUDIO needs NO laundering.** The sound-continuity mp3 (the
+previous clip's extracted tail, attached via `referenceAudio` — see
+`storyboard-to-video`'s "Clip chaining" sound step) carries no face, so it goes
+in AS-IS on every Seedance slug that lists reference audio. Give it a legend
+line in the prompt saying the soundscape continues its bed.
+
 **Do NOT pass the previous clip itself as a video reference here.** Raw, the
 filter rejects the whole render. Blurred — the old workaround — it clears the
 filter but preserves only *motion, pacing, palette and audio*: the blur destroys

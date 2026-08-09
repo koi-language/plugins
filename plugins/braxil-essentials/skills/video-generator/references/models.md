@@ -2,7 +2,7 @@
 
 Only models **enabled in the BRAXIL backend** are listed, and each table uses the **actual MCP tool parameters the agent can set** — NOT raw fal fields.
 
-`video` parameters: **`operation` ('new'|'edit'|'extend'), `model`, `prompt`, `startFrame`, `endFrame`, `referenceImages`, `referenceVideos` (new only — continuation/prev-clip), `sourceVideo` (edit/extend), `aspectRatio`, `cameraMovement`, `resolution`, `duration`, `quality`, `withAudio`, `seed`, `extra_params`** (`seed`, `referenceVideos` and `extra_params` are `operation:"new"` only; `seed` honoured by Seedance / Veo / WAN, ignored by Kling; `extra_params` = model-specific escape hatch, see Notes). There is NO `characterOrientation`, `keepOriginalSound` or `audioUrl` on this tool.
+`video` parameters: **`operation` ('new'|'edit'|'extend'), `model`, `prompt`, `startFrame`, `endFrame`, `referenceImages`, `referenceVideos` (new only — continuation/prev-clip), `referenceAudio` (new only — a single mp3/wav the model composes the soundscape from, e.g. the previous clip's extracted audio for a seamless diegetic bed; only models whose card lists reference audio honour it), `sourceVideo` (edit/extend), `aspectRatio`, `cameraMovement`, `resolution`, `duration`, `quality`, `withAudio`, `seed`, `extra_params`** (`seed`, `referenceVideos`, `referenceAudio` and `extra_params` are `operation:"new"` only; `seed` honoured by Seedance / Veo / WAN, ignored by Kling; `extra_params` = model-specific escape hatch, see Notes). There is NO `characterOrientation` or `keepOriginalSound` on this tool.
 
 `cameraMovement` (optional): `static`, `pan_left`, `pan_right`, `zoom_in`, `dolly_in`, `orbit_right`, … — a motion hint honoured by some models, ignored by others.
 
@@ -55,15 +55,15 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | `video` param | Req? | Accepted values | Notes |
 |---|---|---|---|
 | prompt | required | string; `@refN` binds to the images by position | |
-| referenceImages | required | up to 9 images | via the tool, only IMAGE refs are settable. |
+| referenceImages | required | up to 9 images | plus `referenceVideos` and `referenceAudio` (see Limits). |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
 | resolution | optional | `480p·720p·1080p·4k` | omit → 720p. Reaches 4k (per fal schema). |
 | duration | optional | `auto·4–15` s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 | seed | optional | integer | reproducibility — same seed + prompt ⇒ same clip. |
 
-- **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤9**, `referenceVideos` **≤3**, reference audio ≤3 — **combined ≤12 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model).
-- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`).
+- **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤9**, `referenceVideos` **≤3**, reference audio **≤3, combined ≤15 s** — **combined ≤12 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model).
+- **Rejects**: startFrame, endFrame. **Reference AUDIO: settable via `referenceAudio`** (one mp3/wav ≤15 s — trim longer sources to the LAST ≤15 s, that's what a seam continues from; the model composes the soundscape from it — the sound-continuity anchor for clip chaining; carries no face → no laundering; name its role in the prompt). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`).
 - **🛡️ Reference PREP — MANDATORY for photoreal human faces. 📖 Full guide → `references/usage/seedance.md`.** Seedance's likeness filter REJECTS the whole render (`"image_urls: may contain likenesses of real people"`) for a real-looking face. In short: **reproduce each character's turnaround 1:1 through Seedream with a FULL re-description** of the subject (Image 1 = the turnaround itself; the detailed re-description is what makes Seedream re-synthesise it and clear the filter — a bare "reproduce exactly" fails). Stylized faces / set plates / props need nothing. Read the guide before rendering with a real-face storyboard.
 - **🔗 CHAINING clip K ≥ 2 — the CONTINUITY FRAMES need LAUNDERING too.** Chaining runs on SELECTIVE CONTINUITY FRAMES on EVERY model (full-res frames of clip K-1, only the takes the new clip must match, role-aliased `prev_end`/`prev_shot3`…; see `storyboard-to-video`'s "Clip chaining"). Seedance's extra step: they are real render frames, so they carry the same real faces the filter rejects — **launder EACH selected frame through Seedream** with a full re-description, exactly like a turnaround, and attach the laundered copies. And do NOT pass the previous clip as a video reference here: raw it trips the filter, and the blurred copy that used to clear it preserves only motion/pacing/palette/audio — it destroys the character screen positions, which is the whole point of the chain (the "the boy was on her right, next clip on her left" bug).
 -
@@ -100,18 +100,20 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 
 ### Seedance 2.5 — Reference-to-Video — `bytedance/seedance-2.5/reference-to-video`
 - composes from `referenceImages`. **Much larger reference caps than 2.0.**
+- **⚠️ COLOR SCIENCE: noticeably cleaner and more NEUTRAL than 2.0** — the same warm-35mm / earthy-palette cinematic prompt renders visibly FLATTER here (field-observed on identical prompts + refs). This is the model's aesthetic prior, not a prompt bug: heavier grade wording recovers only part of it. **For grade-critical cinematic pieces prefer 2.0 reference-to-video** (which also reaches 1080p/4k and honours `seed`); choose 2.5 when the clip must exceed 15 s or needs more references than 2.0's caps.
+- **📦 Payload note ("payload too large" / HTTP 413):** NOT a fal schema limit — reference images travel inline (base64) in the gateway body, and this model's big caps invite stacking many multi-MB laundered PNGs past the body limit. The runtime now auto-offloads any reference over ~600 KB to fal storage (travels as a URL — look for "heavy reference offloaded" in the log), so this should no longer occur. If it DOES occur (older engine build), the recovery is to shrink the reference files (`optimize_image`, lossless) — NEVER to drop references.
 
 | `video` param | Req? | Accepted values | Notes |
 |---|---|---|---|
 | prompt | required | string; `@refN` binds to the images by position | |
-| referenceImages | required | up to 30 images | via the tool, only IMAGE refs are settable. |
+| referenceImages | required | up to 30 images | plus `referenceVideos` and `referenceAudio` (see Limits). |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
 | resolution | optional | `480p·720p` | omit → 720p. **Max is 720p**. |
 | duration | optional | `auto·4–30` s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 
-- **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤30**, `referenceVideos` **≤10** (each 1.8–30.2 s, combined ≤30.2 s), reference audio ≤10 — **combined ≤50 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model). **No `seed`** (not in the 2.5 schema).
-- **Rejects**: startFrame, endFrame. *Not settable via the tool:* reference AUDIO (the model supports it, but `video` exposes no `audioUrl`). `referenceVideos` IS available on `operation:"new"`.
+- **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤30**, `referenceVideos` **≤10** (each 1.8–30.2 s, combined ≤30.2 s), reference audio **≤10** — **combined ≤50 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model). **No `seed`** (not in the 2.5 schema).
+- **Rejects**: startFrame, endFrame. **Reference AUDIO: settable via `referenceAudio`** (one mp3/wav — the previous clip's extracted audio as the sound-continuity anchor for clip chaining; trim to the tail that matters, ~last 15 s; carries no face → no laundering; name its role in the prompt). `referenceVideos` IS available on `operation:"new"`.
 - **🛡️ Reference PREP — MANDATORY for photoreal human faces** — same likeness filter as 2.0. 📖 Full guide → `references/usage/seedance.md`.
 
 ### MiniMax H3 — Text-to-Video — `minimax/h3/text-to-video`

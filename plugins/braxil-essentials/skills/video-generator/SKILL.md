@@ -81,7 +81,8 @@ Once the category and input shape are fixed, several models may qualify. **Choos
 
 | Model | Best at | Watch out for |
 |---|---|---|
-| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios, **reaches 4k** (all three endpoints; pass `resolution: "4k"`). | Photoreal faces need reference PREP → `references/usage/seedance.md`. |
+| **Seedance 2.0** `bytedance/seedance-2.0/*` | **Default first choice — best quality-per-cost.** Only one with `reference-to-video` (compose from up to 9 refs) and true text-to-video. Native audio, up to 15s, honours `seed`, most aspect ratios, **reaches 4k** (all three endpoints; pass `resolution: "4k"`). **Richest COLOR SCIENCE of the family — the one for cinematic/graded looks.** | Photoreal faces need reference PREP → `references/usage/seedance.md`. |
+| **Seedance 2.5** `bytedance/seedance-2.5/*` | Longer clips (**up to 30 s**) and much bigger reference caps (≤30 images + reference audio ≤10). Pick it when a clip must exceed 15 s or carry more refs than 2.0 allows. | **720p max** (no 1080p/4k), no `seed`, and a **cleaner, more NEUTRAL color science: the same warm-35mm cinematic prompt comes out visibly flatter than on 2.0** (field-observed). Grade-critical cinematic pieces stay on 2.0. Same likeness filter/PREP as 2.0. |
 | **Kling v3 Pro** `fal-ai/kling-video/v3/pro/image-to-video` | Strong image-to-video for **product & controlled cinematic** shots; clean motion, start+end frame, up to 15s. Best pick when Seedance can't do it. | Image-to-video only. Inherits aspect from the start image (no `aspectRatio`/`resolution`), ignores `seed`. |
 | **Veo 3.1** `fal-ai/veo3.1/image-to-video` | Top-tier realism; reaches 4k. Reach for it when you need maximum photoreal polish (Seedance also does 4k, so pick Veo for the realism, not just the resolution). | Image-to-video only, no `endFrame`, durations locked to `4s/6s/8s`, 16:9 or 9:16 only. Priciest — use when the max-quality is the point. |
 | **Luma Ray v3.2** `luma/agent/ray/v3.2/text-to-video` · `…/image-to-video` | **Elegant, clean-motion b-roll / cinematic** clips; polished all-rounder. Does text-to-video AND image-to-video (start+end frame), most aspect ratios, up to 1080p. Also does **reframe** (change a clip's aspect ratio) and **video-to-video** — see below. | Only `5s`/`10s` durations. **No native audio.** Caps at 1080p. |
@@ -121,6 +122,17 @@ An AI video edit covers **10 SECONDS AT MOST**. So before editing an existing cl
   3. Their pick reaches you in the **`# WORKING AREA`** block of the next turn (the selected segment, start/end in ms). **Edit exactly that segment** — cut it out of the source and edit the cut, never the whole clip.
 
 The same rule holds when the clip arrives as an attachment rather than open in the work area: show it with `selectSegment` and ask.
+
+## 🔴 When a generation FAILS (likeness filter, content policy, provider error)
+
+**NEVER strip information from the request to force it through.** The goal is ALWAYS to generate the clip as well as possible — not to generate it at any cost. Dropping a reference image (a turnaround, a plate, a continuity frame), thinning the prompt's identity/continuity detail, or downgrading to a weaker model just to dodge an error produces a clip that "succeeds" while betraying the piece — a drifted face, reset positions, a broken set. **If the flow says a reference must be attached, it STAYS attached on every attempt, no exceptions.** A failed render with the right inputs is a better outcome than a finished render with the wrong ones.
+
+1. **First response: RETRY THE IDENTICAL REQUEST — unchanged — two or three times.** These failures are highly RANDOM: the same request that just got rejected (filter false-positive, transient provider error) very often goes through on the second or third try. Touch nothing between attempts.
+2. **Still failing? Fix the CAUSE with its sanctioned mechanism — never by removing information:**
+   - Likeness/face filter → launder the offending reference through Seedream (turnaround-style 1:1 re-description, per the model's card) and attach the laundered copy. The reference still goes in.
+   - Content-policy on the prompt's wording → reword the flagged phrasing WITHOUT losing any of the scene's content or constraints.
+   - Input shape the model can't take → a different model that accepts the SAME references — never the same model with the references dropped.
+3. **Nothing works? STOP and tell the user** what fails and the options. Never silently deliver a degraded clip — the user can't see what you quietly removed.
 
 ## Gotchas
 
