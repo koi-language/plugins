@@ -44,6 +44,13 @@ Sanity-check EACH clip against the model's `D_max`. Any clip > `D_max` → chunk
 
 Render SEQUENTIALLY, not parallel: each clip continues from the one before it (the seam inherits camera energy, world-state and momentum) and you can sanity-check before committing. Clip 1: no previous clip. Clip K ≥ 2: wait for K-1 to finish, verify its `savedTo`, then chain it (see "Clip chaining").
 
+### 📽️ PROGRESSIVE timeline assembly — build the timeline AS the clips land (NOT all-at-once at the end)
+Do NOT wait for every clip before touching the timeline. The moment **CLIP 1 has rendered AND passed its post-render QA**, run STEP D's create step BROUGHT FORWARD: `create_timeline` the final timeline **passing `storyboardId` = this storyboard's id** (MANDATORY — this links the timeline back to its story so it appears under that story in the project browser; a story can own many timelines, so the link lives on the timeline), `show_timeline` it so the user watches the film assemble, and `add_clip_to_timeline` clip 1 at cursor 0. Then, still inside this sequential loop, the instant **each subsequent clip K passes its own QA**, `add_clip_to_timeline` it at the running cursor — the GUI updates live and the user sees progress instead of a long silence. Keep the `timelineId` and `cursorMs` across the loop (this IS STEP D's V1 concatenation, executed one clip at a time). Rules:
+- **Add a clip ONLY after it is FINAL** — its post-render QA settled and any surgical `replace_take` repairs done. A `replace_take` splice is IN PLACE (the clip keeps its path), so a clip already on the timeline stays valid after repair — no timeline edit needed.
+- **A WHOLE-clip re-roll produces a NEW file path.** If you re-roll a clip that is already on the timeline, UPDATE its timeline clip to the new file (`update_clip` the path, or `remove_clip` + re-add at the same cursor) — never leave the discarded take on the timeline.
+- **Only V1 (the picture clips) is progressive.** The single music track (STEP C) needs the TOTAL duration, so it is still added ONCE at the end (STEP D), after the last clip; subtitles and ducking likewise finalize at the end.
+- The timeline's fps/aspect/canvas are inherited from **clip 1** the moment it is added — that is why you create the timeline WITHOUT passing fps/width/height. Everything else (track conventions, cumulative cursor) is exactly STEP D; you are just running its V1 loop incrementally.
+
 ### 🚨 UNIVERSAL reference rules — EVERY clip, ANY model (non-negotiable)
 Every `generate_video` clip MUST attach:
 1. **The character TURNAROUND sheet of each character that PARTICIPATES in THIS clip — MANDATORY. Only the ones actually in this clip, NOT the whole cast.** Identity (face, hair, wardrobe, proportions) comes from these; WITHOUT them the characters drift. One per participating character. Plus the **EXTRAS GROUP SHEET** of any recurring unnamed group in the clip (crowd, caravan…) — without it the group re-rolls its look every clip.
@@ -172,24 +179,25 @@ Right after each clip's `generate_video` returns, and BEFORE chaining the next c
    - **`replace_take`** with the take's real bounds + the retake file + a `note` naming the defect. The splice is IN PLACE — the clip keeps its path, so timelines and references stay valid — and every replace snapshots the previous full version first: **`take_history`** lists the versions, **`restore_take`** brings any of them back (offer it when the user prefers an earlier take).
    - **Verify the seams:** extract frames at `fromMs`±0.2 s and `toMs`±0.2 s and re-watch the repaired take — coherent entry/exit state, no doubled or missing action, audio bed unbroken. Still wrong → the retake follows the normal retry doctrine (never degrade inputs).
 3. A repaired clip is a CHANGED clip: if clip K+1 already took continuity frames (or the audio tail) from it, RE-EXTRACT them from the repaired file.
+4. **Once the clip is FINAL (QA passed, any repairs done), ADD it to the timeline right away** per "📽️ PROGRESSIVE timeline assembly" — for clip 1 this means creating and `show_timeline`-ing the timeline first. Do NOT batch the adds for the end.
 
 ## STEP C: Music track (single, full-length, only when needed)
 Audio plan calls for music AND **≥ 2 clips** → ONE separate track (per-clip music thumps every boundary; independent renders can't keep a continuous melody across seams): ONE `generate_audio`, `type: "music"`, `duration: <total = sum of all clip durations>`, `prompt` from the type's music brief + tone. Single clip (no seams) → music inside the clip render is fine, skip. Voiceover-only / SFX-only → no music, skip.
 
-## STEP D: Assemble the timeline (concatenate every clip into one video)
-Follow `timeline-assembler`.
-1. **Always `create_timeline` a NEW timeline**: one fresh per video; NEVER reuse/append/overwrite. Descriptive `name` + target `aspectRatio`; do NOT pass fps/width/height (inheritance). Keep the returned `timelineId`.
-2. **V1: concatenate clips in order, back-to-back, each clip's OWN duration** (cumulative cursor):
+## STEP D: Finalize the timeline (music, subtitles, hand-off)
+Follow `timeline-assembler`. **The timeline was already CREATED after clip 1 and every picture clip was ADDED to V1 progressively during STEP B (see "📽️ PROGRESSIVE timeline assembly").** Steps 1–2 below are the AUTHORITY for how that create + per-clip add work — you executed them incrementally, not in a burst here. This step adds only what needs the WHOLE film present.
+1. **The timeline is a NEW one** (created in STEP B — one fresh per video; NEVER reuse/append/overwrite): descriptive `name` + target `aspectRatio`; created WITHOUT fps/width/height (inherited from clip 1). You kept the returned `timelineId`.
+2. **V1 = clips in order, back-to-back, each clip's OWN duration** (cumulative cursor) — the loop you ran ONE CLIP AT A TIME in STEP B:
    ```
    cursorMs = 0
-   for clip in clips (in clipIndex order):
+   for clip in clips (in clipIndex order):        # run incrementally in STEP B, not all here
        add_clip_to_timeline(track="V1", path=clip.path, startMs=cursorMs, durationMs=clip.durationSec * 1000)
        cursorMs += clip.durationSec * 1000
    ```
-   `add_clip_to_timeline` auto-detects each clip's audio stream, do NOT pass `hasAudio`.
-3. **A2: music** (if STEP C): one clip at `startMs: 0`, `durationMs: totalMs`. **Duck ONLY where it competes with voice, from actual audio, not reflexively:** voiceover/dialogue → duck to ≈ −28 dB (`set_clip_volume(<musicClipId>, { change: { gain: 0.04 } })`, or `volumePoints` for speaking stretches); NO-voice sections → do NOT duck. See assembler's "Audio mixing levels".
+   `add_clip_to_timeline` auto-detects each clip's audio stream, do NOT pass `hasAudio`. By the time you reach STEP D, `cursorMs` already equals the total picture length.
+3. **A2: music** (if STEP C): one clip at `startMs: 0`, `durationMs: totalMs` (= the final `cursorMs`). **Duck ONLY where it competes with voice, from actual audio, not reflexively:** voiceover/dialogue → duck to ≈ −28 dB (`set_clip_volume(<musicClipId>, { change: { gain: 0.04 } })`, or `volumePoints` for speaking stretches); NO-voice sections → do NOT duck. See assembler's "Audio mixing levels".
 4. (Optional) subtitles for tutorial/explainer per the assembler's "Subtitles" matrix.
-5. **Hand-off: ALWAYS end by showing the TIMELINE.** `show_timeline({ id })` — pass the id from `create_timeline`, nothing else. Only if the user explicitly asks to export: `render_timeline({ id })` → `show_video` the rendered mp4. (koi/CLI surface: `show_result({ resourceType: "timeline", timelineId })`.)
+5. **Hand-off: the timeline was already `show_timeline`-n when clip 1 landed and stayed open as it filled.** End by ensuring it is shown — `show_timeline({ id })` is idempotent, pass the id from `create_timeline`, nothing else. Only if the user explicitly asks to export: `render_timeline({ id })` → `show_video` the rendered mp4. (koi/CLI surface: `show_result({ resourceType: "timeline", timelineId })`.)
 
 Final length = sum of per-clip durations (= storyboard total when present). Concatenation is timeline-only: NEVER `ffmpeg concat`.
 
@@ -232,4 +240,5 @@ With `withAudio: true` voiceover is per clip; models that match voice to the vis
 - Bake music into per-clip renders for ≥ 2 clips (STEP C), or duck music reflexively (STEP D).
 - Ship a silent clip / use `withAudio: false` to drop music (STEP B).
 - Render a format other than the user's answer (pass the Step 0a `aspectRatio` every call).
+- Wait for ALL clips before touching the timeline — create it after clip 1 and add each clip as it passes QA (📽️ PROGRESSIVE timeline assembly); only the music track waits for the end.
 - Concatenate outside the timeline, reuse/append a timeline, or finish without `show_timeline`-ing the TIMELINE (STEP D).
