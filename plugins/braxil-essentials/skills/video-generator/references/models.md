@@ -69,13 +69,13 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 -
 
 ### Seedance 2.5 — Text-to-Video — `bytedance/seedance-2.5/text-to-video`
-- text-only (no frames). Newer Seedance generation: **longer clips (up to 30 s), but caps out at 720p** (no 1080p/4k, unlike 2.0).
+- text-only (no frames). Newer Seedance generation: **longer clips (up to 30 s) and now up to 1080p** (fal added 1080p to the 2.5 family; 4k remains 2.0-only).
 
 | `video` param | Req? | Accepted values (this model) | Notes |
 |---|---|---|---|
 | prompt | required | string | English. |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | clamped to nearest. |
-| resolution | optional | `480p·720p` | omit → 720p. **Max is 720p** (no 1080p/4k). |
+| resolution | optional | `480p·720p·1080p` | omit → 720p. **Max is 1080p** (4k is 2.0-only). |
 | duration | optional | 4–30 s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 
@@ -91,7 +91,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | prompt | required | string | motion description. |
 | endFrame | optional | image | first+last interpolation. |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
-| resolution | optional | `480p·720p` | omit → 720p. **Max is 720p**. |
+| resolution | optional | `480p·720p·1080p` | omit → 720p. **Max is 1080p** (4k is 2.0-only). |
 | duration | optional | 4–30 s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 
@@ -108,7 +108,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 | prompt | required | string; `@refN` binds to the images by position | |
 | referenceImages | required | up to 30 images | plus `referenceVideos` and `referenceAudio` (see Limits). |
 | aspectRatio | optional | `auto·21:9·16:9·4:3·1:1·3:4·9:16` | |
-| resolution | optional | `480p·720p` | omit → 720p. **Max is 720p**. |
+| resolution | optional | `480p·720p·1080p` | omit → 720p. **Max is 1080p** (4k is 2.0-only). |
 | duration | optional | `auto·4–30` s | omit → auto. |
 | withAudio | optional | true/false | default true. |
 
