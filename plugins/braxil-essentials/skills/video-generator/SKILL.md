@@ -1,9 +1,31 @@
 ---
 name: video-generator
-description: MANDATORY before ANY video generation — activate this skill the moment a request involves creating, generating, animating, or editing a video, i.e. before EVERY `generate_video` call: text-to-video, image-to-video, reference-to-video, motion transfer, talking-head avatar, video-to-video edit, or extend. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category and matching input shape, and exactly which parameters each supported model accepts or rejects (and any per-model reference PREP, e.g. Seedance's face-filter workaround in `references/usage/seedance.md`). If you are about to generate/animate/edit a video and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "generate/create/make a video", "genera/crea/haz un vídeo", "animate this image/photo", "anima esta imagen/foto", "image to video", "talking head/avatar", "extend/make this clip longer", "restyle this video", "remove the background of this video", or any mention of a video model (Veo, Kling, Seedance, WAN, Gemini Omni Flash, OmniHuman).
+description: >
+  🔴 MANDATORY before ANY video generation — activate the moment a request involves creating, generating, animating or editing a video, i.e. before EVERY `generate_video` call. ALSO activate `cinematic-video-prompt-engineer` at the same time: it authors every video prompt and `generate_video` REFUSES to run without it. Triggers (any language): "genera/crea/haz un vídeo", "generate a video", "anima esta imagen/foto", "animate this photo", "image to video", "talking head/avatar", "extend/alarga este clip", "restyle this video", or any video-model name (Veo, Kling, Seedance, WAN, Gemini Omni Flash, OmniHuman).
+  MANDATORY before ANY video generation — activate this skill the moment a request involves creating, generating, animating, or editing a video, i.e. before EVERY `generate_video` call: text-to-video, image-to-video, reference-to-video, motion transfer, talking-head avatar, video-to-video edit, or extend. It is the required model+parameter contract: `model` is a mandatory parameter (there is NO auto-router) and this skill tells you which model to pick by category and matching input shape, and exactly which parameters each supported model accepts or rejects (and any per-model reference PREP, e.g. Seedance's face-filter workaround in `references/usage/seedance.md`). If you are about to generate/animate/edit a video and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "generate/create/make a video", "genera/crea/haz un vídeo", "animate this image/photo", "anima esta imagen/foto", "image to video", "talking head/avatar", "extend/make this clip longer", "restyle this video", "remove the background of this video", or any mention of a video model (Veo, Kling, Seedance, WAN, Gemini Omni Flash, OmniHuman).
 ---
 
 # Video models
+
+## 🔴 STEP ZERO — `activate_skill` `braxil-essentials:cinematic-video-prompt-engineer` RIGHT NOW
+
+Before you read another line of this runbook, before you look at a model card,
+before you choose a slug, and long before any `generate_video` call: **activate
+`cinematic-video-prompt-engineer`.** It is MANDATORY for EVERY render — a
+storyboard clip, a bare "animate this photo", a re-roll, all of them. It is the
+author of the prompt; this skill only owns the model + parameter contract.
+
+Do it from THIS line and do not wait to be reminded elsewhere: by the time you
+are reading this, at least one skill is active, which means the skill CATALOG
+has collapsed to NAMES ONLY — the cinematic skill's own description, and its
+MANDATORY wording, are no longer in your context. Nothing else is going to tell
+you.
+
+`generate_video` ENFORCES this in code: called without that skill active it
+returns an error and generates nothing. Activating it up front is not politeness,
+it is the difference between rendering and not rendering.
+
+---
 
 Runbook for producing video through BRAXIL's `generate_video` tool. **Do not reimplement video API code.** **You choose the model** (the `model` param is required — there is no auto-router): identify the operation → pick a slug from the matching category whose input shape fits → send only what that model accepts.
 
