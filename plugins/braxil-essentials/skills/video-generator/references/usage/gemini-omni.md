@@ -20,8 +20,27 @@ default.
   animate from a single `startFrame` image.
 - **Reference-guided** (`google/gemini-omni-flash/reference-to-video`) —
   compose from up to 10 `referenceImages` (style / character / object refs).
+- **Text-to-video** — v1 has only the bare `google/gemini-omni-flash` slug;
+  **v1.1 adds a proper `google/gemini-omni-flash/v1.1/text-to-video`**.
 - Reach for a cinematic model (Veo, Kling, Seedance, Luma) instead when you
-  need higher fidelity, `seed`, `resolution` control, or 4K.
+  need higher fidelity or a `seed`. (4K and `resolution` are no longer a
+  reason to leave — see v1.1 below.)
+
+### v1.1 — prefer it over v1 unless you have a reason not to
+
+Every v1 route has a `…/v1.1/…` twin that is the SAME model with strictly
+more control. Reach for the v1.1 slug by default:
+
+| Route | What v1.1 adds |
+|---|---|
+| `…/v1.1/text-to-video` | The route itself (v1 had no dedicated t2v slug) + `resolution`. |
+| `…/v1.1/image-to-video` | **`endFrame`** → A→B interpolation, which v1 cannot do at all + `resolution`. |
+| `…/v1.1/reference-to-video` | **`referenceVideos`** (≤3 clips, **≤3 s each**) + `resolution`. |
+| `…/v1.1/edit` | `resolution` (the edit itself is unchanged). |
+
+`resolution` on every v1.1 route is `360p` / `720p` / `1080p` / `4k`. Omit it
+and you get fal's 720p — the engine deliberately does NOT send the field when
+you didn't ask, so you're never billed for an upgrade you didn't request.
 
 > ⚠ **Regional restriction**: video-to-video edits are unavailable in the EEA,
 > Switzerland, the UK and some US states. A v2v edit that returns quickly with
@@ -31,8 +50,11 @@ default.
 
 - `aspectRatio`: **`16:9` or `9:16` only** (clamped to the nearest
   orientation). Edits follow the source aspect.
-- `duration`: any integer **3–10 s** (clamped). No `seed`, no `resolution`.
-- References: up to **10** images on the reference-to-video slug.
+- `duration`: any integer **3–10 s** (clamped) on every route, v1 and v1.1
+  alike. No `seed` anywhere. `resolution` is **v1.1 only** (`360p·720p·1080p·4k`).
+- References: up to **10** images on the reference-to-video slug; v1.1 also
+  takes up to **3 reference videos, each ≤3 s** (trim before attaching — fal
+  rejects longer clips).
 
 ## Prompting
 
@@ -110,6 +132,14 @@ You can hand the model attention-steering instructions verbatim:
 On `reference-to-video` (and when an image should act as first frame vs.
 reference) you make each image's role explicit with tags **inside the prompt**
 — the tool binds `referenceImages` positionally, so YOU write the tags.
+
+> **On `…/v1.1/reference-to-video` you can just write `@ref1`, `@ref2`, …**
+> and the engine translates them for you, AFTER applying the caps, so the
+> indices always match what actually ships. It maps images first, then
+> videos, each modality with its own ZERO-based counter — 2 images + 1 video
+> means `@ref1 @ref2 @ref3` → `<IMAGE_REF_0> <IMAGE_REF_1> <VIDEO_REF_0>`.
+> Hand-written tags still pass through untouched, so the syntax below keeps
+> working on v1.1 too; use it when you need the explicit-role forms.
 
 ### Simple tags (recommended)
 
