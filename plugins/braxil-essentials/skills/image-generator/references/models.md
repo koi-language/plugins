@@ -20,12 +20,46 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | prompt                 | required | 2–32000 chars                                                 | English.                                                                          |
 | aspectRatio            | optional | any `W:H` (converted to pixels)                               | edges multiple of 16, max edge 3840, ratio ≤3:1. Omit → `auto`.                   |
 | resolution             | optional | `low·medium·high·ultra` → long edge 1280 / 1920 / 2560 / 3840 | default high. `ultra` = 4K long edge (3840); `high` = QHD (2560).                  |
-| quality                | optional | `low·medium·high·auto`                                        | sampling effort (auto→high). **This is the only model that reads** `quality`**.** |
+| quality                | optional | `low·medium·high·auto`                                        | sampling effort (auto→high; `xhigh`/`max` also fold to high here). Read only by the GPT Image 2 / 2.5 families. |
 | outputFormat           | optional | `png·jpeg·webp`                                               | default png.                                                                      |
 | n                      | optional | 1–4                                                           | default 1.                                                                        |
 
 
 - **Rejects**: referenceImages, cameraAngles.
+
+### GPT Image 2.5 Flare: `openai/gpt-image-2.5/flare/text-to-image`  *(text-to-image)*
+
+- GPT Image 2.5, OpenAI's everyday variant: fast, natural lighting, rich textures, complex layouts, transparent backgrounds · no references.
+
+| `generate_image` param | Req?     | Accepted values (this model)                                  | Notes |
+| ---------------------- | -------- | ------------------------------------------------------------- | ----- |
+| prompt                 | required | 1–32000 chars                                                 | English. |
+| aspectRatio            | optional | any `W:H` (converted to pixels)                               | edges multiple of 16, max edge 3840, ratio ≤3:1, total pixels 655,360–8,294,400. Omit → `auto`. |
+| resolution             | optional | `low·medium·high·ultra` → long edge 1280 / 1920 / 2560 / 3840 | default high. Only applied together with `aspectRatio`. |
+| quality                | optional | `low·medium·high·xhigh·max·auto`                              | sampling effort, NOT pixels. Omit → derived from `resolution` (ultra→high). `xhigh`/`max` add fine detail at much higher latency and token cost: use them only when the user wants top fidelity. |
+| outputFormat           | optional | `png·jpeg·webp`                                               | default png. |
+| n                      | optional | 1–10                                                          | default 1. |
+
+- **Extra params** (via `extra_params`): `background` (`auto`·`transparent`·`opaque`, default `auto`; for a transparent cut-out use `png` or `webp`, JPEG has no alpha), `output_compression` (integer 0–100, only with `jpeg`/`webp`).
+- **Limits (fal schema):** `prompt` **1–32000 chars**; `n` 1–10; pixel canvas as in the aspectRatio row.
+- **Rejects**: referenceImages, cameraAngles. `seed` accepted but IGNORED (not in the schema).
+
+### GPT Image 2.5 Sunburst: `openai/gpt-image-2.5/sunburst/text-to-image`  *(text-to-image)*
+
+- GPT Image 2.5, precision variant: extra fidelity on intricate detail, in exchange for longer generation times · no references.
+
+| `generate_image` param | Req?     | Accepted values (this model)                                  | Notes |
+| ---------------------- | -------- | ------------------------------------------------------------- | ----- |
+| prompt                 | required | 1–32000 chars                                                 | English. |
+| aspectRatio            | optional | any `W:H` (converted to pixels)                               | edges multiple of 16, max edge 3840, ratio ≤3:1, total pixels 655,360–8,294,400. Omit → `auto`. |
+| resolution             | optional | `low·medium·high·ultra` → long edge 1280 / 1920 / 2560 / 3840 | default high. Only applied together with `aspectRatio`. |
+| quality                | optional | `low·medium·high·xhigh·max·auto`                              | sampling effort, NOT pixels. Omit → derived from `resolution` (ultra→high). `xhigh`/`max` add fine detail at much higher latency and token cost: use them only when the user wants top fidelity. |
+| outputFormat           | optional | `png·jpeg·webp`                                               | default png. |
+| n                      | optional | 1–10                                                          | default 1. |
+
+- **Extra params** (via `extra_params`): `background` (`auto`·`transparent`·`opaque`, default `auto`; for a transparent cut-out use `png` or `webp`, JPEG has no alpha), `output_compression` (integer 0–100, only with `jpeg`/`webp`).
+- **Limits (fal schema):** `prompt` **1–32000 chars**; `n` 1–10; pixel canvas as in the aspectRatio row.
+- **Rejects**: referenceImages, cameraAngles. `seed` accepted but IGNORED (not in the schema).
 
 ### Nano Banana 2 — `fal-ai/nano-banana-2`  *(text-to-image)*
 
@@ -135,11 +169,47 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 | referenceImages        | required | 1–16 images (each ≤25 MB)                               |                                |
 | aspectRatio            | optional | any `W:H` (→ pixels); omit → inferred from ref[0]       | same pixel limits as generate. |
 | resolution             | optional | `low/medium/high/ultra` → 1280/1920/2560/3840 long edge |                                |
-| quality                | optional | `low·medium·high·auto`                                  | only this family reads it.     |
+| quality                | optional | `low·medium·high·auto`                                  | GPT Image 2 / 2.5 only; `xhigh`/`max` fold to high here. |
 | outputFormat           | optional | `png·jpeg·webp`                                         |                                |
 | n                      | optional | 1–4                                                     |                                |
 
 
+- *Not settable via the tool:* `maskImage` (masked inpaint is NOT exposed by `generate_image`). `seed` accepted but IGNORED.
+
+### GPT Image 2.5 Flare Edit: `openai/gpt-image-2.5/flare/edit`  *(image-to-image)*
+
+- GPT Image 2.5 edit, everyday variant: changes only what's asked (subject, composition and background kept); reference subjects stay recognizable across styles and successive edits · **needs** `referenceImages`.
+
+| `generate_image` param | Req?     | Accepted values                                         | Notes |
+| ---------------------- | -------- | ------------------------------------------------------- | ----- |
+| prompt                 | required | 1–32000 chars                                           | edit instructions. |
+| referenceImages        | required | 1–16 images (each ≤25 MB)                               | |
+| aspectRatio            | optional | any `W:H` (→ pixels); omit → inferred from the input images | same pixel limits as the text-to-image slug. |
+| resolution             | optional | `low/medium/high/ultra` → 1280/1920/2560/3840 long edge | only applied together with `aspectRatio`; set both when the reference is small. |
+| quality                | optional | `low·medium·high·xhigh·max·auto`                        | sampling effort, NOT pixels. `xhigh`/`max` = more detail, much slower and costlier. |
+| outputFormat           | optional | `png·jpeg·webp`                                         | default png. |
+| n                      | optional | 1–10                                                    | default 1. |
+
+- **Extra params** (via `extra_params`): `background` (`auto`·`transparent`·`opaque`), `output_compression` (integer 0–100, only with `jpeg`/`webp`).
+- **Limits (fal schema):** `prompt` **1–32000 chars**; `referenceImages` **≤16**; `n` 1–10.
+- *Not settable via the tool:* `maskImage` (masked inpaint is NOT exposed by `generate_image`). `seed` accepted but IGNORED.
+
+### GPT Image 2.5 Sunburst Edit: `openai/gpt-image-2.5/sunburst/edit`  *(image-to-image)*
+
+- GPT Image 2.5 edit, precision variant: tightest control, edits scoped exactly to the instruction, subject and composition preserved across many revision rounds · **needs** `referenceImages`.
+
+| `generate_image` param | Req?     | Accepted values                                         | Notes |
+| ---------------------- | -------- | ------------------------------------------------------- | ----- |
+| prompt                 | required | 1–32000 chars                                           | edit instructions. |
+| referenceImages        | required | 1–16 images (each ≤25 MB)                               | |
+| aspectRatio            | optional | any `W:H` (→ pixels); omit → inferred from the input images | same pixel limits as the text-to-image slug. |
+| resolution             | optional | `low/medium/high/ultra` → 1280/1920/2560/3840 long edge | only applied together with `aspectRatio`; set both when the reference is small. |
+| quality                | optional | `low·medium·high·xhigh·max·auto`                        | sampling effort, NOT pixels. `xhigh`/`max` = more detail, much slower and costlier. |
+| outputFormat           | optional | `png·jpeg·webp`                                         | default png. |
+| n                      | optional | 1–10                                                    | default 1. |
+
+- **Extra params** (via `extra_params`): `background` (`auto`·`transparent`·`opaque`), `output_compression` (integer 0–100, only with `jpeg`/`webp`).
+- **Limits (fal schema):** `prompt` **1–32000 chars**; `referenceImages` **≤16**; `n` 1–10.
 - *Not settable via the tool:* `maskImage` (masked inpaint is NOT exposed by `generate_image`). `seed` accepted but IGNORED.
 
 ### Nano Banana 2 — Edit — `fal-ai/nano-banana-2/edit`  *(image-to-image)*
@@ -271,9 +341,9 @@ These do NOT go through `generate_image`; you don't choose a model.
 
 ## Notes
 
-- `quality` is consumed ONLY by GPT Image 2 (/edit); every other model ignores it.
+- `quality` is consumed ONLY by the GPT Image 2 and GPT Image 2.5 families (base + edit); every other model ignores it. `xhigh`/`max` exist ONLY on GPT Image 2.5 (GPT Image 2 folds them to `high`).
 - `cameraAngles` is consumed ONLY by Qwen Multiple-Angles.
-- `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2, Seedream 5 Lite and the MAI Image 2.5 Pro family** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `loras` **are NOT parameters** — the agent cannot set them here.
+- `seed` **IS a parameter of** `generate_image`, honoured by **Krea 2 Turbo and the Nano-Banana 2 / Pro models (base + edit)**; **GPT Image 2 / 2.5, Seedream 5 Lite and the MAI Image 2.5 Pro family** accept and ignore it. `maskImage`**,** `safetyTolerance`**,** `loras` **are NOT parameters** — the agent cannot set them here.
 - `width` + `height` (an exact px canvas, both together) are consumed ONLY by the **Seedream family** and **Qwen-Image-Edit**; every other model ignores them and uses `aspectRatio`/`resolution`. Always stay under the model's area cap (Seedream edit = 2048² ≈ 4.2 MP).
 - **Resolution matters**: Nano-Banana caps low unless you send `high`/`ultra`.
 - **Respect each model's HARD limits** (in its card, from the fal schema): the `prompt` char cap (GPT Image 32000, Nano-Banana 50000, Krea/MAI 5000, …), max `referenceImages`, and `n`. Exceeding a limit — most often a prompt over the model's max — **fails the call**; compress the prompt, don't truncate blindly.

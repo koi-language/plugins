@@ -8,7 +8,7 @@ Only models **enabled in the BRAXIL backend** are listed, and each table uses th
 
 Talking-head **avatar** rides the SAME tool: `operation:"new"` + `audioFile` + a REQUIRED `model` from the `video_avatar` cards (see the Avatar section).
 
-**Multi-shot** (one generation renders several hard-cut shots mapped to reference panels — the storyboard→video path): the **Seedance 2.0 family** AND the **MiniMax H3 family**. **Every other video model produces ONE continuous shot per call.** Each card states it explicitly. When a clip needs several hard-cut shots you MUST pick a multi-shot model; choose it on this capability + fit (read the cards), not from any fixed label. **Multi-shot is a model BEHAVIOUR, not a schema field** — it isn't in the fal openapi, so it's curated per card from testing/docs, not auto-derived.
+**Multi-shot** (one generation renders several hard-cut shots mapped to reference panels — the storyboard→video path): the **Seedance 2.0 family** AND the **MiniMax H3 family** (`minimax/h3/*`; the H3 Max Multi-Angle camera-move slug is NOT multi-shot). **Every other video model produces ONE continuous shot per call.** Each card states it explicitly. When a clip needs several hard-cut shots you MUST pick a multi-shot model; choose it on this capability + fit (read the cards), not from any fixed label. **Multi-shot is a model BEHAVIOUR, not a schema field** — it isn't in the fal openapi, so it's curated per card from testing/docs, not auto-derived.
 - **Real human faces do NOT force the model choice — BOTH Seedance and MiniMax H3 handle photoreal faces perfectly.** ⚠️ Do NOT steer a live-action / real-face storyboard to MiniMax just because it has real faces — that is NOT a reason to avoid Seedance. **Seedance does real faces perfectly via its documented workaround: reproduce each character's turnaround through Seedream with a detailed re-description** (a Seedream reproduction clears Seedance's likeness filter; see the Seedance reference-to-video card's reference-PREP section / `references/usage/seedance.md`). MiniMax H3 accepts photoreal references directly — its ONLY edge here is skipping that one Seedream generation step, not any capability Seedance lacks. So pick the model on **craft, look, limits and fit** (Seedance's craft skill + look, its 4k reach, its reference caps, etc.), never on the mere presence of real faces.
 
 Every card lists that model's **hard limits (from the fal schema)** — prompt char cap, max references, duration range, enums. Respect them: exceeding a limit (e.g. a prompt over the model's max) fails the call. If your prompt is over the cap, compress it, don't truncate blindly.
@@ -161,6 +161,28 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 - **✅ Accepts REAL human faces in references directly — NO tricks.** MiniMax takes photoreal character references AS-IS: attach the raw turnarounds, no Seedream laundering, no blur. ⚠️ This is a **convenience (fewer steps), NOT a reason to prefer it over Seedance for real faces** — Seedance handles real faces perfectly too, via its documented Seedream turnaround-(re)generation workaround (see its card's reference-PREP section). Real faces alone must NEVER decide the model; choose on craft/look/limits/fit.
 - **Audio: NATIVE and always ON** — the model generates synced sound/dialogue itself (no `withAudio` toggle in the schema; you can't turn it off or steer it, but it DOES come out with audio — don't warn the user it's missing/uncontrollable).
 - The model also accepts up to 3 reference AUDIO clips (each needs at least one image or video ref) but that is **not settable via the tool** (`video` exposes no `audioUrl`). **Rejects**: startFrame, endFrame. *Not settable:* `seed`.
+
+### MiniMax H3 Max Multi-Angle (Image-to-Video): `minimax/h3-max/multi-angle/image-to-video`
+- needs `startFrame`. **Camera-only move around ONE still image**: the scene stays frozen while the camera orbits, rises/drops and pushes in/out along explicit 3D keyframes. For turntables, orbit reveals and multi-angle views of a product, character or set from a single frame; NOT for subject/character motion.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | image | the frame the camera moves around; output canvas follows it. |
+| prompt | optional | string, ≤50000 chars | omit → the model's built-in "scene frozen, only the camera moves" prompt. |
+| resolution | optional | `480p·768p·1080p` (`low`→480p, `medium`/`720p`→768p, `high`/`ultra`→1080p) | omit → 768p. 1080p = latent refinement of a native 768p render. |
+| duration | optional | 5–15 s (integer) | omit → 5 s. |
+| seed | optional | integer | reproducibility. |
+
+- **Camera path → `extra_params.camera_trajectory`** (this model's core control): an ordered array of **2–12 keyframes**, each an object with ALL four keys:
+  - `time`: 0–1, normalized position in the clip (0 = start, 1 = end).
+  - `azimuth`: horizontal angle around the subject, in degrees. Signed; full turns are preserved (e.g. 720 = two orbits), max **32 turns** of total azimuth travel.
+  - `elevation`: vertical angle around the subject, **−90…90** degrees.
+  - `distance`: camera distance from the subject in normalized scene units, **> 0** (smaller = closer).
+  - The first pose is held until its `time`; the last pose is held for the rest of the clip.
+  - fal's own example (starts at `azimuth 0 · elevation 0 · distance 1`): `extra_params: { "camera_trajectory": [ {"time": 0, "azimuth": 0, "elevation": 0, "distance": 1}, {"time": 0.3, "azimuth": 45, "elevation": 15, "distance": 0.2}, {"time": 0.8, "azimuth": 90, "elevation": -90, "distance": 1} ] }`.
+- **Other extra params:** `prompt_expansion_mode` (`balanced` default, ~1 s prompt rewrite; `quality` spends up to ~30 s on a richer prompt).
+- **Limits (fal schema):** `prompt` **≤50000 chars**; `camera_trajectory` **2–12** keyframes (`time` 0–1, `elevation` −90…90, `distance` >0, ≤32 azimuth turns total); `duration` 5–15 s integer. **Multi-shot: NO** (one continuous camera move).
+- **Rejects**: endFrame, referenceImages, referenceVideos, aspectRatio (canvas follows the image). *Not settable:* `withAudio` (not in the schema).
 
 ### Flux 3 — Text-to-Video — `blackforestlabs/flux-3/text-to-video`
 - text-only (no frames). Black Forest Labs Flux 3; caps at 1080p.

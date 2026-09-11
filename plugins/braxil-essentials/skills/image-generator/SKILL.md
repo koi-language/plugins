@@ -92,7 +92,7 @@ Reach for GPT Image 2 first, every time. Do NOT switch to Nano-Banana, Seedream,
 
 If none of the three applies, use GPT Image 2. When in doubt, GPT Image 2.
 
-- Compare the candidates' cards in `references/models.md` only for the parameters GPT Image 2 accepts/rejects (aspect ratios, resolution ceiling, output formats, `quality`) — GPT Image 2 is the only model that reads `quality`.
+- Compare the candidates' cards in `references/models.md` only for the parameters GPT Image 2 accepts/rejects (aspect ratios, resolution ceiling, output formats, `quality`). Only the GPT Image 2 / 2.5 families read `quality` (`xhigh`/`max` only on 2.5).
 - **What the labels mean.** A model's labels (the Catalog table's **Labels** column) mark the content/subject/style it is best-suited for. They only override the GPT Image 2 default under exception 3 above — a specialized style the user explicitly asked for that GPT Image 2 isn't labelled for. Never let a label pull you off GPT Image 2 for a generic request.
 - Some capabilities live on a single model (camera-rotation, masked inpaint, outpaint, transparent cut-out). Find that model by the param / label it supports in the table + `references/models.md` — never by memory (this is exception 1).
 

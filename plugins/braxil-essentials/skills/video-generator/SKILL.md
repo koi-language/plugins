@@ -142,3 +142,4 @@ The same rule holds when the clip arrives as an attachment rather than open in t
 - **Duration is per-model** — some cap at 8s, others reach 15s, and extend is a fixed length. Check the card before promising a duration.
 - **Only some models reach 4k** — others ignore `resolution` or inherit it from the input. Check the card.
 - Read the model's card in `references/models.md` before setting `endFrame`, `resolution`, `duration` or `cameraMovement` — support and accepted values are per-model.
+- **Precise camera path around a still image** (turntable, orbit reveal, multi-angle views of a product/character/set, scene frozen): `cameraMovement` is only a loose hint. Use the model whose card documents `extra_params.camera_trajectory` (keyframed azimuth / elevation / distance).
