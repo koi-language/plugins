@@ -184,6 +184,53 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 - **Limits (fal schema):** `prompt` **≤50000 chars**; `camera_trajectory` **2–12** keyframes (`time` 0–1, `elevation` −90…90, `distance` >0, ≤32 azimuth turns total); `duration` 5–15 s integer. **Multi-shot: NO** (one continuous camera move).
 - **Rejects**: endFrame, referenceImages, referenceVideos, aspectRatio (canvas follows the image). *Not settable:* `withAudio` (not in the schema).
 
+### MiniMax H3-Max Turbo — Text-to-Video — `minimax/h3-max-turbo/text-to-video`
+- text-only (no frames). fal's **post-trained** H3 variant: stronger prompt adherence and better aesthetics than plain H3, and the **Turbo** tier is the cheap/fast one.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string | English. **≤50000 chars** — 25× H3's 2000-char ceiling, so no compressing needed here. |
+| aspectRatio | optional | `21:9·16:9·4:3·1:1·3:4·9:16` | clamped to nearest; NO `auto` — omit → 16:9. |
+| resolution | optional | `480p` · `768p` | native tiers. `720p`/`1080p`/`2k`/`4k` all fold to **768P** (the ceiling); only an explicit `low`/`480p` gets the cheap tier. Omit → 768P. |
+| duration | optional | 5–15 s (integer) | omit → 5s. |
+| seed | optional | integer | ✅ **supported** — unlike plain H3, which has no seed at all. |
+
+- **NOT 2K.** The H3-Max family renders natively at 480P/768P; H3's fixed `2K` does not exist here. If the user needs 2K, that's plain `minimax/h3/*`.
+- The engine always sends `prompt_expansion_mode: "balanced"` (the schema requires the field). The `quality` mode spends ~30 s rewriting your prompt — **wrong for us**: our prompts are already authored shot-by-shot, so a model rewrite can only drift off the storyboard.
+- **Audio:** no `withAudio` toggle in the schema (same as the H3 base) — expect the family's native synced audio; you can't steer it here.
+- **Rejects**: startFrame, endFrame, referenceImages, referenceVideos.
+
+### MiniMax H3-Max Turbo — Image-to-Video — `minimax/h3-max-turbo/image-to-video`
+- needs `startFrame` (optional `endFrame`).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| startFrame | required | image | literal first frame; output dims follow it. |
+| endFrame | optional | image | first→last keyframe interpolation. |
+| prompt | required | string ≤50000 chars | motion description — REQUIRED on this slug. |
+| resolution | optional | `480p` · `768p` | as above; omit → 768P. |
+| duration | optional | 5–15 s (integer) | omit → 5s. |
+| seed | optional | integer | ✅ supported. |
+
+- No `aspectRatio` (output follows the image — frame the photo first). **Rejects**: referenceImages, referenceVideos.
+
+### MiniMax H3-Max — Reference-to-Video — `minimax/h3-max/reference-to-video`
+- composes from `referenceImages` (+ `referenceVideos`). The **non-Turbo** H3-Max tier: better aesthetics, pricier per second.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤50000 chars; refs cited as `Image N` / `Video N` / `Audio N` (the engine rewrites your `@refN` for you) | |
+| referenceImages | optional | up to 9 images | |
+| referenceVideos | optional | up to 3 clips (2–15 s each, combined ≤ 15 s) | continuation / composition refs. |
+| aspectRatio | optional | `adaptive·21:9·16:9·4:3·1:1·3:4·9:16` | omit → adaptive. |
+| resolution | optional | `480p` · `768p` | omit → 768P. |
+| duration | optional | 5–15 s (integer) | omit → 5s. |
+| seed | optional | integer | ✅ supported. |
+
+- **Cross-modal cap: 12 FILES TOTAL** (images + videos + audio), on top of the per-modality 9 / 3 / 3. Over that, the engine trims audio first, then videos, then images — so keep the set under 12 or you lose refs silently.
+- **Reference billing is separate**: the first ~4096 reference tokens are free (≈4 images at 1024×1024, or ONE at 2048×2048), then each extra 1K tokens is charged. Downscale refs you don't need at full size.
+- **Rejects**: startFrame, endFrame.
+
 ### Flux 3 — Text-to-Video — `blackforestlabs/flux-3/text-to-video`
 - text-only (no frames). Black Forest Labs Flux 3; caps at 1080p.
 
@@ -357,6 +404,50 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 
 - **Rejects**: startFrame, endFrame, resolution, seed, withAudio.
 
+### Gemini Omni Flash 1.1 — Text-to-Video — `google/gemini-omni-flash/v1.1/text-to-video`
+- text-only. The v1.1 revision: same minimal, prose-driven model, **plus a real `resolution` knob that reaches 4k**.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (prompting technique, audio).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars | all cinematography/pacing/audio direction lives in the prose. |
+| aspectRatio | optional | `16:9·9:16` only | clamped to nearest orientation; omit → 16:9. |
+| duration | optional | 3–10 s (clamped) | omit → 8s. **Note the window: 3–10, not the MiniMax 5–15.** |
+| resolution | optional | `360p·720p·1080p·4k` | NEW in v1.1. Omit → fal's 720p default (we don't send the field at all, so you're never billed for an upgrade you didn't ask for). `2k` folds DOWN to 1080p. |
+
+- **Rejects**: startFrame, endFrame, referenceImages, referenceVideos, seed, withAudio.
+
+### Gemini Omni Flash 1.1 — Image-to-Video — `google/gemini-omni-flash/v1.1/image-to-video`
+- needs `startFrame` + `prompt`. Two things v1 didn't have: an **`endFrame`** and **`resolution`**.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`**.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars | how the first image animates (or interpolates into the end image). |
+| startFrame | required | image | literal first frame. |
+| endFrame | optional | image | ✅ **NEW in v1.1** — with both frames set the model INTERPOLATES between them in order. v1 had no end frame at all. |
+| aspectRatio | optional | `16:9·9:16` only | omit → 16:9. |
+| duration | optional | 3–10 s (clamped) | omit → 8s. |
+| resolution | optional | `360p·720p·1080p·4k` | NEW in v1.1; omit → 720p default. |
+
+- **Rejects**: referenceImages, referenceVideos, seed, withAudio.
+
+### Gemini Omni Flash 1.1 — Reference-to-Video — `google/gemini-omni-flash/v1.1/reference-to-video`
+- composes from `referenceImages` (≤10) and — **new in v1.1** — `referenceVideos` (≤3).
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (how refs bind, prompting technique, audio).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars; write `@refN` and the engine rewrites it | see the ref-binding note below. |
+| referenceImages | optional | up to 10 images | |
+| referenceVideos | optional | up to 3 clips, **each ≤3 s** | ⚠ hard 3-second cap PER CLIP — trim before attaching or fal rejects it. |
+| aspectRatio | optional | `16:9·9:16` only | omit → 16:9. |
+| duration | optional | 3–10 s (clamped) | omit → 8s. |
+| resolution | optional | `360p·720p·1080p·4k` | NEW in v1.1; omit → 720p default. |
+
+- **Ref binding — write `@ref1`, `@ref2`, … as usual.** This model's native dialect is `<IMAGE_REF_n>` / `<VIDEO_REF_n>`, which is **ZERO-indexed with a separate counter per modality** (2 images + 1 video ⇒ `@ref1 @ref2 @ref3` becomes `<IMAGE_REF_0> <IMAGE_REF_1> <VIDEO_REF_0>`). The engine does that translation for you AFTER applying the caps, so the indices always match what actually ships. Do NOT hand-write the tags — unlike v1, where you had to.
+- **Rejects**: startFrame, endFrame, seed, withAudio.
+
 ### Kling v3 Standard — Motion-Control — `fal-ai/kling-video/v3/standard/motion-control`
 - motion transfer. ⚠ **Requires a reference motion video + `characterOrientation`, which the `video` tool does NOT expose (no `referenceVideos`/`characterOrientation` params).** Effectively not usable through the standard MCP `video` tool right now — do not pick it unless a dedicated path provides those inputs.
 
@@ -374,6 +465,31 @@ The server picks the editor; you pass `sourceVideo` + `prompt`.
 | prompt | required | edit instruction ≤20000 chars | tip: append "Keep everything else the same." |
 - Output dims/length follow the source. Unavailable in EEA/CH/UK.
 - 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (edit prompting technique, audio keep-vs-regenerate, gotchas).
+
+### Gemini Omni Flash 1.1 — Video Edit — `google/gemini-omni-flash/v1.1/edit`  *(operation `"edit"`)*
+The v1.1 editor: identical to the v1 one plus a `resolution` knob.
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"edit"` | |
+| sourceVideo | required | path/@mention to the clip | |
+| prompt | required | edit instruction ≤20000 chars | tip: append "Keep everything else the same." |
+| resolution | optional | `360p·720p·1080p·4k` | NEW in v1.1. Omit → 720p; `2k` folds down to 1080p. |
+- Length still follows the source; only the resolution is now yours to set. Unavailable in EEA/CH/UK.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`**.
+
+### Kling o3 4K — Video-to-Video Reference / Edit — `fal-ai/kling-video/o3/4k/video-to-video/reference` · `…/edit`  *(operation `"edit"`)*
+The 4K tier of the Kling o3 v2v pair. Same fields as the standard/pro tiers — what the tier buys you is a **bigger input envelope**: source clip up to **3840 px** and **15 s** (standard caps at 2160 px / 10 s), ≤200 MB, 24–60 fps, .mp4/.mov only.
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"edit"` | |
+| sourceVideo | required | .mp4/.mov, 3–15 s, 720–3840 px, ≤200 MB | |
+| prompt | required | edit instruction ≤2500 chars | **much tighter than Gemini's 20000** — keep it short. |
+| referenceImages | optional | up to 4 images, ≤10 MB and ≥300 px each | style / character refs. |
+| aspectRatio | optional | `16:9·9:16·1:1` — **`/reference` ONLY** | anything else → auto (matches the source). |
+| duration | optional | 3–15 s — **`/reference` ONLY** | |
+- ⚠ **The two routes are NOT symmetric**: `/edit` rejects `aspectRatio` and `duration` (framing and length follow the source); `/reference` accepts both.
+- On `/edit`, `@refN` binds POSITIONALLY to `@ImageN` in the prompt (the engine rewrites it). On `/reference`, the images are GLOBAL style guidance and are not bound positionally.
+- Audio from the source is **opt-in** (dropped by default, like every model here).
 
 ### Luma Ray 3.2 — Video-to-Video — `luma/agent/ray/v3.2/video-to-video`  *(operation `"edit"`)*
 Restyle / transform an existing clip.
