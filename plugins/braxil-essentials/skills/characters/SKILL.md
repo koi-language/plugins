@@ -68,15 +68,9 @@ attaches them to the character.
   - **WITH reference photos** (a real person) → the **`characters`**-label
     identity model (default **GPT Image 2** edit), which best matches the source.
   - **NO reference photos** (a **100% invented** character) → the
-    **`characters-synthetic`**-label model (**Seedream** text-to-image). A
-    synthesised face is **Seedance-native**: it clears the reference-to-video
-    likeness filter with NO later laundering pass, so an invented character is
-    ready to drive Seedance video straight from its turnaround.
-- **Real-photo characters + Seedance**: their GPT Image 2 sheet is NOT
-  Seedance-native; when later driven by Seedance the video pipeline regenerates a
-  Seedream turnaround from the source first (see `video-generator` →
-  `references/usage/seedance.md`). Invented characters skip that — they are
-  already Seedream.
+    **`characters-synthetic`**-label model (**Seedream** text-to-image).
+- **Every sheet goes to the video model AS-IS** — Seedance included. Never
+  regenerate a character's turnaround through Seedream to feed Seedance.
 - **Resolution**: the sheet renders at **2K** (`generate_character_sheet` requests `resolution: '2k'` = 2048).
 - Pass `characterId` so the sheet lands on the character automatically.
 
