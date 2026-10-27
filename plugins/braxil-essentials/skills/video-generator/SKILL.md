@@ -7,6 +7,21 @@ description: >
 
 # Video models
 
+## 🔴 BEFORE ANYTHING — ask about the 3D previz (user rule, never skip)
+
+A NEW video (text-to-video, a story, several shots, any length) is **never**
+generated without first asking the user, in their language, whether they want
+to **previsualize it in 3D first** — a storyboard with its shots and a live 3D
+previz they can adjust (camera, blocking, timing) before the real video — or
+generate it directly. Ask BEFORE reading model cards or writing the prompt.
+- They choose 3D → activate `storyboard` + `scene-3d` and build the storyboard
+  (the real video comes later from `prepare_scene3d_video`).
+- They say generate directly → go on; pass `previzDeclined: true` to the
+  `video` tool.
+The `video` tool refuses a new generation without that answer. Not asked for:
+takes made from `prepare_scene3d_video` (they ARE the 3D previz), animating a
+photo (`startFrame`), avatars, and edits / extends of an existing video.
+
 ## 🔴 STEP ZERO — `activate_skill` `braxil-essentials:cinematic-video-prompt-engineer` RIGHT NOW
 
 Before you read another line of this runbook, before you look at a model card,

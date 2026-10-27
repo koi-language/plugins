@@ -160,7 +160,26 @@ camera, its aim and its path points on the timeline's 3D stage, change its
 focal length and add cameras; Braxil saves that as the shot's `keyframes`
 (and drops `move`). Those keyframes ARE the user's camera: keep them on any
 other edit, and re-frame such a shot by editing its keyframes, never by
-replacing them with a `move`.
+replacing them with a `move`. `camera.focusKeys` `[{t, d}]` (ms from the shot
+start, metres) is focus pulled by hand — it replaces `focus` / `focusOn` for
+that shot; keep it. Likewise `camera.lensKeys` `[{t, mm}]` is the zoom keyed
+by hand (it overrides the `lens` of the keyframes). And `camera.lensKit` `{name, min, max}` is the lens on
+the camera for the whole shot (a prime has min = max; zoom stays inside it).
+A shot with `inMontage: false` was taken out of the story's montage by the
+user: leave it out, do not put it back.
+
+**Every object must read as what it is.** The video model recognises things
+from the grey previz: a car built as a flat box comes back as anything. Use the
+library shape (`car`, `racecar` for open-wheel / Formula 1, `van`, `truck`,
+`bus`, `motorbike`, `bicycle`, furniture…) and, for what the library lacks, a
+`group` whose parts give its telling silhouette (wings, wheels, cabin, mast…),
+at real size. Never a bare `box` for an object with a shape of its own.
+
+**Vehicles drive, people ride.** Move a vehicle with `drive` actions (`prop`,
+`to`, times — chain legs for curves, about one waypoint per second; it turns
+nose-first along the path) and seat its driver / passengers with `ride`
+(`character`, `prop`; no times = the whole scene). Never fake it with a
+character running while "holding" the vehicle.
 
 **One action clock per scene.** Actions run on the scene clock once; the
 shots are only windows on it (who sees the action, from where). Never
@@ -386,11 +405,45 @@ several, or on the whole montage is always this flow:
    `generate_video` with `model` = **`bytedance/seedance-2.5/us/reference-to-video`
    (always 2.5)**, `referenceVideos: [referenceVideo]`, ALL its
    `referenceImages` (never drop them), `duration: durationSec`, and ONE
-   multi-shot cinematic prompt that walks `shots` in order with their times
-   ("Shot 1 (0–3.2 s): … Hard cut. Shot 2 (3.2–6.5 s): …"), keeping light,
-   wardrobe, props and sound continuous across the cuts. Say that the
+   prompt written SHOT BY SHOT — the shots of the 3D are the only cuts:
+   - one block per entry of `shots` ("Shot 1 (0–3.2 s): …"), the words
+     "HARD CUT" between two blocks, and once, plainly: "Cut ONLY at HARD CUT;
+     never anywhere else";
+   - inside a block NO times at all (no "0–6 s", no "around 6 s": time
+     marks read as more shots and the model cuts there): one paragraph
+     saying the shot follows the reference video's camera EXACTLY as ONE
+     continuous move, then in order what happens — what the camera does
+     (moves, zoom, focus pulls, framing), who is who and how they look,
+     acting, gestures, lines, what happens out of shot, light, sound —
+     chained with "then", "as", "while", never with times;
+   - light, wardrobe, props and sound continuous across the cuts. Say that the
    reference video is a grey 3D previz to be fully re-rendered
    photographically, keeping its composition, motion and cut points.
+   **The reference video is the MASTER.** Open the prompt by saying so: the
+   attached video's camera, framing, what is in and out of frame, positions,
+   sides and timing override anything in the text. Then CHECK the prompt
+   against that shot's `inFrameTimeline` (second by second: `inFrame` = who /
+   which vehicle the shot shows, side, distance; `offFrame` = what is near but
+   out of shot, and on which side) and correct it lightly: an action that
+   happens out of shot stays in the prompt, said as out of shot ("A's car
+   overtakes on the right, entirely out of frame — only its roar and B's eyes
+   following it"). Never write it as seen while the reference doesn't show it
+   (the model invents it to obey the text). If the user wants it ON screen,
+   tell them the 3D camera must frame it first.
+   Give each figure the VIEW the timeline gives (front / three-quarter front /
+   side / three-quarter from behind / behind, and which of its sides) — a view
+   the reference's camera does not have ("his face, sun full on it" while it
+   shows his side) makes the model CUT to get it. Every change of framing
+   inside a shot is the camera MOVING there, never a new shot.
+   Spend the words on who / what things look like (cast, vehicles, place,
+   light, sound), not on re-staging motion the video already carries.
+   **Screen positions come from the 3D, not the script:** each shot's
+   `onScreen` says who the reference shows on the left / centre / right and
+   how near; write THOSE sides (the storyboard's "screen right" may be out of
+   date — a prompt that contradicts the reference makes the model mirror the
+   shot). Tie every character to its grey figure with `castKey` ("the boy —
+   the small blue figure in the reference — …") so the model knows which
+   figure is which sheet.
 4. REVIEW THE TAKE: `extract_frame` around each planned shot (or `ask_video`)
    and compare with the previz and the scripts — composition, camera move,
    who is where. If it drifts, regenerate with a corrected prompt (same

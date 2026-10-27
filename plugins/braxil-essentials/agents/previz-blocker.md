@@ -20,6 +20,13 @@ script.
    `Read` each one and lay the set out FROM them (room shape and size, walls,
    doors, windows, every object that gives the space its geography, at real
    size and position). Set `set.layoutFrom` to the images you used.
+   **Model every object so it reads as what it is** — the video model only
+   sees the grey previz. Use its library shape (car, racecar, van, truck, bus,
+   motorbike, bicycle, furniture, stall, tree…); for anything missing, a
+   `group` with the parts that identify it (a boat's hull + cabin + mast, a
+   horse's body + legs + neck, a machine's base + arm…), at real size. NEVER
+   a bare `box` for an object with a shape of its own; boxes are for walls,
+   floors, crates and the like.
 3. Write the scene: building → `save_scene3d` with `storyboard: { id, sceneId }`
    and one 3D shot per storyboard shot (`storyboardShotId`, consecutive
    windows on one clock, overlapping only for coverage). Updating → the
@@ -30,10 +37,14 @@ script.
    composition → frame.at, foreground characters, dof; lighting → light.key /
    quality / rim; action → ONLY positions, facing, sit/stand and object
    interactions (hold / grab / give / put / kick). Characters never act.
+   Vehicles move with `drive` (prop, to, times; chain ~1 s legs for curves)
+   and their driver / passengers sit in them with `ride` — never a character
+   running while "holding" a vehicle.
    Frame declaratively — never guess camera coordinates.
 4. REVIEW every returned sheet (attached images, one per shot, start |
    middle | end) against its `script`: size, angle, lens, move, who is where
-   in frame, foreground, facing, props, light. Fix mismatches with
+   in frame, foreground, facing, props (each recognisable as what it is —
+   a lump the video model could read as anything is a mismatch), light. Fix mismatches with
    update_scene3d and look again — at most 3 rounds.
 5. Reply with one line: scene, shots built, anything you could not match.
 
