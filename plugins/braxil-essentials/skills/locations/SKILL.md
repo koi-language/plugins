@@ -27,10 +27,8 @@ via `scene.locationId` on the storyboard.
 | `lighting` | string | the set's default light. |
 | `tags` | string[] | free tags. |
 | `photos` | string[] | ABSOLUTE paths to reference photos. `photos[0]` is the hero. POINTERS only. |
-| `plate` | string | path to the **FRONT** establishing view (set by `generate_location_plate`). **The only view a location needs.** |
-| `plateRear` | string | OPTIONAL path to the **REAR** (reverse 180°) view. |
-| `plateLeft` | string | OPTIONAL path to the **LEFT** side view. |
-| `plateRight` | string | OPTIONAL path to the **RIGHT** side view. |
+| `views` | `[{ id, label, path }]` | the establishing views: a free list. `label` is free text owned by the user (no fixed front/rear/left/right); `path` is null on an empty slot waiting to be filled. Set by `generate_location_plate`. **One view with an image is all a location needs.** |
+| `plate` | string | READ-ONLY: derived from the first view with an image, the location's anchor. Change `views`, never this. |
 | `details` | string[] | OPTIONAL ABSOLUTE paths to close-up / DETAIL shots of the place (a sign, a scale, a corner). Uploaded or assigned by the user, POINTERS only. Distinct from `photos` (the input references that DEFINE the place). |
 
 `createdAt` / `updatedAt` are managed by the tool — on an UPDATE, read the
@@ -43,7 +41,7 @@ existing doc and pass its fields back (including `id`) so you update in place.
    story** — `locationType` (interior|exterior|mixed), `timeOfDay`, `palette`,
    `lighting`. Do NOT leave them empty when the scene description states them (an
    empty attribute next to a full description is a bug). Add any reference `photos`.
-2. **The FRONT view** with `generate_location_plate` (procedure below). **That is the whole obligation** — do NOT also generate a rear or side view here.
+2. **One view** with `generate_location_plate` (procedure below). **That is the whole obligation** — do NOT also generate more views here.
 3. **Link it**: on the storyboard, set the scene's `locationId` to this location
    (and/or add it to the storyboard `locations` roster).
 
@@ -54,17 +52,16 @@ person's identity. A **location** → establishing **views** of the EMPTY set th
 lock the world's look, palette and light across every clip shot there. No face on
 a set, so no likeness-laundering is needed.
 
-🔴 **Creating a location generates the FRONT view and NOTHING else.** A location
-with only its front is COMPLETE — that is the normal, finished state, not a
-half-built one. REAR / LEFT / RIGHT are optional extra angles that exist as empty
-slots in the GUI until someone deliberately fills them (see "Extra angles").
-Generating them as a routine second step is a bug: it burns a render on an image
-nobody asked for, on a set that may never be shot from that side.
+🔴 **Creating a location generates ONE view and NOTHING else.** A location with
+one view is COMPLETE — that is the normal, finished state, not a half-built one.
+Further views are optional (see "More views"). Generating them as a routine second
+step is a bug: it burns a render on an image nobody asked for, on a set that may
+never be shot from that side.
 
 **YOU (the agent) author the descriptions — `generate_location_plate` NEVER
 writes the prompt.** It only renders the image from the prompt YOU give it.
 
-### The FRONT view (the one mandatory step)
+### The first view (the one mandatory step)
 Write a **precise, faithful, element-by-element** description of the empty
 location, grounded in its `description`. Name EVERY concrete element the place has
 — every piece of furniture, the TV, the wall clock, the china cabinet, the
@@ -75,38 +72,34 @@ plants, the paintings, the floor, the palette, and the light and how it falls.
 main failure to avoid. Then call:
 
 ```
-generate_location_plate({ view: "front", prompt: "<your precise FRONT description>", locationId })
+generate_location_plate({ prompt: "<your precise description>", locationId })
 ```
 
-It saves the image to `plate` and returns its path. **You must SEE it** (read the
+It adds the view and returns its `path`. **You must SEE it** (read the
 returned path). Then STOP — the location is done.
 
-### Extra angles (REAR / LEFT / RIGHT) — only on demand
+### More views — only on demand
 Generate one ONLY when:
-- the **user asks** for it (in chat, or via that slot's button in the GUI), or
-- a **scene genuinely needs that angle** — you are about to shoot the set from a
-  side the front view doesn't show, and the render would otherwise invent it.
+- the **user asks** for it (in chat, or via that view's button in the GUI), or
+- a **scene genuinely needs that side** — you are about to shoot the set from an
+  angle the existing views don't show, and the render would otherwise invent it.
 
-Never "just in case", never as a completion ritual. Each angle **MUST attach the
-current FRONT as reference** — that is what keeps it the SAME place instead of a
-re-invented one — and each saves to its OWN field (`plateRear` / `plateLeft` /
-`plateRight`), so one never overwrites another:
+Never "just in case", never as a completion ritual. Each one **MUST attach the
+`plate` as reference** — that is what keeps it the SAME place instead of a
+re-invented one:
 
 ```
-generate_location_plate({ view: "rear", prompt: "<your reverse-shot description>",
+generate_location_plate({ prompt: "<your description of this view>", label: "<short label>",
   referenceImages: [ "<the current plate path>" ], locationId })
 ```
 
-- **REAR** = the SAME place with the camera rotated 180°: the wall the FRONT
-  camera stood at is now in front; the FRONT view's back wall / window / balcony
-  is now **BEHIND the camera and NOT visible**.
-- **LEFT / RIGHT** = the SAME place seen from that side (camera rotated 90°),
-  same light and palette. Typical on an EXTERIOR (a building whose sides matter)
-  that the front alone cannot capture.
+Pass `viewId` to fill or replace an existing view; omit it to add a new one. When
+the user gave a view a label, that label says which view it is: follow it, and
+never rename it. `label` only applies to a view that has none.
 
-The user can also **ASSIGN** an image to any of these slots instead of generating
-it, or **REMOVE** one, from the location tab. Respect what is there: never
-regenerate a view the user assigned unless they ask.
+The user can also **ASSIGN** an image to a view, **REMOVE** one, or add empty ones
+from the location tab. Respect what is there: never regenerate a view the user
+assigned unless they ask.
 
 ### Detail shots (`details`)
 Close-ups of the place the user uploads or assigns (a hand-written sign, a scale,
@@ -114,21 +107,20 @@ a corner). You do not generate these — they are the user's. Attach them as ext
 reference anchors when a shot features that detail.
 
 ## Regenerating / editing a view
-- To redo ONE view, just call `generate_location_plate` again for that `view`
-  (for `rear`/`left`/`right`, keep attaching the current `plate` as reference so
-  it stays the same room).
-- To tweak a view (e.g. "open the window in the REAR"), `generate_image` in EDIT
-  mode with that view's image as the reference + the change + the set's
-  description, then `save_location` writing the new path back to `plate`/`plateRear`.
+- To redo ONE view, call `generate_location_plate` again with its `viewId` (keep
+  attaching the current `plate` as reference unless it IS the first view).
+- To tweak a view (e.g. "open the window"), `generate_image` in EDIT mode with that
+  view's image as the reference + the change + the set's description, then
+  `save_location` writing the new path into that entry of `views`.
 
 ## Gotchas
 
 - **NEVER hand-write the JSON** — always `save_location`.
 - **Update in place**: read the doc, mutate, `save_location` with the SAME `id`
   (and its `createdAt`) so you don't duplicate.
-- **`plate` / `plateRear`** come from `generate_location_plate`, not by hand, and
-  the tool never writes the prompt — YOU author a precise, faithful description.
-- The REAR MUST attach the FRONT as `referenceImages` — that reference is what
-  keeps it the SAME room instead of a plausible but different one.
-- Reference `photos` are the raw inputs the location was built FROM; `plate` /
-  `plateRear` are the generated establishing views the video pipeline attaches.
+- **`views`** come from `generate_location_plate`, not by hand, and the tool never
+  writes the prompt — YOU author a precise, faithful description.
+- Every view after the first MUST attach the `plate` as `referenceImages` — that
+  reference is what keeps it the SAME room instead of a plausible but different one.
+- Reference `photos` are the raw inputs the location was built FROM; `views` are
+  the generated establishing views the video pipeline attaches.

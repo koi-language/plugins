@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "officegen": "^0.6.5",
-    "pdf-lib": "^1.17.1",
-    "pptxgenjs": "^4.0.1"
-  }
-}

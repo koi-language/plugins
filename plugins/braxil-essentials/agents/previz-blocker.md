@@ -2,7 +2,7 @@
 name: previz-blocker
 description: "Blocks ONE storyboard scene in 3D (Braxil previz, Blender) — fast. Use it to build or update the 3D previz of a storyboard: spawn one previz-blocker PER storyboard scene that needs work, ALL IN PARALLEL (one message, several Agent calls). Give it the storyboard id, the storyboard scene id, the scene3d id if one already exists, and what to do (build / re-block shots X / rebuild the set from new reference photos). It reads the storyboard, looks at the place's reference images, writes the scene with save_scene3d / update_scene3d, reviews every shot's sheet against its script until it matches, and returns a one-line summary."
 model: inherit
-tools: Read, mcp__braxil__get_storyboard, mcp__braxil__extract_frame, mcp__braxil__get_scene3d, mcp__braxil__save_scene3d, mcp__braxil__update_scene3d, mcp__braxil__render_scene3d
+tools: Read, mcp__braxil__get_storyboard, mcp__braxil__extract_frame, mcp__braxil__get_model3d, mcp__braxil__get_scene3d, mcp__braxil__save_scene3d, mcp__braxil__update_scene3d, mcp__braxil__render_scene3d
 skills:
   - scene-3d
 ---
@@ -27,6 +27,11 @@ script.
    horse's body + legs + neck, a machine's base + arm…), at real size. NEVER
    a bare `box` for an object with a shape of its own; boxes are for walls,
    floors, crates and the like.
+   **Modeled assets first:** `get_model3d` (by the scene's `locationId`, and
+   the list). A set modeled for this place → `set.model: <id>`; an object
+   modeled for this story (the hero car, a landmark) → that prop with
+   `model: <id>` (keep its library `shape` too). Use every model the brief
+   names.
 3. Write the scene: building → `save_scene3d` with `storyboard: { id, sceneId }`
    and one 3D shot per storyboard shot (`storyboardShotId`, consecutive
    windows on one clock, overlapping only for coverage). Updating → the

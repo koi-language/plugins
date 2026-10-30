@@ -175,6 +175,15 @@ library shape (`car`, `racecar` for open-wheel / Formula 1, `van`, `truck`,
 `group` whose parts give its telling silhouette (wings, wheels, cabin, mast…),
 at real size. Never a bare `box` for an object with a shape of its own.
 
+**Modeled assets (`model`).** When an object or a place must look like ITS
+reference photos (the hero car, a specific street or circuit, a landmark),
+it is modeled once with `build_model3d` (skill `3d-modeler`, agent
+`model-builder`) and used by id: a prop `{ shape: "racecar", model: "<id>", … }`
+(the model replaces the library shape at its modeled size; `size` scales it
+uniformly) or `set.model: "<id>"` (replaces the procedural floor / walls /
+ceiling; the set model is in scene coordinates). `get_model3d` lists what
+exists: reuse it in every scene of that place / object.
+
 **Vehicles drive, people ride.** Move a vehicle with `drive` actions (`prop`,
 `to`, times — chain legs for curves, about one waypoint per second; it turns
 nose-first along the path) and seat its driver / passengers with `ride`
@@ -298,6 +307,13 @@ the objects the action needs plus a few that orient the viewer (doors,
 windows, the big furniture), all at real size.
 
 ## From a storyboard (the main flow)
+
+**Before blocking:** when the story has places or key objects with
+reference photos (saved locations, photos the user gave, a specific
+vehicle), spawn one `model-builder` per place / object, all in parallel,
+and wait for their ids; then pass those ids to the previz-blockers so the
+sets and props use the models. Secondary objects and extras stay library
+shapes.
 
 1. `get_storyboard` → its scenes, shots, aspect, characters, locations.
    If `get_scene3d { storyboardId }` already lists scenes, UPDATE them; never duplicate.
@@ -460,4 +476,4 @@ several, or on the whole montage is always this flow:
 ## Limits (say them when relevant)
 
 Characters are mannequins (no faces, hands or cloth); props are simple
-volumes. Previz is for space, timing, camera and staging — not for look.
+volumes unless modeled with `build_model3d`. Previz is for space, timing, camera and staging — not for look.
