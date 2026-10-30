@@ -8,6 +8,8 @@ description: "MANDATORY before build_model3d. Models ONE object (a specific car,
 You model in **Blender Python**: you write a script, `build_model3d` runs it
 in a clean Blender, exports the result as `.glb` and returns a review you
 LOOK at and correct against. It runs locally: free, a few seconds per build.
+**Never ask the user for permission to model:** it costs nothing, so when the
+previz needs a model, build it and say what you are doing.
 
 ## What matters, in this order
 
@@ -50,7 +52,12 @@ budget: an object 2k–30k triangles, a set up to ~150k.
 4. **Write the script** (see "Script contract"). Block the main volumes first
    at the measured sizes, then the telling parts.
 5. **`build_model3d`** with `name`, `kind`, `script` (or `scriptFile`) and
-   `references`. LOOK at every attached image:
+   `references`. ALWAYS pass `name` (what it is, in the user's language:
+   "Coche de F1", "Fachada de la juguetería") and a one-line `description`
+   of what THIS build does ("Bloqueo de volúmenes a escala real",
+   "Alerón delantero más ancho, morro más bajo"), on every rebuild too: the
+   user sees them on the progress card, it is how they follow the work.
+   LOOK at every attached image:
    - turnaround (objects: front / side / back / three-quarter; sets: three
      corners + top): proportions and that it reads as what it is;
    - per photo: `[photo | model from the photo camera | blend]`. In the blend

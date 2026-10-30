@@ -16,6 +16,10 @@ Read each skill's SKILL.md / card before using it; don't re-derive. What THIS sk
 - **The identity/look ANCHORS = the character TURNAROUND sheets + the set/location PLATES.** These lock face, hair, wardrobe, and the world's look/palette across every clip. **They are MANDATORY on every render** — a text prompt, however good, does not carry a face; without them a multi-shot piece drifts ("same character, different face each clip"). Built here once if missing (see "Build missing anchors"), then reused across every clip.
 - **Composition ALWAYS comes from the cinematic prompt** authored by `cinematic-video-prompt-engineer`. There is no composed panel sheet in this pipeline — nothing but the **ANCHORS** (turnarounds + plates, prepared per the model card) + the **cinematic prompt** ever reaches the model. Never put a panel image in `referenceImages`.
 
+## 🔴 RESOLUTION: ask the user once, before the first clip
+
+Unless the user already named it, ask which resolution they want (AskUserQuestion, the values the chosen model accepts) BEFORE rendering anything, and pass that `resolution` on every clip. Never pick it yourself (user rule; the `video` tool refuses without it).
+
 ## 🛑 STEP 0: READ THE STORYBOARD JSON FIRST (MANDATORY, before any `generate_video`)
 The storyboard JSON is the script. **When you read it, read the CONTINUITY MATRIX too** — the per-shot `continuity` rows `{ characters, objects, place }` + the story-wide `continuity` LOCK. Hold it in mind for every clip; it drives what state you restate in each clip's brief ("🎬 READ THE CONTINUITY MATRIX FIRST", STEP B). It is the raccord authority, not optional colour.
 - The storyboard JSON path is given directly (task / `# WORKING AREA` active doc, or the storyboard established in the conversation). `read_file` it.

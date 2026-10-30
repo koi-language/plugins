@@ -259,7 +259,7 @@ in sync BEFORE telling the user you're done:
 - orphans → `removeShots`.
 
 **Speed:** storyboard scenes are independent sets. Delegate each one that needs
-work to a `previz-blocker` subagent — ALL IN PARALLEL, in ONE message with one
+work to a `previz-creator` subagent — ALL IN PARALLEL, in ONE message with one
 Agent call per scene (brief: storyboard id, storyboard scene id, scene3d id if
 any, what to do: build / re-block shots X / rebuild the set from new photos).
 Never block scenes one after another yourself. Each scene renders all its
@@ -311,9 +311,10 @@ windows, the big furniture), all at real size.
 **Before blocking:** when the story has places or key objects with
 reference photos (saved locations, photos the user gave, a specific
 vehicle), spawn one `model-builder` per place / object, all in parallel,
-and wait for their ids; then pass those ids to the previz-blockers so the
+and wait for their ids; then pass those ids to the previz-creators so the
 sets and props use the models. Secondary objects and extras stay library
-shapes.
+shapes. Modeling, blocking and rendering the previz are local and free: never
+ask the user for permission to do them.
 
 1. `get_storyboard` → its scenes, shots, aspect, characters, locations.
    If `get_scene3d { storyboardId }` already lists scenes, UPDATE them; never duplicate.
@@ -405,6 +406,9 @@ on the same clip(s), and the 3D stays one switch away ("Ver 3D (fuente)" /
 "Ver vídeo real" in the clip menu). "Pásalo a vídeo" on one 3D clip, on
 several, or on the whole montage is always this flow:
 
+0. Unless the user already said it, ASK the resolution first (AskUserQuestion,
+   the values the take model accepts) and pass it on every `generate_video` of
+   the takes. Never pick it yourself (user rule).
 1. Activate `video-generator` + `cinematic-video-prompt-engineer`.
 2. `prepare_scene3d_video { timelineId, clipIds }` (omit `clipIds` = every
    clip still in 3D). **ONE TAKE over several small ones:** consecutive clips
@@ -417,6 +421,11 @@ several, or on the whole montage is always this flow:
    `model` and `previousClip` for continuity. Separate takes per clip only
    when the user asks for them (`oneTake: false`). Never render a `cut` by
    hand for this, and never pass a `scene3d:` path to a media tool.
+   The reference is always baked at 1080p and top quality and scaled to the
+   output by `generate_video`. In the prompt, ask for the sharpest picture
+   (crisp focus, fine detail in skin, hair, fabric), the reference's exact
+   framing and headroom, and never softness or degradation (soft focus, soft
+   contrast, haze, heavy grain) unless the user asked for that look.
 3. Per take — several takes: start them ALL with `wait: false`, then await —
    `generate_video` with `model` = **`bytedance/seedance-2.5/us/reference-to-video`
    (always 2.5)**, `referenceVideos: [referenceVideo]`, ALL its

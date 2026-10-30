@@ -22,6 +22,18 @@ The `video` tool refuses a new generation without that answer. Not asked for:
 takes made from `prepare_scene3d_video` (they ARE the 3D previz), animating a
 photo (`startFrame`), avatars, and edits / extends of an existing video.
 
+## 🔴 ALWAYS ask the RESOLUTION (user rule, never skip)
+
+Every video generation (new, edit, extend, a take from the 3D previz, a
+storyboard clip, a re-roll) uses the resolution **the user chose**. If they
+did not name it for this video, **ask them** (AskUserQuestion, in their
+language) before generating, offering the values the chosen model accepts
+(its card in `references/models.md`). If that model has no resolution knob,
+say so in the question and let them choose between it (its fixed size) and a
+model that offers the resolution they want. Never pick it yourself, never rely
+on the model default. Several clips of one request: ask ONCE, use the answer
+for all of them. The `video` tool refuses to run without `resolution`.
+
 ## 🔴 STEP ZERO — `activate_skill` `braxil-essentials:cinematic-video-prompt-engineer` RIGHT NOW
 
 Before you read another line of this runbook, before you look at a model card,
@@ -57,7 +69,7 @@ Choosing a slug whose adapter rejects your request shape (e.g. an image-to-video
 - `prompt` (required) — **always English** (models lose motion fidelity / scene coherence otherwise). The ONLY exception is dialogue, lyrics, voice-over, or on-screen text the model must reproduce verbatim: keep that in the user's language, quoted, inside the otherwise-English prompt.
 - `duration` — seconds. **Per-model legal set** — some are fixed (Veo `4s/6s/8s`, extend `7s`), others reach 15s (Kling) or **30s (Seedance 2.5)**, avatars follow the audio. See the model's table.
 - `aspectRatio` — **per-model** — some accept `auto/16:9/9:16/…`; frame-driven and avatar models inherit dims from the input image. See the table.
-- `resolution` — **per-model** labels — only some reach 4k, and most emit `1080p` when you omit it. See the table for the default and ceiling.
+- `resolution` — **per-model** labels — only some reach 4k. ALWAYS the user's choice: ask it when they did not say it (see the rule above). See the table for the values and ceiling.
 - `startFrame` — the **LITERAL first frame** — frame 0 of the output looks identical to this image. Use ONLY when the user wants the video to begin from this exact picture. **Never** pass a storyboard/sheet/mood-board/style ref here — those go in `referenceImages`. Accepts a path / `att-N` / `@mention`.
 - `endFrame` — the LITERAL last frame. Pair with `startFrame` for "animate FROM image A TO image B" — the model interpolates. Don't collapse a FROM→TO request into a frameless prompt.
 - `referenceImages` — visual REFERENCES (style sheets, storyboards, character designs, subject photos) guiding look/composition/identity, NOT the literal first frame. Only reference-to-video models accept them.
