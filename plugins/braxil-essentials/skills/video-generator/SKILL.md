@@ -14,7 +14,7 @@ generated without first asking the user, in their language, whether they want
 to **previsualize it in 3D first** — a storyboard with its shots and a live 3D
 previz they can adjust (camera, blocking, timing) before the real video — or
 generate it directly. Ask BEFORE reading model cards or writing the prompt.
-- They choose 3D → activate `storyboard` + `scene-3d` and build the storyboard
+- They choose 3D → activate `story` + `scene-3d` and build the storyboard
   (the real video comes later from `prepare_scene3d_video`).
 - They say generate directly → go on; pass `previzDeclined: true` to the
   `video` tool.
@@ -75,12 +75,12 @@ Choosing a slug whose adapter rejects your request shape (e.g. an image-to-video
 - `referenceImages` — visual REFERENCES (style sheets, storyboards, character designs, subject photos) guiding look/composition/identity, NOT the literal first frame. Only reference-to-video models accept them.
 - `sourceVideo` — the existing clip, for `operation:"edit"`/`"extend"` (the ONLY reference for those — never re-attach the images the video was generated from).
 - `referenceVideos` — (operation `"new"` only) video REFERENCES for CONTINUITY / style / motion carry-over, e.g. the immediately-preceding clip of a multi-shot film so this new clip continues from it. NOT a v2v edit of them (that is `operation:"edit"`): the model renders the NEW scene in `prompt` and treats the videos as continuity anchors. Only reference-to-video / continuation-aware models honour them (e.g. `bytedance/seedance-2.5/us/reference-to-video`); others ignore them. Combine freely with `referenceImages` (e.g. the character turnarounds + the previous clip). The tool auto-routes this as a continuation (keeps your pinned model, not a v2v editor).
-- `withAudio` — generate an audio track (SFX/dialogue/VO/ambient). **Default true.** Set false only for a deliberately silent clip. Does NOT control background music (exclude music via prompt text).
+- `withAudio` — generate an audio track (SFX/dialogue/VO/ambient). **Default true.** Set false only for a deliberately silent clip. Does NOT control music, so exclude it in the prompt. NO MUSIC IN THE CLIP, even in the background or from a source in the scene: no score, song, humming or instrument sound. A band, a radio or a TV shown in the scene makes NO sound of its own (a band plays silently, a TV is silent). Only sound effects, natural ambience and the characters' voices. Close every prompt saying so explicitly. Only if the user asks for music inside the clip may it have it..
 - `cameraMovement` — optional motion hint (`static`, `pan_left`, `zoom_in`, `dolly_in`, `orbit_right`, …); some models honour it, others ignore it.
 - `seed` — reproducibility seed (operation `"new"` only): same seed + prompt ⇒ the same clip **on models that honour it** (Seedance, Veo, WAN; Kling ignores it). Omit for a fresh result.
 
 > The `video` tool has NO `characterOrientation`, `keepOriginalSound` or `audioUrl` — even where a model supports them, the agent can't set them here. (`referenceVideos` IS available on `operation:"new"` — see above.)
-- `saveTo` — optional COPY (dir or `.mp4/.mov/.webm`). Original stays in `~/.koi/videos/` (returned `savedTo` — use THAT for the timeline/library); copy is `exportedTo`.
+- `saveTo` — optional COPY (dir or `.mp4/.mov/.webm`). Original stays in `<project>/videos/` (returned `savedTo` — use THAT for the timeline/library); copy is `exportedTo`.
 - `model` — **REQUIRED. YOU pick the exact slug.** No auto-router — omitting it (or `"auto"`) makes the tool error out. Read the tool's **Catalog table** (or `references/models.md`) and pick a slug whose **Categories** match your operation AND whose input shape matches your request. Don't invent a slug.
 
 ## Categories — match your operation, ALWAYS

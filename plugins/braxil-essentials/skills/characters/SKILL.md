@@ -8,7 +8,7 @@ description: >
 # Characters
 
 A **character** is a persisted, reusable cast member stored as ONE JSON file at
-`~/.koi/characters/<id>.json`, indexed as a first-class creation. Author and edit
+`<project>/characters/<id>.json`, indexed as a first-class creation. Author and edit
 it ONLY through the `save_character` tool (never hand-write the JSON). Give it a
 turnaround with `generate_character_sheet`, and a voice with `list_voices` +
 `save_character`.

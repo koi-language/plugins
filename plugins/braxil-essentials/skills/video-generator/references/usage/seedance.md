@@ -31,7 +31,7 @@ Follow `video-generator`'s "When a generation FAILS":
 Chaining runs on **SELECTIVE CONTINUITY FRAMES** on every model: full-res
 frames extracted from clip K-1's render, ONLY the takes the new clip must
 match, each under its own role alias (`prev_end`, `prev_shot3`…) — the flow
-lives in `storyboard-to-video`'s "Clip chaining". On Seedance they are attached
+lives in `previz-to-video`'s "Continuity from the previous take". On Seedance they are attached
 **as-is**, like on every other model.
 
 **Reference AUDIO** (the previous clip's extracted tail, via `referenceAudio`)

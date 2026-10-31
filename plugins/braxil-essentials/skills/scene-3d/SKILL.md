@@ -1,6 +1,6 @@
 ---
 name: scene-3d
-description: "MANDATORY before ANY 3D previz work — blocking a scene in 3D, building an animated storyboard / animatic from 3D, framing or re-framing a camera in a 3D scene, or generating a real video FROM a 3D previz. It is the contract for the scene3d JSON (set, characters, blocking, shots) and the craft for turning storyboard shots into cameras. Activate together with `storyboard` when the previz comes from a storyboard. Triggers (any language): \"previz\", \"previsualización\", \"3D\", \"anima el storyboard\", \"animatic\", \"monta la escena en 3D\", \"bloquea la escena\", \"blocking\", \"cámara más baja/alta\", \"más cerrado/abierto\", \"plano 3D\", save_scene3d, update_scene3d, render_scene3d, add_scene3d_to_timeline, or a request arriving with a `[3D previz shot — …]` preamble from the timeline."
+description: "MANDATORY before ANY 3D previz work — blocking a scene in 3D, building an animated storyboard / animatic from 3D, framing or re-framing a camera in a 3D scene, or preparing a 3D previz for real video (the generation itself is `previz-to-video`). It is the contract for the scene3d JSON (set, characters, blocking, shots) and the craft for turning storyboard shots into cameras. Activate together with `storyboard` when the previz comes from a storyboard. Triggers (any language): \"previz\", \"previsualización\", \"3D\", \"anima el storyboard\", \"animatic\", \"monta la escena en 3D\", \"bloquea la escena\", \"blocking\", \"cámara más baja/alta\", \"más cerrado/abierto\", \"plano 3D\", save_scene3d, update_scene3d, render_scene3d, add_scene3d_to_timeline, or a request arriving with a `[3D previz shot — …]` preamble from the timeline."
 ---
 
 # 3D previz (scene3d)
@@ -16,7 +16,9 @@ previews. The previews become:
   video clips on any OTHER timeline (trim / slip / split / move work as on any
   clip; every re-render updates them automatically);
 - **structure for real generation** — the shot's previz drives `generate_video`
-  video-to-video so the real take keeps your blocking and camera.
+  video-to-video so the real take keeps your camera and where each character
+  stands, travels and faces. The figures' limb motion and poses are abstract
+  placeholders: the video model invents the real acting, never copies them.
 
 Never hand-write scene files: use `save_scene3d` (create / replace),
 `update_scene3d` (patch), `get_scene3d` (read / list), `render_scene3d`
@@ -80,7 +82,7 @@ scene:
       characterId: <saved Braxil character id, if any>
       position: [-2.6, 1.5]
       facing: table
-      color: "#c0694a"    # tints the wooden mannequin (keeps the cast apart)
+      color: "#c0694a"    # tints the figure (keeps the cast apart)
       height: 1.68
     - id: luis
       name: Luis
@@ -89,7 +91,7 @@ scene:
       pose: sitting
   actions:
     - character: marta
-      type: walk          # walk run turn look_at sit stand wave point raise_arm
+      type: walk          # walk run turn look_at pose sit stand lie jump
       to: [-0.6, 0.9]
       startMs: 0
       endMs: 2400
@@ -269,19 +271,103 @@ cameras in one Blender pass and the cards appear as they land.
 
 Everyone is an abstract BLOCK FIGURE (faceted ball head, slab torso, block
 legs — grey clay). They exist to say WHERE each person is, which way they
-face / look, standing or sitting. **They never act**: no walk cycles (a walk
+face / look, and the body POSE of the moment. **They never act**: no walk cycles (a walk
 glides), no nods, waves, shrugs or gestures — the video model performs all of
 that from the script. Use a limb ONLY when the picture must read an
 interaction with an OBJECT or a body:
 
 - `hold` (the coach holds the ball at chest / chin / waist — the prop rides the hands),
 - `grab` (reach a prop and keep it), `give` (hand it to another character),
-  `put` (leave it somewhere), `kick` (a leg strikes, optionally sending the prop `to` a point).
+  `put` (leave it somewhere), `kick` (sends the prop `to` a point; the leg itself does not move).
 
 Everything else in an `action` line ("asiente tres veces", "sonríe",
 "manos en los bolsillos") is performance: leave it to the video model.
+
+A jump is the one exception, because it changes where the body is: use
+`{ character, type: "jump", to: [x, y, z], startMs, endMs }`. The rigid body
+flies a real ballistic arc and lands (no crouch); the duration sets the height (about 1 s is a
+strong leap). Give `z` when landing at another height. Someone on a raised
+surface (a bridge, a train roof) is a character with `position: [x, y, z]`;
+walks and jumps stay at that height unless `to` has its own `z`.
+
+### Real physics (🔴 nothing superhuman)
+
+Everything moves the way it really can, unless the script explicitly asks for
+a superhuman feat. Work the numbers out from distance and time:
+
+- **Walk** 1.2-1.8 m/s. **Run** 3-6 m/s (a tired or ordinary person), 7+ only
+  an all-out sprint, never above ~10 m/s. A run of 20 m takes 4-6 s, not 1.
+- **Jump**: the arc comes from the DURATION (gravity sets the height). Air time
+  0.5-0.7 s, so a jump action lasts ~1.1-1.3 s; the body rises 0.5-0.9 m and
+  a running jump covers 2-4 m. A longer duration is a higher jump, never a
+  slower one. Dropping more than ~4 m hurts a person.
+- **On a moving vehicle** (a train roof, a deck): walks and jumps are in world
+  coordinates, so they include the vehicle's travel; add `aboard: "<propId>"`
+  so only the person's own effort is judged, and keep THAT effort human.
+- **Vehicles** at their real speeds (bicycle ≤ 16 m/s, car ≤ 70, motorbike ≤ 60,
+  bus ≤ 35). **Falling things** take √(2h/9.81) s to drop h metres (2 m ≈ 0.64 s);
+  a kicked ball flies ~20-30 m/s.
+
+- **Body cadence**: a walking step takes ~0.5 s (~2 steps/s, 0.6-0.8 m each;
+  backwards shorter and slower), a running stride ~0.33 s (~3/s). "Two steps
+  back" is ~1 s, not 0.45. **Pose changes take time on screen**: getting up
+  from lying ~1.5-2.5 s, from a knee ~0.8-1 s, sitting down ~0.7-1 s, lying
+  down ~1 s, a fall ~0.5 s; or put the switch on a cut. A body that is lying,
+  sitting or kneeling does not travel unless it slides or rolls off momentum
+  (slowing down) or crawls, and the script says so.
+- 🔴 **Inertia**: a body off its feet (falling, sliding, rolling, thrown) keeps
+  its direction and only slows down, steadily, until something acts on it. Its
+  path is ONE straight line or smooth arc and its heading ONE slow turn. It
+  changes only at an event the script states and the viewer sees: a blow, an
+  obstacle, a hand gripping a seam. No event, no change. NEVER weave the path
+  or flip `face` leg by leg to fake "swinging", "tumbling" or a rough slide: a
+  zigzag with no cause is physically impossible, and the video copies it. When
+  the script's wording asks for that, the wording is what gets fixed. The same
+  on a moving vehicle: judge the line relative to the vehicle (`aboard`).
+
+`save_scene3d` / `update_scene3d` (and `prepare_scene3d_video`) check this and
+return `physics.warnings` plus `physics.motion`: every movement's distance,
+time, speed and natural step count, and every pose change with its duration.
+🔴 Fix every warning, then reconcile `motion` with what the script SAYS for
+those moments (counted steps or strides, "slowly", "in one leap", how long
+getting up takes): they must match exactly. Do it yourself, no question asked:
+re-time the 3D when the script is right, or rewrite the wording with the
+`cinematic-video-prompt-engineer` skill when the 3D timing is right. Ask the
+user only when the fix would change something they decided (a shot length, a
+cut, an action they asked for), saying both options with their numbers.
+
+**A person is ALWAYS a character.** NEVER build a person as a prop or `group`
+of body parts, NEVER swap "pose" statues, and NEVER hide things with a
+near-instant `drive` to a far point: every swap reads as a teleport in the
+previz, and in the video made from it. A character may change place abruptly
+only exactly on a cut between shots. Before delivering a shot with a jump or a
+fall, step through its frames: the body must move continuously.
+
 `color` only tints the clay so the cast stays apart; `height` sets the build.
-(`characterStyle: "mannequin"` switches to wooden artist's mannequins.)
+Characters are block figures (head, trunk, arms, legs). The figure says
+WHERE the actor is and shows, as exactly as possible, the **body pose of each
+moment**, held still. It never performs: walks and runs glide with no leg
+cycle, a jump is the whole body on its arc with no crouch, kicks and strikes
+move no limb, and there are no gestures (the video model performs all of that
+from the script). Arms only move to hold, take or hand over an object.
+
+🔴 Match the pose to the script in EVERY shot, as precisely as the library
+allows. Poses: `standing` (default), `sitting` (chair), `riding` (motorbike,
+bicycle, horse: `ride` picks it by itself), `driving` (car, van, truck: also
+automatic), `lying` (flat on the back), `lying_front`, `lying_side`,
+`on_elbow` (lying, propped on one elbow; `side` picks the arm),
+`sitting_ground`, `kneeling` (one knee down), `kneeling_both`, `crouching`,
+`all_fours`. Set the starting one with `pose` on the character; change it with
+`{ character, type: "pose", pose, startMs, endMs }` (`sit` / `stand` / `lie`
+are shortcuts): the body switches in ONE step at `endMs`, no in-between, so
+put the switch on the cut or at the moment the script lands in the new pose.
+Never leave someone standing when the script has them seated, riding, lying,
+kneeling or getting up from the floor.
+
+A hand-placed camera (`position` / `target` / `keyframes`) is aimed for the
+pose the figure had when you placed it: after changing a pose, frame the shot
+with `subject` + `shotSize` (the solver aims at where the head really is, and
+for a body lying down it shoots from above the face) or re-aim it.
 
 ## Places and objects: match the reference images, at real scale
 
@@ -297,6 +383,11 @@ every image before blocking and reproduce its layout:
   as a car (use the library shape, real size) and an object the library lacks
   is a `group` of simple parts with its real proportions;
 - then set `set.layoutFrom` to all the reference images you matched.
+- a prop that is a story object (`object`) with a modeled `model`: set its
+  `modelFrom` to the object card's views the model was built from (the sheet's
+  three crops, `threeQuarter` / `front` / `side`, plus any extra views). When
+  the card gets new views, `previz3d.objects` lists the prop: rebuild the model
+  from ALL the views, save it on the card and update `model` + `modelFrom`.
 
 Pick a shot's camera from the photo's own viewpoint when the storyboard shot
 frames the place the same way. When NEW reference images arrive later (the
@@ -310,9 +401,19 @@ windows, the big furniture), all at real size.
 
 **Before blocking:** when the story has places or key objects with
 reference photos (saved locations, photos the user gave, a specific
-vehicle), spawn one `model-builder` per place / object, all in parallel,
-and wait for their ids; then pass those ids to the previz-creators so the
-sets and props use the models. Secondary objects and extras stay library
+vehicle, and EVERY entry of the storyboard `objects` roster: the views of its
+object card (`objectId` → `<project>/objects/<id>.json`, its `views` (the sheet's
+three crops first) + `photos`)
+are its references; a legacy entry without a card uses its `image`), spawn
+one `model-builder` per place / object, all in parallel, and wait for their
+ids; then pass those ids to the previz-creators so the sets and props use the
+models. When an object card has no `model` yet, save the built model's id on
+it as `model` (`save_object`), so the next previz reuses it instead of
+modeling it again; when it already has one, use it. Vehicles and machines the story is
+about (a train, a motorbike) are never skipped: they matter as much as the
+set and the cast. Each prop that IS a roster object carries
+`object: <its roster name>` (and `model: <id>`): that is what puts its
+object card's sheet and views (or its legacy `image`) on the real-video takes. Secondary objects and extras stay library
 shapes. Modeling, blocking and rendering the previz are local and free: never
 ask the user for permission to do them.
 
@@ -345,7 +446,9 @@ side of the line between them (same sign of `angle` relative to each subject).
 ## Edits (incl. the timeline's floating bar)
 
 A request with a `[3D previz shot — scene3d id …, shot id …]` preamble targets
-that shot. `get_scene3d` first, then the SMALLEST `update_scene3d` patch:
+that shot. "Plano N" / "shot N" from the user is the story's shot
+`number`, the one drawn on the timeline clip and by its camera on the stage (a
+continuous take shares one number), NOT the shot id (`sh6` can be "plano 5"). `get_scene3d` first, then the SMALLEST `update_scene3d` patch:
 
 - framing / lens / camera height → `shots: [{ id, set: { camera: { … } } }]` (camera merges one level deep);
 - move → `shots: [{ id, set: { move: … } }]`;
@@ -355,7 +458,35 @@ that shot. `get_scene3d` first, then the SMALLEST `update_scene3d` patch:
 Unchanged shots are never re-rendered; the timeline clips and storyboard cards
 update by themselves. Don't call add_scene3d_to_timeline again for an edit.
 
+🔴 **The user's change is the truth.** A change the user asks for (a pose, a
+speed, a camera, a duration, an action) is carried into EVERY place that
+describes that moment: the 3D scene AND the story script (`update_storyboard`:
+`action`, `shot`, `camera`, `composition`, `continuity`, `duration`). The new
+wording is never improvised: it is written with the
+`cinematic-video-prompt-engineer` skill (poses, faces, acting, movement,
+camera, lenses, staging), exactly like the rest of the story, and the 3D and
+the take prompts follow that wording. The old script wording is what is out of
+date: never warn that "the script says otherwise", never revert the change to
+match it. Ask only when two of the user's own requests contradict each other.
+
 ## Montage: the storyboard's own timeline (automatic, both ways)
+
+**Merging shots into ONE** ("fusiona los planos 4 y 5", or "Delete Through
+Edit" on the cut between two 3D clips): `update_scene3d { id, mergeShots:
+[ids] }`. The FIRST shot keeps its own camera over the whole window (the
+action already runs on the scene clock), the others leave the scene and the
+story, and the story's first shot absorbs their action / dialogue / sound.
+Then rewrite that merged script wording with the
+`cinematic-video-prompt-engineer` skill so it reads as one shot seen through
+the first camera.
+
+🔴 **Timing belongs to the MONTAGE.** Once a story has its 3D montage, each
+shot's `duration` in the script is copied from the montage automatically (a
+continuous take keeps one duration per shot, never the whole take on its
+first shot). To change how long something lasts, change the 3D shot
+(`update_scene3d` `durationMs`) or trim it on the montage; never edit the
+script's `duration` to do it, and never ask the user about a script-vs-montage
+time mismatch: the montage wins, always.
 
 Each storyboard has ONE montage timeline (`role: "storyboard"`), created and
 kept by the engine — never build it yourself and never `add_scene3d_to_timeline`
@@ -401,88 +532,13 @@ the vocabulary can't express.
 
 ## Generating the real shot from the previz
 
-The 3D is the SOURCE of the real video: the take is rendered FROM it, lands
-on the same clip(s), and the 3D stays one switch away ("Ver 3D (fuente)" /
-"Ver vídeo real" in the clip menu). "Pásalo a vídeo" on one 3D clip, on
-several, or on the whole montage is always this flow:
-
-0. Unless the user already said it, ASK the resolution first (AskUserQuestion,
-   the values the take model accepts) and pass it on every `generate_video` of
-   the takes. Never pick it yourself (user rule).
-1. Activate `video-generator` + `cinematic-video-prompt-engineer`.
-2. `prepare_scene3d_video { timelineId, clipIds }` (omit `clipIds` = every
-   clip still in 3D). **ONE TAKE over several small ones:** consecutive clips
-   of the same 3D set (same track, end to end, ≤ 30 s) come back JOINED as
-   one `take` — their exact 3D windows (trim / slip included) baked end to
-   end into one `referenceVideo` that carries the camera, the blocking AND
-   the cuts. Each take lists `shots` (which clip, where it falls in the take,
-   its storyboard script), `referenceImages` (character sheets / photos of
-   who is in it, the place's plates, storyboard refs), `durationSec`,
-   `model` and `previousClip` for continuity. Separate takes per clip only
-   when the user asks for them (`oneTake: false`). Never render a `cut` by
-   hand for this, and never pass a `scene3d:` path to a media tool.
-   The reference is always baked at 1080p and top quality and scaled to the
-   output by `generate_video`. In the prompt, ask for the sharpest picture
-   (crisp focus, fine detail in skin, hair, fabric), the reference's exact
-   framing and headroom, and never softness or degradation (soft focus, soft
-   contrast, haze, heavy grain) unless the user asked for that look.
-3. Per take — several takes: start them ALL with `wait: false`, then await —
-   `generate_video` with `model` = **`bytedance/seedance-2.5/us/reference-to-video`
-   (always 2.5)**, `referenceVideos: [referenceVideo]`, ALL its
-   `referenceImages` (never drop them), `duration: durationSec`, and ONE
-   prompt written SHOT BY SHOT — the shots of the 3D are the only cuts:
-   - one block per entry of `shots` ("Shot 1 (0–3.2 s): …"), the words
-     "HARD CUT" between two blocks, and once, plainly: "Cut ONLY at HARD CUT;
-     never anywhere else";
-   - inside a block NO times at all (no "0–6 s", no "around 6 s": time
-     marks read as more shots and the model cuts there): one paragraph
-     saying the shot follows the reference video's camera EXACTLY as ONE
-     continuous move, then in order what happens — what the camera does
-     (moves, zoom, focus pulls, framing), who is who and how they look,
-     acting, gestures, lines, what happens out of shot, light, sound —
-     chained with "then", "as", "while", never with times;
-   - light, wardrobe, props and sound continuous across the cuts. Say that the
-   reference video is a grey 3D previz to be fully re-rendered
-   photographically, keeping its composition, motion and cut points.
-   **The reference video is the MASTER.** Open the prompt by saying so: the
-   attached video's camera, framing, what is in and out of frame, positions,
-   sides and timing override anything in the text. Then CHECK the prompt
-   against that shot's `inFrameTimeline` (second by second: `inFrame` = who /
-   which vehicle the shot shows, side, distance; `offFrame` = what is near but
-   out of shot, and on which side) and correct it lightly: an action that
-   happens out of shot stays in the prompt, said as out of shot ("A's car
-   overtakes on the right, entirely out of frame — only its roar and B's eyes
-   following it"). Never write it as seen while the reference doesn't show it
-   (the model invents it to obey the text). If the user wants it ON screen,
-   tell them the 3D camera must frame it first.
-   Give each figure the VIEW the timeline gives (front / three-quarter front /
-   side / three-quarter from behind / behind, and which of its sides) — a view
-   the reference's camera does not have ("his face, sun full on it" while it
-   shows his side) makes the model CUT to get it. Every change of framing
-   inside a shot is the camera MOVING there, never a new shot.
-   Spend the words on who / what things look like (cast, vehicles, place,
-   light, sound), not on re-staging motion the video already carries.
-   **Screen positions come from the 3D, not the script:** each shot's
-   `onScreen` says who the reference shows on the left / centre / right and
-   how near; write THOSE sides (the storyboard's "screen right" may be out of
-   date — a prompt that contradicts the reference makes the model mirror the
-   shot). Tie every character to its grey figure with `castKey` ("the boy —
-   the small blue figure in the reference — …") so the model knows which
-   figure is which sheet.
-4. REVIEW THE TAKE: `extract_frame` around each planned shot (or `ask_video`)
-   and compare with the previz and the scripts — composition, camera move,
-   who is where. If it drifts, regenerate with a corrected prompt (same
-   references, never thinner); say what you fixed.
-5. `assign_scene3d_take { timelineId, clipIds, mediaPath }` — splits the
-   take over its clips: each clip starts at the take's REAL cut nearest to
-   the planned one (ffmpeg scene detection) and keeps its own length.
-   **Clip lengths are protected**: the tool refuses a take shorter than its
-   clips (regenerate longer), and you never trim, stretch or move a clip to
-   fit a take. It records which state of the 3D the take came from; when the
-   3D changes afterwards the clips are flagged out of date
-   (`scene3d.renderStale`) — offer to regenerate.
+The 3D is the SOURCE of the real video: each take is rendered FROM it and
+lands on the same clip(s). "Pásalo a vídeo" on one 3D clip, on several, or on
+the whole montage: activate **`previz-to-video`** and follow it (resolution
+asked first, `prepare_scene3d_video`, the take prompt, review, landing). Never
+improvise that flow from here.
 
 ## Limits (say them when relevant)
 
-Characters are mannequins (no faces, hands or cloth); props are simple
+Characters are block figures that hold a pose but never act; props are simple
 volumes unless modeled with `build_model3d`. Previz is for space, timing, camera and staging — not for look.

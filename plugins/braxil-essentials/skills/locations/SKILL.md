@@ -6,7 +6,7 @@ description: "MANDATORY before creating or editing a reusable LOCATION / set (a 
 # Locations
 
 A **location** is a persisted, reusable set/place stored as ONE JSON file at
-`~/.koi/locations/<id>.json`, indexed as a first-class creation. Author and edit
+`<project>/locations/<id>.json`, indexed as a first-class creation. Author and edit
 it ONLY through the `save_location` tool (never hand-write the JSON). Give it its
 establishing **plate views** with `generate_location_plate`. A scene links one
 via `scene.locationId` on the storyboard.
@@ -27,7 +27,7 @@ via `scene.locationId` on the storyboard.
 | `lighting` | string | the set's default light. |
 | `tags` | string[] | free tags. |
 | `photos` | string[] | ABSOLUTE paths to reference photos. `photos[0]` is the hero. POINTERS only. |
-| `views` | `[{ id, label, path }]` | the establishing views: a free list. `label` is free text owned by the user (no fixed front/rear/left/right); `path` is null on an empty slot waiting to be filled. Set by `generate_location_plate`. **One view with an image is all a location needs.** |
+| `views` | `[{ id, label, path }]` | the establishing views: a free list. `label` is free text owned by the user (no fixed front/rear/left/right); `path` is null on an empty slot waiting to be filled. Set by `generate_location_plate`. **As many as it takes to cover every part of the place the story shoots, and no more** (see "Coverage"). |
 | `plate` | string | READ-ONLY: derived from the first view with an image, the location's anchor. Change `views`, never this. |
 | `details` | string[] | OPTIONAL ABSOLUTE paths to close-up / DETAIL shots of the place (a sign, a scale, a corner). Uploaded or assigned by the user, POINTERS only. Distinct from `photos` (the input references that DEFINE the place). |
 
@@ -41,7 +41,9 @@ existing doc and pass its fields back (including `id`) so you update in place.
    story** — `locationType` (interior|exterior|mixed), `timeOfDay`, `palette`,
    `lighting`. Do NOT leave them empty when the scene description states them (an
    empty attribute next to a full description is a bug). Add any reference `photos`.
-2. **One view** with `generate_location_plate` (procedure below). **That is the whole obligation** — do NOT also generate more views here.
+2. **Cover the place** with `generate_location_plate`: first the wide master
+   view, then one view per part of the place the story shoots that the master
+   does not show well (procedure below, "Coverage").
 3. **Link it**: on the storyboard, set the scene's `locationId` to this location
    (and/or add it to the storyboard `locations` roster).
 
@@ -52,40 +54,63 @@ person's identity. A **location** → establishing **views** of the EMPTY set th
 lock the world's look, palette and light across every clip shot there. No face on
 a set, so no likeness-laundering is needed.
 
-🔴 **Creating a location generates ONE view and NOTHING else.** A location with
-one view is COMPLETE — that is the normal, finished state, not a half-built one.
-Further views are optional (see "More views"). Generating them as a routine second
-step is a bug: it burns a render on an image nobody asked for, on a set that may
-never be shot from that side.
+🔴 **Cover the place the story uses, consistently.** A plate that frames ONE
+spot of a big place (a corner of the overpass) leaves the rest to be invented
+clip by clip, and it drifts: a reported bug ("a script with lots of landscape,
+and the location only had one tight picture that does not cover the scene").
+The opposite failure is a pile of views nobody shoots. So:
 
-**YOU (the agent) author the descriptions — `generate_location_plate` NEVER
+### Coverage: plan the views from the story
+Before rendering, read the scenes set in this location (their action and their
+shots' framing, and the 3D cameras when the previz exists) and list the PARTS
+of the place they show: which features (the overpass, the rails, the service
+road, the horizon), seen from where, looking which way (toward the sun or with
+it behind). Then:
+1. **The master view first: WIDE and ELEVATED, the whole place at once.** Not
+   centred on one element: a high, wide vantage (a crane or a drone height,
+   short lens, deep focus) that shows every feature the story uses in its real
+   layout and distances, with room around it. Interiors: a corner-to-corner
+   wide that shows the whole room, every wall the scenes use.
+2. **Then one view per uncovered part.** Every part on your list that the
+   master shows too small, hidden or from the wrong side gets its own view, at
+   the height and direction the story's cameras look at it from (ground level
+   along the rails toward the horizon; the reverse angle, toward the overpass
+   with the sun behind). Each one attaches the master as reference (below), so
+   it is the SAME place; each `label` says what it shows ("rails toward the
+   horizon, ground level", "reverse: the overpass from the road").
+3. **Stop when the list is covered.** A small place one wide covers completely
+   (a room, a single doorway) has one view. Never views "just in case", never
+   left/right/rear as a ritual.
+
+**YOU (the agent) author the descriptions: `generate_location_plate` NEVER
 writes the prompt.** It only renders the image from the prompt YOU give it.
 
-### The first view (the one mandatory step)
+### Writing a view
 Write a **precise, faithful, element-by-element** description of the empty
-location, grounded in its `description`. Name EVERY concrete element the place has
-— every piece of furniture, the TV, the wall clock, the china cabinet, the
+location, grounded in its `description`. Name EVERY concrete element the place has:
+every piece of furniture, the TV, the wall clock, the china cabinet, the
 azulejo tiling, the ceiling beams, the dining table (shape/wood), the exact
 number of chairs, the sideboard, the doors, the windows/balcony, the lamps, the
 plants, the paintings, the floor, the palette, and the light and how it falls.
-**Never a thin one-liner** like "a traditional dining room at night" — that is the
-main failure to avoid. Then call:
+For the master, also the vantage (height, which way it looks) and the layout
+(what is where, how far apart). **Never a thin one-liner** like "a traditional
+dining room at night": that is the main failure to avoid. Then call:
 
 ```
-generate_location_plate({ prompt: "<your precise description>", locationId })
+generate_location_plate({ prompt: "<your precise description>", label: "<what it shows>", locationId })
 ```
 
 It adds the view and returns its `path`. **You must SEE it** (read the
-returned path). Then STOP — the location is done.
+returned path) and check it against your coverage list before the next one.
 
-### More views — only on demand
-Generate one ONLY when:
+### Views later, on demand
+After the coverage pass, generate one more ONLY when:
 - the **user asks** for it (in chat, or via that view's button in the GUI), or
 - a **scene genuinely needs that side** — you are about to shoot the set from an
   angle the existing views don't show, and the render would otherwise invent it.
 
-Never "just in case", never as a completion ritual. Each one **MUST attach the
-`plate` as reference** — that is what keeps it the SAME place instead of a
+Never "just in case", never as a completion ritual. Every view after the
+master (coverage or on demand) **MUST attach the `plate` as reference**: that is what keeps it the SAME place instead of a
 re-invented one:
 
 ```

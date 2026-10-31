@@ -31,7 +31,7 @@ One tool, four **modes**. YOU pick the model each time — pass `model` (require
 
 - `mode` — `speech` (alias `tts`, default) · `transcribe` · `sfx` · `music`.
 - `model` — **REQUIRED for speech / sfx / music** — YOU pick the slug whose category matches the mode. **Transcribe needs no model.** Omitting it for a generation mode errors out.
-- `saveTo` — optional COPY path. Original always in `~/.koi/audio/` (returned `savedTo`); copy is `exportedTo`.
+- `saveTo` — optional COPY path. Original always in `<project>/audio/` (returned `savedTo`); copy is `exportedTo`.
 
 **Speech mode** (text → audio) — enabled model: `fal-ai/minimax/speech-2.8-hd`:
 - `text` (required) — the actual words to speak. **Keep in the user's language** — the voice reproduces it verbatim; do NOT translate to English.

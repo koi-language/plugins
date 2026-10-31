@@ -24,7 +24,10 @@ previz needs a model, build it and say what you are doing.
    chrome, rubber).
 
 Detail is NOT a goal. Model the parts that make it recognisable and keep
-the silhouette right; skip bolts, panel gaps, textures, logos. Typical
+the silhouette right; skip bolts, panel gaps, textures, logos. Never model
+SURFACE marks as geometry or colour: weathered patches, stains, cracks,
+painted lines, tile or plank patterns, dirt. A surface is ONE flat colour.
+The video model copies whatever pattern the previz shows. Typical
 budget: an object 2k–30k triangles, a set up to ~150k.
 
 ## Workflow

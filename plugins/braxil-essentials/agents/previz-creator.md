@@ -19,7 +19,7 @@ script.
 2. If the brief or `previz3d.layout` lists reference images of the place,
    `Read` each one and lay the set out FROM them (room shape and size, walls,
    doors, windows, every object that gives the space its geography, at real
-   size and position). Set `set.layoutFrom` to the images you used.
+   size and position). Set `set.layoutFrom` to the images you used. A story-object prop built from its object card's views (the sheet's three crops `threeQuarter` / `front` / `side`, plus any extra views) gets `modelFrom` = those views (`previz3d.objects` lists props whose card has newer ones: rebuild that model).
    **Model every object so it reads as what it is** — the video model only
    sees the grey previz. Use its library shape (car, racecar, van, truck, bus,
    motorbike, bicycle, furniture, stall, tree…); for anything missing, a
@@ -29,9 +29,15 @@ script.
    floors, crates and the like.
    **Modeled assets first:** `get_model3d` (by the scene's `locationId`, and
    the list). A set modeled for this place → `set.model: <id>`; an object
-   modeled for this story (the hero car, a landmark) → that prop with
-   `model: <id>` (keep its library `shape` too). Use every model the brief
-   names.
+   modeled for this story (the hero car, a landmark, a roster object) → that prop with
+   `model: <id>` (keep its library `shape` too). A roster object linked to an
+   object card (`objectId`) takes the card's `model` when it has one; its
+   card's views are its references (not a single `image`), and a model built
+   for it is saved on the card as `model` with `save_object` so it is reused. Use every model the brief
+   names. Every entry of the storyboard `objects` roster that appears in this
+   scene (a train, a motorbike) MUST be in it as a prop with
+   `object: <its roster name>`, modeled or, failing that, a library shape /
+   `group` that reads as what it is: never leave a story object out.
 3. Write the scene: building → `save_scene3d` with `storyboard: { id, sceneId }`
    and one 3D shot per storyboard shot (`storyboardShotId`, consecutive
    windows on one clock, overlapping only for coverage). Updating → the
@@ -58,3 +64,13 @@ script.
 - Never call any image / video generation tool.
 - Do not ask questions: decide, and say in your one-line reply what you assumed.
 - No gestures / nods / walk cycles: characters are position markers.
+- REAL PHYSICS: every motion must be one a real body or object can make (see
+  "Real physics" in the `scene-3d` skill: walk 1.2-1.8 m/s, run 3-6 m/s, a
+  jump rises 0.5-0.9 m and covers 2-4 m, things fall at gravity's pace, a body
+  off its feet keeps its direction and only slows down until a stated, visible
+  event acts on it, never a zigzag). If a
+  save / update result carries `physics.warnings`, fix them all before you
+  reply, unless the script explicitly asks for that superhuman feat. Then make
+  `physics.motion` match the script's wording for those moments (counted
+  steps ~0.5 s each, pose changes with their real duration) by re-timing the
+  3D; never leave a mismatch for the caller.

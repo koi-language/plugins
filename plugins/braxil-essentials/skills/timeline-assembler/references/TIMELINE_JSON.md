@@ -77,6 +77,7 @@ the "edit the JSON" path, minus the risk of a malformed write breaking the visor
 | Field | Type | Notes |
 |---|---|---|
 | `linkId` | string \| null | Shared id pinning a V clip to its auto-paired A peer (move / trim / remove together). Keep it consistent between the two. `null` = unlinked. |
+| `scene3d` | object \| absent | A 3D previz clip's link: `{ sceneId, shotId, storyboardShotId, storyboardSceneId, poster, shots? }`. `shots: [{ id, startMs, durationMs }]` (scene clock, in order) only when the clip is a CONTINUOUS TAKE over several 3D shots (the story's `noCutBefore`): it plays each shot's camera in turn. Never edit it by hand; the story montage lays it. |
 | `hasAudio` | bool | Whether the clip feeds the mix. `false` on the V clip when its A peer carries the sound (avoids double-mix), and on genuinely silent layers (images, titles). |
 | `volumePoints` | array | Gain automation: `[{ "t": ms, "v": gain }]`. `t` in `[0, durationMs]`, `v` linear gain in `[0, 2]`. See `TRACKS_AND_AUDIO.md`. |
 

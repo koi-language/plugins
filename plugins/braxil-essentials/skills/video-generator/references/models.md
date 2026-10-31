@@ -67,7 +67,7 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 - **Limits (fal schema):** `prompt` no char cap; `referenceImages` **≤9**, `referenceVideos` **≤3**, reference audio **≤3, combined ≤15 s** — **combined ≤12 files total** (hard cap). **Multi-shot: YES** — native (hard-cut shots → panels; THE storyboard→video model).
 - **Rejects**: startFrame, endFrame. **Reference AUDIO: settable via `referenceAudio`** (one mp3/wav ≤15 s — trim longer sources to the LAST ≤15 s, that's what a seam continues from; the model composes the soundscape from it — the sound-continuity anchor for clip chaining; name its role in the prompt). `referenceVideos` IS available on `operation:"new"` (continuation / prev-clip). **Extra params** (via `extra_params` — see the Notes): `bitrate_mode` (`standard`/`high`).
 - **References go in DIRECTLY.** Attach character sheets, photos, plates and continuity frames AS-IS — never re-synthesise them through Seedream first (user decision). If the likeness filter rejects a render: retry the identical request 2-3×, then stop and tell the user. 📖 `references/usage/seedance.md`.
-- **🔗 CHAINING clip K ≥ 2:** selective continuity frames of clip K-1 (see `storyboard-to-video`'s "Clip chaining"), attached AS-IS like on every model. Prefer them over the previous clip as a video reference: they carry each character's exact screen position.
+- **🔗 CHAINING clip K ≥ 2:** selective continuity frames of clip K-1 (see `previz-to-video`'s "Continuity from the previous take"), attached AS-IS like on every model. Prefer them over the previous clip as a video reference: they carry each character's exact screen position.
 -
 
 ### Seedance 2.5 — Text-to-Video — `bytedance/seedance-2.5/us/text-to-video`
