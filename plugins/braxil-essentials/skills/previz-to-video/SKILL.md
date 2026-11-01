@@ -127,7 +127,7 @@ per take:
   as its reference; a shot INSIDE the object uses its `Interior:` views as
   references, the way a location plate anchors a set.
 
-**Story material (what it writes about):** per shot, the `script`'s action,
+**Story material (what it writes about; 🔴 activate `physics-of-motion` whenever a shot holds physical action, because the prompt must carry the full performance: first contact, turning over, loose limbs, speed dying off, the end state; a `tumble` in the reference gives only direction, rhythm and duration):** per shot, the `script`'s action,
 dialogue VERBATIM, sound and light; the story's style line, identical on
 every take; the continuity lock and the state that still holds (a prop
 broken, someone already seated); the PHYSICS of any real action (force, arc,
@@ -229,7 +229,7 @@ this same pass waits for that one.
 🔴 **The user's change is the truth.** A change the user asks for (a pose, a
 speed, a camera, a duration, an action) is carried into EVERY place that
 describes that moment: the 3D scene AND the story script (`update_storyboard`:
-`action`, `shot`, `camera`, `composition`, `continuity`, `duration`). The new
+`action`, `shot`, `camera`, `composition`, `duration`). The new
 wording is never improvised: it is written with the
 `cinematic-video-prompt-engineer` skill (poses, faces, acting, movement,
 camera, lenses, staging), exactly like the rest of the story, and the 3D and

@@ -129,7 +129,7 @@ story points at. Those are generated and ATTACHED to the card as `details`, so
 every take that shows them gets them right.
 
 1. **After the sheet, read the story**: every shot where the object appears
-   (its action, framing, dialogue and continuity notes).
+   (its action, framing and dialogue).
 2. **List the details the story relies on**:
    - anything a shot frames in CLOSE-UP or INSERT (the hand on the gear lever,
      the key in the lock);

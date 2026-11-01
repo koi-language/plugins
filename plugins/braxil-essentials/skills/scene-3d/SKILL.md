@@ -292,6 +292,18 @@ walks and jumps stay at that height unless `to` has its own `z`.
 
 ### Real physics (🔴 nothing superhuman)
 
+The rules per situation (running, jumping, falls, moving surfaces, fights,
+vehicles, objects, several bodies, water) live in the `physics-of-motion` skill:
+🔴 activate it whenever a shot holds real physical action, and run its method.
+
+A body thrown along a surface after an impact is a **tumble**:
+`{ character, type: "tumble", to, startMs, endMs, aboard?, roll?:"forward"|"backward"|"side", turns?, pose? }`.
+The figure really turns over along one line, its speed dying off to zero at
+`endMs`, and ends in `pose` (default `lying_front`). `aboard` makes the stop
+relative to a moving vehicle, with `to` in world coordinates. Distance and time
+come from `v²/(2a)` and `v/a` at about 5 m/s²: never a slide in a held pose or a
+chain of short walks.
+
 Everything moves the way it really can, unless the script explicitly asks for
 a superhuman feat. Work the numbers out from distance and time:
 
@@ -461,7 +473,7 @@ update by themselves. Don't call add_scene3d_to_timeline again for an edit.
 🔴 **The user's change is the truth.** A change the user asks for (a pose, a
 speed, a camera, a duration, an action) is carried into EVERY place that
 describes that moment: the 3D scene AND the story script (`update_storyboard`:
-`action`, `shot`, `camera`, `composition`, `continuity`, `duration`). The new
+`action`, `shot`, `camera`, `composition`, `duration`). The new
 wording is never improvised: it is written with the
 `cinematic-video-prompt-engineer` skill (poses, faces, acting, movement,
 camera, lenses, staging), exactly like the rest of the story, and the 3D and

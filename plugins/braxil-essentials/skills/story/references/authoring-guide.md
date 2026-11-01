@@ -12,18 +12,6 @@ Load when WRITING/EDITING. SKILL.md = schema skeleton, flows, hard gates; here =
   - **🔴 STAGING / AXIS LOCK for ANY multi-character scene — seated OR travelling (dinner table, car, sofa… AND characters walking/riding together): MANDATORY as a LOCK line.** The video model reinvents the geometry on every hard cut and flips who is where (silent 180-degree axis cross — the reported "she was beside the father, two shots later across from him" and "the boy was on her right, next shot on her left" bugs). When cinematic's scene fixes a camera side + screen positions, TRANSCRIBE that into the LOCK verbatim so it rides into every clip prompt, e.g.: *"La cámara permanece SIEMPRE en el mismo lado de la mesa; a cámara: MADRE a la IZQUIERDA, HIJA a la DERECHA, PADRE al fondo de frente. Nadie cambia de lado de pantalla en ningún plano; no se cruza el eje de 180°."* If cinematic didn't state it, DERIVE it from shot 1's blocking and add it. (Per-shot, ALSO keep each visible character's screen side in that shot's `composition` — the LOCK is the global anchor, `composition` restates it per cut.)
   - **🔴 The LOCK and every `composition` speak SCREEN, never a character's own left/right.** The renderer has no persistent 3D scene between cuts; it reads each shot's SCREEN directions literally. So positions, movement direction, off-frame eyelines and prop sides go in as screen-LEFT / screen-RIGHT **as that shot's camera sees them** — a line written from the character's body ("mira a su hermana, a su derecha") renders MIRRORED under a frontal camera and is the #1 cause of characters swapping sides. Two rules follow: (a) never write a WORLD-space invariant into the LOCK ("X va SIEMPRE a la izquierda de Y", "su mano derecha en la izquierda de ella") — state it without laterality ("van de la mano por dentro, nunca se sueltan") and let the per-shot screen sides carry it; (b) when a frontal shot and a from-behind shot of the same pair would legitimately mirror the sides, **SCREEN CONSTANCY WINS** — keep each character on the SAME screen side in both, even though that "breaks" the real geometry (invisible to the viewer, unlike the swap).
 
-### Per-shot `continuity` { characters, objects, place }
-Continuity-table ROW for that panel, user's language:
-- `characters`: who's in frame + exact state (position, pose, wear/hold, expression).
-- `objects`: state of every key prop/scenery in frame.
-- `place`: WHERE panel physically happens, restated per shot.
-
-Compositor → CURRENT PANEL STATE + SHOT LOCATION → render shows exactly this state in this place (no default-reset, later beat, void, or wrong close-up bg). Columns top-to-bottom = the continuity table user reviews in visor.
-- Fill `place` on EVERY shot of a scene with a strong setting (underwater, car, room) so close-ups stay anchored (fixes "close-up out of scene").
-- Fill `characters`/`objects` on any NON-default state (on stacked object, holding/using, machine open, object moved/broken/placed).
-- Table CATCHES self-contradiction (N "can crushed" vs N+1 "standing on can" → fix `action`).
-- **Declare ABSENCES (closed world):** a transient element that leaves (falling object, exiting char, consumed prop) → shots AFTER exit must state absence in `objects`, not just remaining elements. Renderers infer presence from neighbours; absence holds only if written.
-
 ### `dialogue`, `sfx`, `music`
 - `dialogue`: lines/VO, quote each speaker to parse; a CUE for facial expression, words NOT rendered on-frame.
 - `sfx`/`music`: free-text audio cues, NOT used by image prompt (reserved for future audio); editing them doesn't invalidate rendered image cache.
@@ -47,7 +35,7 @@ The cinematography is designed by `cinematic-video-prompt-engineer`; this skill 
 - One tight sentence per shot, user's language, readable in visor.
 
 ### Carry-forward state (#1 continuity bug)
-A shot setting a NON-default state (on stacked object, holding, machine open, object moved/broken/placed) → EVERY later shot where it still holds MUST restate it in `action`; renderer treats panels semi-independently, silently resets to default. State persists in text until a shot explicitly changes it. Same raccord: same object/hand/machine + lighting + time-of-day, shot-to-shot. Per-shot + root `continuity` = structured backstop.
+A shot setting a NON-default state (on stacked object, holding, machine open, object moved/broken/placed) → EVERY later shot where it still holds MUST restate it in `action`; renderer treats panels semi-independently, silently resets to default. State persists in text until a shot explicitly changes it. Same raccord: same object/hand/machine + lighting + time-of-day, shot-to-shot. A transient element that leaves (falling object, exiting character, consumed prop) → later shots state its absence in `action`: absence holds only if written. Root `continuity` = structured backstop. Positions and who is in frame come from the 3D.
 
 ## Continuous takes: `noCutBefore`
 
