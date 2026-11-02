@@ -44,6 +44,14 @@ Delegations, non-negotiable:
 3. **Timeline work: the engine and `timeline-assembler`.** Takes land on their
    clips by themselves; you never trim, stretch or move a 3D clip.
 
+## 🔴 Video only when the user asks
+
+Generate or regenerate real video ONLY when the user's latest request asks for
+it. Recalculating, fixing or approving the 3D is not that request: show the 3D
+and stop. Out-of-date takes, a stale clip or an earlier "make the video" never
+authorize a new one. Say in one line that the take no longer matches the 3D,
+and wait.
+
 ## 🔴 Step 0: resolution, asked once
 
 Unless the user already named it for this video, ask the resolution
@@ -144,7 +152,9 @@ event, which the video model renders as an impossible zigzag.
 - right after, say plainly that the grey figures are crude placeholders: take
   only where each one stands, moves to and faces; do NOT copy their poses,
   limb movement or gestures; every person moves and acts naturally, as a real
-  actor would, following the text;
+  actor would, following the text; each figure's two dark eyes, pale chest
+  panel, dark back panel and dark toes only mark which way the body faces (front
+  or back, face up or face down): obey them for that and do not render them;
 - and that the reference's SURFACES carry no information: its flat grey
   materials, colours, shapes on the ground or walls and any pattern are NOT
   to be rendered; the look of every surface (ground, road, walls, vehicles)

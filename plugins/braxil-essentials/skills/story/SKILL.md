@@ -166,6 +166,11 @@ The working storyboard is set by the CONVERSATION, not by focused tab: whichever
 
 ## Flow: modifying an EXISTING storyboard
 
+🔴 **Rewrite or refine.** A radical change to a part of the script: rewrite that
+part from zero, removing its shots and clips and creating the ones the new
+version needs, with as much time as it takes. Refining a clip or a group of
+clips: small changes inside them only. Clips the user locked stay untouched.
+
 🔴 **Timing belongs to the MONTAGE.** Once a story has its 3D montage, each
 shot's `duration` in the script is copied from the montage automatically (a
 continuous take keeps one duration per shot, never the whole take on its

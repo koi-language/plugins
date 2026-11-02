@@ -31,10 +31,18 @@ A **scene** = one place + its characters + their **blocking on a single
 clock** (ms). A **shot** = one camera over a window `[startMs, startMs+durationMs]`
 of that clock.
 
-- Sequential shots → consecutive windows (shot 2 starts where shot 1 ends).
-- **Coverage** (shot / reverse-shot of the same dialogue, a cutaway during the
-  same action) → **overlapping** windows. The action happens once; the cameras
-  watch it from different places. This is what keeps continuity right for free.
+- 🔴 **Action and cameras are separate, and together they are the film.** `actions`
+  is what happens and it runs on by itself. A shot is only a camera watching a stretch
+  of it, and which stretch follows from story order and durations, one after the
+  other: `startMs` is set for you. The film never goes back in time.
+- So reordering, removing or resizing clips changes where we look from, never what
+  happens. Never touch the action for one of these changes. Weigh what it does to
+  the cameras around it and adapt them: `cameraCheck` lists the hand-keyed ones that
+  now watch another moment, until you re-frame or confirm them.
+- Change `actions` only when what happens must change. If it must really take longer,
+  use `insertTime`; `timeMoved` gives how far each vehicle moved, so check anything
+  that must meet it later, such as a landing on it. `camerasOutlastAction` warns when
+  the last shots watch a world that has stopped: tell the user.
 - A shot is played LIVE: Blender interprets its camera over the scene clock in
   the timeline (nothing is pre-rendered), so the window only decides where it
   cuts — trim / slip just move it. Outside its window the camera holds still.
@@ -296,7 +304,14 @@ The rules per situation (running, jumping, falls, moving surfaces, fights,
 vehicles, objects, several bodies, water) live in the `physics-of-motion` skill:
 🔴 activate it whenever a shot holds real physical action, and run its method.
 
-A body thrown along a surface after an impact is a **tumble**:
+A body that loses its footing is an **impact**, simulated with real physics:
+`{ character, type: "impact", contact:"feet"|"left_side"|"right_side"|"back"|"front"|"head", speed, startMs, heading?, facing?, fallSpeed?, friction?, to? | offset?, tolerance?, restPose?, surfaceZ?, aboard?, slowMotion? }`.
+How it turns comes from what touches first; `endMs` and where it rests come out of
+the simulation (`simReport`). `to` / `offset` ask for a destination and it repeats
+until it gets there; `reached:false` means that spot is impossible. It simulates a
+flat surface: no roof edges, gaps or obstacles, so keep the path clear of them.
+`slowMotion` slows this body only: divide every vehicle's speed in the shot by the
+same factor. Use the older **tumble** only when an impact cannot do it:
 `{ character, type: "tumble", to, startMs, endMs, aboard?, roll?:"forward"|"backward"|"side", turns?, pose? }`.
 The figure really turns over along one line, its speed dying off to zero at
 `endMs`, and ends in `pose` (default `lying_front`). `aboard` makes the stop
@@ -442,7 +457,7 @@ ask the user for permission to do them.
    entrances, crosses, sits, turns, looks. Durations come from the shots
    (`duration` seconds × 1000).
 6. Shots: one per storyboard shot, `storyboardShotId` set, window on the clock
-   (consecutive, or overlapping for coverage). Translate the shot field:
+   (consecutive). Translate the shot field:
    "PG / plano general" → `wide`, "PE / plano entero" → `full`, "PA / americano" → `medium_full`,
    "PM / plano medio" → `medium`, "PMC / plano medio corto" → `medium_close`,
    "PP / primer plano" → `close_up`, "PPP / detalle" → `extreme_close_up`;
@@ -466,9 +481,24 @@ continuous take shares one number), NOT the shot id (`sh6` can be "plano 5"). `g
 - move → `shots: [{ id, set: { move: … } }]`;
 - "que entre por la derecha" / blocking → `characters` / `addActions` / `removeActions`;
 - "más largo" → the shot's `durationMs` (and the actions it contains).
+- More happens in a shot, or the user says to lengthen what it needs → first
+  time each beat of the script at real speed, sum them, and that sum is the
+  shot's `durationMs`. Then move everything later on the scene clock by the
+  difference: actions, vehicle legs (a train keeps its speed, so it travels
+  further), other shots. Never fit new content into the old window: a shot or
+  montage that keeps its old length after a big change is a mistake unless the
+  beats really fit. Report each changed shot's old and new length.
 
 Unchanged shots are never re-rendered; the timeline clips and storyboard cards
 update by themselves. Don't call add_scene3d_to_timeline again for an edit.
+
+🔴 **Rewrite or refine: two different jobs.** When the user changes a part of the
+script radically, rewrite that part from zero: remove its shots and clips and
+create the ones the new version needs, with as many shots and as much time as it
+takes. The old shots, clips, durations and blocking are not a starting point to
+preserve. Only when the user refines a clip or a group of clips make small
+changes inside them, keeping the rest as it is. Clips the user locked stay
+untouched in both cases.
 
 🔴 **The user's change is the truth.** A change the user asks for (a pose, a
 speed, a camera, a duration, an action) is carried into EVERY place that
@@ -549,6 +579,14 @@ lands on the same clip(s). "Pásalo a vídeo" on one 3D clip, on several, or on
 the whole montage: activate **`previz-to-video`** and follow it (resolution
 asked first, `prepare_scene3d_video`, the take prompt, review, landing). Never
 improvise that flow from here.
+
+## 🔴 Video only when the user asks
+
+Generate or regenerate real video ONLY when the user's latest request asks for
+it. Recalculating, fixing or approving the 3D is not that request: show the 3D
+and stop. Out-of-date takes, a stale clip or an earlier "make the video" never
+authorize a new one. Say in one line that the take no longer matches the 3D,
+and wait.
 
 ## Limits (say them when relevant)
 

@@ -84,9 +84,15 @@ Tires: see Vehicles.
   until the body is still.** Energy goes into a tumble, a bounce, a slide, a
   crumple, or breaking something.
 - Toppling over from standing takes 0.8-1 s; hands and arms react on the way.
-- A body thrown along a surface does not slide like a puck. It hits, turns over,
-  hits again, losing speed each time, limbs loose and flung outward. Use the
-  stopping formula; its direction stays one line.
+- **How a body turns comes from the hit.** A force away from the centre of mass
+  starts a turn; through the centre it only pushes. So what touches first decides
+  it: landing on a shoulder or side across the travel rolls it along its length;
+  feet stopped while the trunk carries on throw it over onto its back; a clip on
+  the legs sends it head over heels. Forward somersaults at speed are rare: never
+  pick an axis or a number of turns by taste.
+- A body thrown along a surface mixes sliding, a few turns and hits, losing speed
+  each time, limbs loose. It does not roll like a ball: 10 m at 10 m/s is about
+  one or two turns, not four.
 - **🔴 Inertia.** With no footing a body keeps its direction and only slows down
   until something acts on it. Any change needs a named, visible event in that
   beat: a blow, an obstacle, a hand gripping. Never "swinging left and right" or
@@ -285,28 +291,37 @@ AFTER     what state carries on into the next shots
 ### Writing the script
 Write the full arc, with its distances and durations in plain words, and make
 the shot as long as it needs. A viewer's "he lands" becomes: *"He hits the roof
-shoulder first and the train tears him backward: he turns over and over along
-22 metres of steel, arms flung loose, slowing with every hit, for three seconds,
-until he stops flat on his stomach near the wagon's end."* Name causes. Avoid
+shoulder first and the train tears him backward: he rolls once along his length,
+then slides on his side over the steel, arms flung loose, slowing with every hit,
+for two seconds, until he stops flat on his back near the wagon's end."* Name causes. Avoid
 wording that the video model renders as a zigzag ("swinging", "tumbling back and
-forth").
+forth") or as a somersault ("turns over and over"), and never count turns before
+the simulation has run: take them from `simReport`.
 
 ### Planning the 3D
 Translate the computed numbers into positions and times:
-- A body thrown along a surface: `{ character, type: "tumble", to, startMs, endMs,
-  aboard?, roll?, turns?, pose? }`. It bakes the constant-friction stop and really
-  turns over; never fake it with a walk in several legs or a slide in a held pose.
+- A body that loses its footing is SIMULATED: `{ character, type: "impact", contact,
+  speed, startMs, heading?, to? | offset?, restPose?, surfaceZ?, aboard? }`. Declare
+  the hit (what touches first, the speed relative to the surface); the turning, the
+  stop and the time come out of the physics. With a destination (`to` on still
+  ground, `offset` along a moving surface) it repeats, adjusting the arrival within
+  human limits, until the body rests there. Then read `simReport` (`restsAt`, time,
+  turns) and make the script and the next actions match it. `reached:false` means
+  that spot cannot be reached: change it or stage what stops the body. It assumes a
+  flat surface with no edge: keep the path on the roof and clear of gaps.
+  Prefer it to `tumble`; never fake a fall with a walk in several legs or a slide
+  in a held pose.
 - A vehicle keeps a speed consistent across legs, changing it gradually over
   several legs.
 - If the script asks for what cannot be, re-time or rewrite it and keep them
   matching, as `scene-3d` requires. A change the user decided is theirs to change.
 - `physics.warnings` catches part of this: impossible speeds, stops too hard for
-  friction, a hard landing with no reaction, a vehicle's sudden speed change, a
+  friction, a hard landing with no reaction, a destination an impact cannot reach, a vehicle's sudden speed change, a
   zigzag. Passing it does not make an action real: run the method anyway.
 
 ### Wording the video prompt
 The previz gives camera, place, path and timing. The body's mannequin is never
 copied, so the prompt must carry the physical performance: what touches first,
-the turning over, loose limbs, the speed dying off, the state at the end. A
-tumble in the reference gives direction, rhythm and duration; a real actor's
+the turns `simReport` measured and no more, loose limbs, the speed dying off, the
+state at the end. A fall in the reference gives direction, rhythm and duration; a real actor's
 body performs it.

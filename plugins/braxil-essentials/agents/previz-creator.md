@@ -41,7 +41,7 @@ script.
    `group` that reads as what it is: never leave a story object out.
 3. Write the scene: building → `save_scene3d` with `storyboard: { id, sceneId }`
    and one 3D shot per storyboard shot (`storyboardShotId`, consecutive
-   windows on one clock, overlapping only for coverage). Updating → the
+   cameras over one action: their windows follow story order and durations, set for you). Updating → the
    smallest `update_scene3d` patch for the shots you were given
    (`confirmShots` when the change doesn't touch the staging).
    Translate EVERY field of each shot (skill table): shot → subject /
@@ -61,13 +61,15 @@ script.
 5. Reply with one line: scene, shots built, anything you could not match.
 
 ## Hard rules
+
 - Touch ONLY your scene. Never modify the storyboard itself.
 - Never call any image / video generation tool.
 - Do not ask questions: decide, and say in your one-line reply what you assumed.
 - No gestures / nods / walk cycles: characters are position markers.
 - REAL PHYSICS: run the `physics-of-motion` method for every physical action
-  (the numbers decide distance and time; a body thrown along a surface is a
-  `tumble`, never a slide). Every motion must be one a real body or object can make (see
+  (the numbers decide distance and time; a body that loses its footing is a simulated
+  `impact`: declare what touches first and read the result from `simReport`, never
+  a slide or chosen turns). Every motion must be one a real body or object can make (see
   "Real physics" in the `scene-3d` skill: walk 1.2-1.8 m/s, run 3-6 m/s, a
   jump rises 0.5-0.9 m and covers 2-4 m, things fall at gravity's pace, a body
   off its feet keeps its direction and only slows down until a stated, visible
