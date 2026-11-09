@@ -27,6 +27,7 @@ via `scene.locationId` on the storyboard.
 | `lighting` | string | the set's default light. |
 | `tags` | string[] | free tags. |
 | `photos` | string[] | ABSOLUTE paths to reference photos. `photos[0]` is the hero. POINTERS only. |
+| `model` | string \| null | The place's 3D SET (a `build_model3d` id, kind "set"). Attached by `build_model3d` with `locationId`: every 3D previz scene in this place uses it and follows its rebuilds. The card shows it, with a Generate / Regenerate 3D button. |
 | `views` | `[{ id, label, path }]` | the establishing views: a free list. `label` is free text owned by the user (no fixed front/rear/left/right); `path` is null on an empty slot waiting to be filled. Set by `generate_location_plate`. **As many as it takes to cover every part of the place the story shoots, and no more** (see "Coverage"). |
 | `plate` | string | READ-ONLY: derived from the first view with an image, the location's anchor. Change `views`, never this. |
 | `details` | string[] | OPTIONAL ABSOLUTE paths to close-up / DETAIL shots of the place (a sign, a scale, a corner). Uploaded or assigned by the user, POINTERS only. Distinct from `photos` (the input references that DEFINE the place). |

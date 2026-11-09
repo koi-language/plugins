@@ -75,8 +75,14 @@ budget: an object 2k–30k triangles, a set up to ~150k.
 7. **Use it** in the scene: a prop `{ shape: "racecar", model: "<id>", … }`
    (keep the closest library `shape` as fallback; the model replaces it, at
    its modeled size; `size` scales it uniformly), or `set.model: "<id>"`
-   (replaces the procedural floor / walls / ceiling). Pass `locationId` when
-   the set is a saved location, so every scene there reuses it.
+   (replaces the procedural floor / walls / ceiling). **A model of a saved
+   card is attached to the card**: pass `locationId` (a set of a saved
+   location) or `objectId` (a saved object card) to `build_model3d`. The
+   card's `model` is then THE model of that place / object: every previz
+   scene in that place, and every prop that is that roster object, takes it
+   from the card by itself — and follows every rebuild (same `id`) or a new
+   model attached to the card. Never copy a card's model id into scenes by
+   hand.
 
 ## Script contract
 
@@ -91,6 +97,11 @@ budget: an object 2k–30k triangles, a set up to ~150k.
 - `kind: "set"`: authored in SCENE coordinates (floor at z = 0, the playable
   area around the origin, y towards the back) and NOT moved. Include the
   ground. Exterior ground ≥ 80 × 80 m so no edge shows.
+- An INTERIOR set: every wall is its OWN object (`wall_back`, `wall_left`…,
+  one slab each, full height, a few cm thick) and so is the ceiling
+  (`ceiling`); never one merged shell. The 3D stage hides the walls between
+  the view and the room (and the ceiling from above) so the user can look in
+  from outside — it can only hide whole objects.
 - Available names: `bpy`, `bmesh`, `math`, `Vector`, `Matrix`, `KIND`,
   `REF_CAMS` (the reference cameras: `[{obj, path, w, h}]`), and:
   - `pbr(name, color="#hex", rough=0.5, metal=0.0, coat=0.0,
@@ -100,8 +111,37 @@ budget: an object 2k–30k triangles, a set up to ~150k.
     `transmission=1, rough=0.05` or dark `#1a1f24, rough=0.1`; rubber:
     `#151515, rough=0.85`; carbon: `#1e2125, rough=0.35`.
   - `assign(obj, mat)` → gives a mesh exactly that material.
-- Use only scalar material inputs (no textures, no node graphs): the export
-  keeps those.
+  - `photo_material(name, photo, corners, size=512)` → a material that shows
+    a piece of a reference photo: `corners` are the thing's four corners in
+    the photo (0..1, y DOWN; top-left, top-right, bottom-right, bottom-left),
+    un-warped to a flat rectangle. For FLAT PRINTED things only: posters,
+    framed pictures, screens, book covers, a rug's pattern, a sign. Put it on
+    a plane (`primitive_plane_add`, UVs 0..1) sized and turned like the real
+    thing. Never on furniture or walls (those are modeled, with `pbr`).
+- Otherwise only scalar material inputs (no node graphs): the export keeps
+  those.
+
+## Sets: modeled like the photo, never a diagram
+
+A set is the PLACE in the photo, not a schematic of it. The user must look
+at it and recognise the photo. So, for every set with photos:
+- **Every visible thing is in it**, big and small: furniture, doors, windows,
+  curtains, rugs, shelves, lamps, what is on the desk and on the bed, what
+  lies on the floor (clothes, shoes, a bag, papers), what hangs on the walls.
+- **Built from its parts, with its real shape**: a bed = base + mattress +
+  pillow + a lumpy duvet (a subdivided, displaced mass, never a box); a desk
+  = top + legs (+ drawers); an office chair = seat + back + column + five
+  wheeled legs; a door = frame + panelled leaf + handle; a window = frame +
+  sill (+ curtains with folds); a pile of clothes = soft irregular lumps.
+  Skirting boards, the light switch, sockets, the door frame.
+- **No raw boxes**: bevel the edges (bevel modifier), round what is round.
+- **Colours per part**, sampled from the photo (the duvet's grey, the desk's
+  pale wood, the black chair).
+- **Printed surfaces from the photo** with `photo_material`: every poster,
+  picture and screen shows its crop of the photo.
+- Use the budget: a room is 30k–150k triangles. Check the
+  `[photo | model | blend]` reviews for detail too: a thing in the photo that
+  is missing or reads as a block in the model is a mismatch.
 
 ### Building shapes that read
 

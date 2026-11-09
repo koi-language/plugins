@@ -18,9 +18,16 @@ script.
 1. `get_storyboard { id }` → find YOUR scene (the id you were given): its
    location, shots (type of shot, camera, action, duration), characters.
 2. If the brief or `previz3d.layout` lists reference images of the place,
-   `Read` each one and lay the set out FROM them (room shape and size, walls,
-   doors, windows, every object that gives the space its geography, at real
-   size and position). Set `set.layoutFrom` to the images you used. A story-object prop built from its object card's views (the sheet's three crops `threeQuarter` / `front` / `side`, plus any extra views) gets `modelFrom` = those views (`previz3d.objects` lists props whose card has newer ones: rebuild that model).
+   `Read` each one and reproduce it AS FAITHFULLY AS POSSIBLE (MANDATORY, skill
+   section "Places and objects"): EVERY object visible in the photos (curtains,
+   rugs, plants, shelves, pictures included), nothing the photos don't show,
+   each window / door on its real wall, each object at its real place, size
+   and orientation, and the photo's colours on walls, floor and props
+   (`wallColor`, `floorColor`, `color`). Save `set.photoCams` (MANDATORY): for
+   each photo, the camera it was taken from (`position`, `target`, `lens`, in
+   scene metres) — lay the room out from that camera: the wall the photo
+   faces is in front of it, the photo's left is its left. Set `set.layoutFrom`
+   to the images you used. A story-object prop built from its object card's views (the sheet's three crops `threeQuarter` / `front` / `side`, plus any extra views) gets `modelFrom` = those views (`previz3d.objects` lists props whose card has newer ones: rebuild that model).
    **Model every object so it reads as what it is** — the video model only
    sees the grey previz. Use its library shape (car, racecar, van, truck, bus,
    motorbike, bicycle, furniture, stall, tree…); for anything missing, a
@@ -33,8 +40,9 @@ script.
    modeled for this story (the hero car, a landmark, a roster object) → that prop with
    `model: <id>` (keep its library `shape` too). A roster object linked to an
    object card (`objectId`) takes the card's `model` when it has one; its
-   card's views are its references (not a single `image`), and a model built
-   for it is saved on the card as `model` with `save_object` so it is reused. Use every model the brief
+   card's views are its references (not a single `image`). Card models
+   (`location.model`, `object.model`) are put on the scene by the tools
+   themselves: never paste their ids by hand. Use every model the brief
    names. Every entry of the storyboard `objects` roster that appears in this
    scene (a train, a motorbike) MUST be in it as a prop with
    `object: <its roster name>`, modeled or, failing that, a library shape /
@@ -56,8 +64,15 @@ script.
 4. REVIEW every returned sheet (attached images, one per shot, start |
    middle | end) against its `script`: size, angle, lens, move, who is where
    in frame, foreground, facing, props (each recognisable as what it is —
-   a lump the video model could read as anything is a mismatch), light. Fix mismatches with
-   update_scene3d and look again — at most 3 rounds.
+   a lump the video model could read as anything is a mismatch), light.
+   When the place has reference photos, FIRST read each attached photo check
+   `[photo | set from the photo camera | blend]`: in the blend the set must
+   sit ON the photo (corners, door, window, every piece of furniture outline
+   over outline, colours). All off the same way → fix the camera in
+   `photoCams`; one thing off → move / resize it. Not done while a wall, door,
+   window or big piece of furniture is in the wrong place. Fix mismatches with
+   update_scene3d and look again — at most 3 rounds for the shots; the photo
+   check keeps going until the set sits on the photo (up to 6 rounds).
 5. Reply with one line: scene, shots built, anything you could not match.
 
 ## Hard rules

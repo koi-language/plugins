@@ -17,8 +17,8 @@ previews. The previews become:
   clip; every re-render updates them automatically);
 - **structure for real generation** — the shot's previz drives `generate_video`
   video-to-video so the real take keeps your camera and where each character
-  stands, travels and faces. The figures' limb motion and poses are abstract
-  placeholders: the video model invents the real acting, never copies them.
+  stands, travels and faces. The figures have no limbs and their poses are
+  abstract placeholders: the video model invents the real acting.
 
 Never hand-write scene files: use `save_scene3d` (create / replace),
 `update_scene3d` (patch), `get_scene3d` (read / list), `render_scene3d`
@@ -185,6 +185,18 @@ library shape (`car`, `racecar` for open-wheel / Formula 1, `van`, `truck`,
 `group` whose parts give its telling silhouette (wings, wheels, cabin, mast…),
 at real size. Never a bare `box` for an object with a shape of its own.
 
+**Card models — the 3D of a place / object lives on its card.** A saved
+location's `model` is THE 3D set of that place; a saved object card's `model`
+is THE 3D model of that object. The scene tools put them on every scene by
+themselves (`set.model` from the storyboard scene's location, `prop.model` for
+each prop that is a roster object) and keep them in sync: rebuilding a model
+(same id) or attaching another one to the card updates every scene that uses
+it, its renders and its live stage. So: model a place / object ONCE, with
+`build_model3d` + `locationId` / `objectId`, and never paste card model ids
+into scenes. **A place with reference photos is modeled as the location's
+set** (model-builder, the photos with their cameras as references): that is
+how the set matches the photos; then `set.photoCams` checks it in the scene.
+
 **Modeled assets (`model`).** When an object or a place must look like ITS
 reference photos (the hero car, a specific street or circuit, a landmark),
 it is modeled once with `build_model3d` (skill `3d-modeler`, agent
@@ -277,16 +289,19 @@ cameras in one Blender pass and the cards appear as they land.
 
 ## Characters = position markers (they do NOT act)
 
-Everyone is an abstract BLOCK FIGURE (faceted ball head, slab torso, block
-legs — grey clay). They exist to say WHERE each person is, which way they
-face / look, and the body POSE of the moment. **They never act**: no walk cycles (a walk
-glides), no nods, waves, shrugs or gestures — the video model performs all of
-that from the script. Use a limb ONLY when the picture must read an
-interaction with an OBJECT or a body:
+Everyone is an abstract RIGID FIGURE: a faceted head with TWO EYES (they say
+where the person looks) on a body that is ONE round column, a touch wider at
+the top than at the foot. **No arms, no legs, nothing bends** — the column is
+rigid, always. They exist to say WHERE each person is, which way they face /
+look, and the body POSE of the moment. **They never act**: no walk cycles (a
+walk glides), no nods, waves, shrugs or gestures — the video model performs
+all of that from the script. Never try to fake limbs with props or extra
+volumes. Interactions with an OBJECT still exist, with no arm to show them:
 
-- `hold` (the coach holds the ball at chest / chin / waist — the prop rides the hands),
-- `grab` (reach a prop and keep it), `give` (hand it to another character),
-  `put` (leave it somewhere), `kick` (sends the prop `to` a point; the leg itself does not move).
+- `hold` (the coach holds the ball at chest / chin / waist — the prop floats
+  where the hands would be, in front of the body),
+- `grab` (the prop jumps to the body and stays), `give` (it passes to another
+  character), `put` (leave it somewhere), `kick` (sends the prop `to` a point).
 
 Everything else in an `action` line ("asiente tres veces", "sonríe",
 "manos en los bolsillos") is performance: leave it to the video model.
@@ -371,18 +386,20 @@ only exactly on a cut between shots. Before delivering a shot with a jump or a
 fall, step through its frames: the body must move continuously.
 
 `color` only tints the clay so the cast stays apart; `height` sets the build.
-Characters are block figures (head, trunk, arms, legs). The figure says
-WHERE the actor is and shows, as exactly as possible, the **body pose of each
-moment**, held still. It never performs: walks and runs glide with no leg
-cycle, a jump is the whole body on its arc with no crouch, kicks and strikes
-move no limb, and there are no gestures (the video model performs all of that
-from the script). Arms only move to hold, take or hand over an object.
+Characters are rigid figures (head with two eyes + one rigid column, no
+limbs). The figure says WHERE the actor is and, as exactly as a rigid body
+can, the **body pose of each moment**, held still: a pose only lowers or
+tilts the whole column — seated / riding / driving sinks it into the seat,
+kneeling / crouching / sitting on the ground sinks it so the head is at the
+real height, lying lays it down. It never performs: walks and runs glide, a
+jump is the whole body on its arc, and there are no gestures (the video model
+performs all of that from the script).
 
 🔴 Match the pose to the script in EVERY shot, as precisely as the library
 allows. Poses: `standing` (default), `sitting` (chair), `riding` (motorbike,
 bicycle, horse: `ride` picks it by itself), `driving` (car, van, truck: also
 automatic), `lying` (flat on the back), `lying_front`, `lying_side`,
-`on_elbow` (lying, propped on one elbow; `side` picks the arm),
+`on_elbow` (lying, raised on one elbow; `side` picks which),
 `sitting_ground`, `kneeling` (one knee down), `kneeling_both`, `crouching`,
 `all_fours`. Set the starting one with `pose` on the character; change it with
 `{ character, type: "pose", pose, startMs, endMs }` (`sit` / `stand` / `lie`
@@ -396,25 +413,64 @@ pose the figure had when you placed it: after changing a pose, frame the shot
 with `subject` + `shotSize` (the solver aims at where the head really is, and
 for a body lying down it shoots from above the face) or re-aim it.
 
-## Places and objects: match the reference images, at real scale
+## Places and objects: AS FAITHFUL TO THE PHOTOS AS POSSIBLE (MANDATORY)
 
-The set must be the place the story happens in — spatially. **When the scene
-has reference images of the place** (storyboard scene/shot `references`, the
-plate / photos of its saved location — `previz3d.layout` lists them), READ
-every image before blocking and reproduce its layout:
+🔴 When the place or an object has reference images (storyboard scene/shot
+`references`, the plate / photos / views of its saved location — 
+`previz3d.layout` lists them — object cards, photos the user gave), the 3D
+set and its objects MUST reproduce those images as faithfully as the tools
+allow. A generic room "of the same kind" is a FAILURE: the user must
+recognise THE room of the photo at a glance, from the photo's own viewpoint.
+READ every image before blocking, and work from it, never from the scene's
+text description:
 
-- the room's size and shape, where the walls, doors and windows are;
-- EVERY object that gives the space its geography (table, sofa, bar, columns,
-  a car, a stall…) at its REAL dimensions, position and orientation;
-- a recognizable silhouette — it doesn't have to be exact, but a car must read
-  as a car (use the library shape, real size) and an object the library lacks
-  is a `group` of simple parts with its real proportions;
-- then set `set.layoutFrom` to all the reference images you matched.
-- a prop that is a story object (`object`) with a modeled `model`: set its
-  `modelFrom` to the object card's views the model was built from (the sheet's
-  three crops, `threeQuarter` / `front` / `side`, plus any extra views). When
-  the card gets new views, `previz3d.objects` lists the prop: rebuild the model
-  from ALL the views, save it on the card and update `model` + `modelFrom`.
+1. **Inventory.** List EVERY object visible in each photo, big and small:
+   furniture, curtains, rugs, plants and pots, shelves, pictures / maps on
+   the walls, lamps, things on the window sill or the desk. Each one goes in
+   the set (library shape or a `group` with its real silhouette). Nothing is
+   dropped because it is "decoration".
+2. **Nothing invented.** No object, door, window or furniture that the photos
+   don't show. Only what the action needs and the photos can't show (the
+   wall behind the photo's camera) may be added, consistent with the rest.
+3. **Geometry.** The room's proportions and shape; WHICH wall each window
+   and door is on, its width, height and sill height; each object's position
+   measured against the walls and its neighbours (the desk under the window,
+   the wardrobe to its right, the bed against the right wall, its headboard
+   on the back wall…), its orientation and its REAL dimensions.
+4. **Colour.** `wallColor`, `floorColor` and each prop's `color` sampled from
+   the photo (pale blue walls, light oak floor, white bed linen, pink rug):
+   never the default beige / grey when the photo shows another colour.
+5. **Photo cameras (`set.photoCams`), MANDATORY.** For EVERY photo of the
+   place, estimate where it was taken from, in the scene's metres, and save it
+   with the set: `{ image, camera: { position, target, lens } }`.
+   - `lens` from the field of view: a phone's main camera ≈ 26 mm, an interior
+     shot that shows two walls and the corner ≈ 16–20 mm, a normal view ≈ 35–50;
+   - `position`: where the photographer stands (usually against the wall
+     opposite what the photo shows, ≈ 1.4–1.6 m high);
+   - `target`: the point at the centre of the photo.
+   Lay the room out FROM the camera: the wall the photo faces is the wall in
+   front of that camera; what is on the left of the photo is on the camera's
+   left. Each save / update / render then returns a **photo check**
+   `[photo | the set from that camera | both blended]`, attached as an image.
+6. **Match ON the photo.** In the blend the set must sit on the photo: room
+   corners on the photo's corners, the door / window on their openings, every
+   piece of furniture outline over outline, the same colours. If everything is
+   off the same way, the camera is wrong → fix `photoCams`; if one thing is
+   off, move / resize it. Repeat `update_scene3d` until the blend matches. A
+   set is NOT done while its photo check shows a wall, door, window or big
+   piece of furniture in the wrong place. Then check the shot sheets too.
+7. Set `set.layoutFrom` to all the reference images you matched.
+
+The same applies to every object with references: its proportions, parts and
+colours come from its photos / card views, measured, not guessed. A prop that
+is a story object (`object`) with a modeled `model`: set its `modelFrom` to the
+object card's views the model was built from (the sheet's three crops,
+`threeQuarter` / `front` / `side`, plus any extra views). When the card gets
+new views, `previz3d.objects` lists the prop: rebuild the model from ALL the
+views, save it on the card and update `model` + `modelFrom`. When the library
+shapes and groups cannot get close enough to the photo (a very particular
+room, a distinctive object), model it with `build_model3d` (skill
+`3d-modeler`) instead of settling for an approximation.
 
 Pick a shot's camera from the photo's own viewpoint when the storyboard shot
 frames the place the same way. When NEW reference images arrive later (the
@@ -434,9 +490,10 @@ three crops first) + `photos`)
 are its references; a legacy entry without a card uses its `image`), spawn
 one `model-builder` per place / object, all in parallel, and wait for their
 ids; then pass those ids to the previz-creators so the sets and props use the
-models. When an object card has no `model` yet, save the built model's id on
-it as `model` (`save_object`), so the next previz reuses it instead of
-modeling it again; when it already has one, use it. Vehicles and machines the story is
+models. Each model-builder gets the card it models (`locationId` /
+`objectId`), so the model lands on the card and every scene takes it from
+there; when a card already has a `model`, it is reused (rebuild it only on
+new references or when the user asks). Vehicles and machines the story is
 about (a train, a motorbike) are never skipped: they matter as much as the
 set and the cast. Each prop that IS a roster object carries
 `object: <its roster name>` (and `model: <id>`): that is what puts its
@@ -447,8 +504,9 @@ ask the user for permission to do them.
 1. `get_storyboard` → its scenes, shots, aspect, characters, locations.
    If `get_scene3d { storyboardId }` already lists scenes, UPDATE them; never duplicate.
 2. **One `save_scene3d` per storyboard scene** (a scene = one set).
-3. Set: if the scene has reference images of the place, lay it out FROM them
-   (section above). Otherwise size the room to the action (a kitchen ~5×4 m, a
+3. Set: if the scene has reference images of the place, reproduce them as
+   faithfully as possible (section above: inventory, nothing invented,
+   geometry, colour, `photoCams` and its photo check until the blend matches). Otherwise size the room to the action (a kitchen ~5×4 m, a
    bar ~10×8 m) with the props the action touches plus the ones that orient the
    viewer, at real size.
 4. Characters: one per cast member present. `characterId` from the storyboard
@@ -590,5 +648,5 @@ and wait.
 
 ## Limits (say them when relevant)
 
-Characters are block figures that hold a pose but never act; props are simple
+Characters are rigid figures (head with eyes + one column, no limbs) that hold a pose but never act; props are simple
 volumes unless modeled with `build_model3d`. Previz is for space, timing, camera and staging — not for look.

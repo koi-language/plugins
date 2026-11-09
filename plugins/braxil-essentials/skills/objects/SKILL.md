@@ -193,9 +193,12 @@ If the user adds an EMPTY detail slot (in the GUI), fill it by passing its
   `details` (`[{ label, path }]`) so the prompt names them.
 - When the previz models the object (`build_model3d`, via `3d-modeler`), the
   sheet's three crops (the `threeQuarter`, `front` and `side` views) plus any
-  extra views and the photos are the references, and the built model's id is
-  saved on the card as `model` (`save_object`) so every later previz reuses it
-  instead of modeling it again. Details are NOT 3D modeling references.
+  extra views and the photos are the references, and `build_model3d` gets
+  `objectId: <the card id>`: the model is attached to the card as `model` by
+  itself, and every previz prop that is this object (`prop.object`) uses it
+  and follows every rebuild. The card shows it (its 3D model section, with a
+  Generate / Regenerate 3D button that asks you to model it). Details are NOT
+  3D modeling references.
 
 ## Gotchas
 
