@@ -22,7 +22,7 @@ The gateway hard-errors on an unknown slug and silently drops fields a model doe
 - `width` + `height` — an **exact pixel canvas** (both required together), used instead of the `resolution` label when you need a precise size. **Only the Seedream family and Qwen-Image-Edit honour them**; every other model ignores them and uses `aspectRatio`/`resolution`. Each model caps the **total AREA** (not per-side): Seedream edit tops at ~4.2 MP (= 2048²), so one side may exceed 2048 if the other shrinks (`4096×1024` ✓), but true 4K (~8.3 MP) does not fit — edit then upscale, or use a 4K-capable text-to-image model. Nothing is clamped client-side; the provider enforces its own area/aspect limits. Video has no width/height (its models size by `resolution` tier + `aspectRatio`). **If the user asks for an exact pixel size on a model WITHOUT `width`/`height`, do NOT render at the default and shrink — approximate it with the closest `resolution` label + closest `aspectRatio`; see the "Exact pixel size requested" section below.**
 - `quality` — sampling effort (`low | medium | high | auto`), decoupled from pixel count. **Only some models consume it** (their table lists it); most ignore it. `low` for thumbnails, `high` for finals.
 - `n` — number of images. **Max is per-model** (see the table — commonly 4, some 6).
-- `seed` — reproducibility seed: same seed + same prompt ⇒ the same image **on models that honour it** (Krea 2 Turbo and the Nano-Banana 2 / Pro models; GPT Image 2 and Seedream Lite ignore it). Omit for a fresh random result.
+- `seed` — reproducibility seed: same seed + same prompt ⇒ the same image **on models that honour it** (Krea 2 Turbo and the Nano-Banana 2 / Pro models; GPT Image 2.x and Seedream Lite ignore it). Omit for a fresh random result.
 - `referenceImages` — file paths / attachment IDs (`att-N`) / `@mention` handles, OR objects `{ alias, path }`. **Prefer aliased objects** and refer to them by alias in the prompt ("paint the `logo` onto the `mug`"). **Only edit / outpaint / bg-remove models accept refs, and the max count is per-model** — text-to-image models reject them.
 - `outputFormat` — **per-model** (most do `png/jpeg/webp`; some only `png/jpeg` — the table lists it). Default png.
 - `cameraAngles` — `{ horizontal?, vertical?, zoom? }` — ONLY for a different camera angle of an existing image; consumed only by a camera-rotation model (its card lists `cameraAngles` support). At least one axis; omitted axes stay at the model default.
@@ -37,8 +37,8 @@ Returns `{ success, provider, model, images: [{ url?, b64?, savedTo?, exportedTo
 When the user asks for a **concrete pixel size** (e.g. "1024×1024", "512px", "a 1080p", "4K", "un icono de 1024"):
 
 1. **If the chosen model accepts `width`+`height`** (ONLY the Seedream family and Qwen-Image-Edit) → set them to the exact size. Done.
-2. **If it does NOT** (GPT Image 2, Nano-Banana, Krea, Bria… — every other model) → you **CANNOT** pass an exact canvas, so you MUST APPROXIMATE it from the two labels the model *does* accept — **do NOT just render at the default size and shrink it**:
-   - **`resolution`** → pick the label whose pixel size (in that model's card — e.g. GPT Image 2: `low`=1280, `medium`=1920, `high`=2560, `ultra`=3840 long edge) is **CLOSEST to the requested size**. For 1024 that is `low` (1280), NOT the default `high` (2560).
+2. **If it does NOT** (GPT Image 2.x, Nano-Banana, Krea, Bria… — every other model) → you **CANNOT** pass an exact canvas, so you MUST APPROXIMATE it from the two labels the model *does* accept — **do NOT just render at the default size and shrink it**:
+   - **`resolution`** → pick the label whose pixel size (in that model's card — e.g. GPT Image 2.x: `low`=1280, `medium`=1920, `high`=2560, `ultra`=3840 long edge) is **CLOSEST to the requested size**. For 1024 that is `low` (1280), NOT the default `high` (2560).
    - **`aspectRatio`** → pick the ratio **CLOSEST to the requested one** (1024×1024 → `1:1`; 1920×1080 → `16:9`; etc.). If the model takes any `W:H`, pass the exact ratio.
    - **Only then**, if the user needs the pixels to be *exact*, resize the returned file DOWN to that size locally (a lossless downscale of the closest render) — never upscale past what the model produced, and never claim the model "renders at a fixed internal resolution": it doesn't, you chose the closest label.
 
@@ -80,20 +80,24 @@ The `generate_image` `model` param covers **generation** and **editing** only. P
 
 ## Choosing within a category
 
-**DEFAULT MODEL — always GPT Image 2 unless a concrete reason below forces another.** It is the standard pick for both categories:
-- **Text-to-image** → `openai/gpt-image-2`.
-- **Edit / image-to-image** → `openai/gpt-image-2/edit`.
+**🔴 NEWEST VERSION WINS (user rule).** When a model family has several versions in the catalog (GPT Image 2 / 2.5 / 2.6, Seedream 4.5 / 5, Nano-Banana 2 / Pro, …), ALWAYS use the NEWEST version. An older version is only picked when the user names it explicitly, or when the operation is impossible on the newest one (check its card). This applies to every default named below: if a newer version of the default exists, use the newer one.
 
-Reach for GPT Image 2 first, every time. Do NOT switch to Nano-Banana, Seedream, Krea, Qwen, Bria or any other model just because it "might look better" or "is newer" — that is exactly the wrong reason. Only deviate when ONE of these is true:
+**DEFAULT MODEL — always GPT Image 2.6 Flare unless a concrete reason below forces another.** It is the standard pick for both categories:
+- **Text-to-image** → `openai/gpt-image-2.6/flare/text-to-image`.
+- **Edit / image-to-image** → `openai/gpt-image-2.6/flare/edit`.
+- Need the maximum fidelity on intricate detail (and can afford a longer wait)? Same model, precision variant: `openai/gpt-image-2.6/sunburst/text-to-image` · `openai/gpt-image-2.6/sunburst/edit`.
+- GPT Image 2 and 2.5 are OLDER versions: never pick them unless the user names them.
 
-1. **The operation is impossible on GPT Image 2.** Camera-rotation (`fal-ai/qwen-image-edit-2511-multiple-angles`), an exact-pixel canvas (Seedream family / Qwen-Image-Edit accept explicit `width`+`height`), or the separate no-model tools (outpaint, upscale, background-removal). If GPT Image 2 cannot physically do it, use the one model that can.
+Reach for GPT Image 2.6 first, every time. Do NOT switch to Nano-Banana, Seedream, Krea, Qwen, Bria or any other model just because it "might look better" or "is newer" — that is exactly the wrong reason. Only deviate when ONE of these is true:
+
+1. **The operation is impossible on GPT Image 2.6.** Camera-rotation (`fal-ai/qwen-image-edit-2511-multiple-angles`), an exact-pixel canvas (Seedream family / Qwen-Image-Edit accept explicit `width`+`height`), or the separate no-model tools (outpaint, upscale, background-removal). If GPT Image 2.6 cannot physically do it, use the one model that can.
 2. **The user explicitly names another model** ("use Nano-Banana", "hazla con Seedream"). Honour the request.
-3. **A catalog Label matches a genuinely specialized style the user asked for** AND GPT Image 2 is not itself labelled for it — e.g. the user asks for `manga`/`anime`/`watercolor`/`logo` and another model carries that exact label. A generic "realistic photo / recreate this / make an image" request is NOT a specialized style — keep GPT Image 2.
+3. **A catalog Label matches a genuinely specialized style the user asked for** AND GPT Image 2.6 is not itself labelled for it — e.g. the user asks for `manga`/`anime`/`watercolor`/`logo` and another model carries that exact label. A generic "realistic photo / recreate this / make an image" request is NOT a specialized style — keep GPT Image 2.6.
 
-If none of the three applies, use GPT Image 2. When in doubt, GPT Image 2.
+If none of the three applies, use GPT Image 2.6. When in doubt, GPT Image 2.6.
 
-- Compare the candidates' cards in `references/models.md` only for the parameters GPT Image 2 accepts/rejects (aspect ratios, resolution ceiling, output formats, `quality`). Only the GPT Image 2 / 2.5 / 2.6 families read `quality` (`xhigh`/`max` only on 2.5 / 2.6).
-- **What the labels mean.** A model's labels (the Catalog table's **Labels** column) mark the content/subject/style it is best-suited for. They only override the GPT Image 2 default under exception 3 above — a specialized style the user explicitly asked for that GPT Image 2 isn't labelled for. Never let a label pull you off GPT Image 2 for a generic request.
+- Compare the candidates' cards in `references/models.md` only for the parameters GPT Image 2.6 accepts/rejects (aspect ratios, resolution ceiling, output formats, `quality`). Only the GPT Image 2 / 2.5 / 2.6 families read `quality` (`xhigh`/`max` only on 2.5 / 2.6).
+- **What the labels mean.** A model's labels (the Catalog table's **Labels** column) mark the content/subject/style it is best-suited for. They only override the GPT Image 2.6 default under exception 3 above — a specialized style the user explicitly asked for that GPT Image 2 isn't labelled for. Never let a label pull you off GPT Image 2.6 for a generic request.
 - Some capabilities live on a single model (camera-rotation, masked inpaint, outpaint, transparent cut-out). Find that model by the param / label it supports in the table + `references/models.md` — never by memory (this is exception 1).
 
 ## Gotchas
@@ -102,7 +106,7 @@ If none of the three applies, use GPT Image 2. When in doubt, GPT Image 2.
 
 - **Never pick a slug from the wrong category** — a text-to-image (`image_generation`) slug given `referenceImages`, or an editing slug asked to upscale, fails at the adapter. Match the operation to its category first, then choose within it.
 - **Some models cap resolution unless you ask** — for a few, omitting `resolution` returns a low render even for a "4K" request. Always set `resolution` (`high`/`ultra`) for high-res work; check the model's card.
-- **Editing a SMALL reference → the output inherits the ref's tiny canvas unless you set `resolution`.** Edit models (e.g. GPT Image 2 edit, Seedream edit) match the output size to the base `referenceImages` when you DON'T pass an explicit size — so a 500×500 web thumbnail in, a ~500×500 render out, and your `aspectRatio` is IGNORED. `quality` does NOT change pixels (it's sampling effort only). When the reference is small and you want a proper-size result, **pass `resolution: high`/`ultra` (and `aspectRatio`) explicitly** so the model renders a fresh large canvas instead of copying the ref's dimensions.
+- **Editing a SMALL reference → the output inherits the ref's tiny canvas unless you set `resolution`.** Edit models (e.g. GPT Image 2.6 edit, Seedream edit) match the output size to the base `referenceImages` when you DON'T pass an explicit size — so a 500×500 web thumbnail in, a ~500×500 render out, and your `aspectRatio` is IGNORED. `quality` does NOT change pixels (it's sampling effort only). When the reference is small and you want a proper-size result, **pass `resolution: high`/`ultra` (and `aspectRatio`) explicitly** so the model renders a fresh large canvas instead of copying the ref's dimensions.
 - **Low-res result → REGENERATE, do NOT upscale — ESPECIALLY with references.** If a render came out small/low-res (matched a small ref, or you forgot `resolution`), the fix is to **redo the generation at the right `resolution`**, NOT to run `upscale_image` on the bad output. Upscaling FABRICATES detail and looks worse than a clean high-res render — and it's never justified when a reference exists, because you can just generate again from that same reference at full size. Reserve `upscale_image` for when the source is already the best available pixels (a real photo, a final render you can't reproduce) — never as a patch for a generation you undersized.
 - **Exact pixel size on a model without `width`/`height`** — approximate with the CLOSEST `resolution` label + CLOSEST `aspectRatio`, then downscale locally if it must be exact. Never render at the default size and shrink, and never say the model "always renders at a fixed internal resolution". See the "Exact pixel size requested" section.
 - **Seed only works on the models whose card lists it** — check the card before promising reproducibility.

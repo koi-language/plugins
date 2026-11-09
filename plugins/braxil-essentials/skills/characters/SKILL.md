@@ -2,7 +2,7 @@
 name: characters
 description: >
   🔴 MANDATORY before creating or editing a reusable CHARACTER. Triggers (any language): "create/new character", "crear/nuevo personaje", "define a character", "define un personaje", "ficha de personaje", "save_character", "generate_character_sheet", "turnaround", or linking a character to a storyboard's cast. If you are about to create/modify a character and this skill is not active, ACTIVATE IT FIRST.
-  MANDATORY before creating or editing a reusable CHARACTER (a cast member — person, mascot, spokesperson) via `save_character` / `generate_character_sheet`. It is the contract for the character JSON (every field + its meaning), the the turnaround-sheet model (the `characters`-labelled catalog model, default GPT Image 2), and the voice-assignment flow (list_voices → ElevenLabs, match the voice's gender to the character's sex). If you are about to create/modify a character and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "create/new character", "crear/nuevo personaje", "define a character", "define un personaje", "character card/ficha de personaje", "cast member", "generate the character turnaround/sheet", "genera la hoja/turnaround del personaje", "assign a voice to the character", "asigna una voz al personaje", or any mention of save_character / generate_character_sheet.
+  MANDATORY before creating or editing a reusable CHARACTER (a cast member — person, mascot, spokesperson) via `save_character` / `generate_character_sheet`. It is the contract for the character JSON (every field + its meaning), the the turnaround-sheet model (GPT Image 2.6 with photos, Seedream 5 Pro for invented ones, passed explicitly), and the voice-assignment flow (list_voices → ElevenLabs, match the voice's gender to the character's sex). If you are about to create/modify a character and this skill is not active, ACTIVATE IT FIRST. Triggers (any language): "create/new character", "crear/nuevo personaje", "define a character", "define un personaje", "character card/ficha de personaje", "cast member", "generate the character turnaround/sheet", "genera la hoja/turnaround del personaje", "assign a voice to the character", "asigna una voz al personaje", or any mention of save_character / generate_character_sheet.
 ---
 
 # Characters
@@ -56,19 +56,20 @@ existing doc and pass its fields back (including `id`) so you update in place.
 3. **Voice**: assign one (see below) and `save_character` with `voiceId` + `ttsModel`.
    A character with no voice cannot speak in a video.
 
-## Turnaround sheet — real photos → GPT Image 2, invented → Seedream
+## Turnaround sheet — real photos → GPT Image 2.6, invented → Seedream
 
 `generate_character_sheet({ description?, photos?, characterId?, model?, aspectRatio? })`
 renders a 4-columns × 2-rows sheet (top row = 4 full-body views; bottom row = 4
 face portraits) with thick pure-black gutter bars, detects the 8 cells, and
 attaches them to the character.
 
-- **Model — AUTO by whether the character has reference photos** (don't override
-  `model` unless the user asks):
-  - **WITH reference photos** (a real person) → the **`characters`**-label
-    identity model (default **GPT Image 2** edit), which best matches the source.
-  - **NO reference photos** (a **100% invented** character) → the
-    **`characters-synthetic`**-label model (**Seedream** text-to-image).
+- **Model — YOU pass it, chosen by whether the character has reference photos**
+  (always the NEWEST version of the family; another model only if the user asks):
+  - **WITH reference photos** (a real person) → `model: "openai/gpt-image-2.6/flare/edit"`,
+    which best matches the source.
+  - **NO reference photos** (a **100% invented** character) →
+    `model: "bytedance/seedream/v5/pro/text-to-image"` (Seedream: a synthesised
+    face clears Seedance's likeness filter with no later pass).
 - **Every sheet goes to the video model AS-IS** — Seedance included. Never
   regenerate a character's turnaround through Seedream to feed Seedance.
 - **Resolution**: the sheet renders at **2K** (`generate_character_sheet` requests `resolution: '2k'` = 2048).

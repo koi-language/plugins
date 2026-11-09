@@ -74,6 +74,8 @@ When the user asks to clone a voice and hasn't provided a sample, don't just wai
 
 When a mode's category holds more than one model, decide from the data — neutrally, no default favourite:
 
+- **🔴 NEWEST VERSION WINS (user rule).** When a model family has several versions in the catalog (e.g. ElevenLabs v2 / v3, MiniMax Speech 2.5 / 2.6), ALWAYS use the NEWEST version. An older version is only picked when the user names it explicitly, or when the operation is impossible on the newest one (check its card).
+
 - Compare the candidates' cards in `references/models.md` on the traits your task needs: output formats, duration range, and the knobs you rely on (`loop` for seamless beds, `instrumental` for no-vocals music, `videoFile` for synced Foley, `chunkLevel: word` for caption timing, `language` for pronunciation, `seed` where it's honoured).
 - **What the labels mean — use them to pick the best-suited model.** A model's labels (the Catalog table's **Labels** column) mark the content or style that model is the BEST-SUITED for. If the user's request matches a label, **strongly prefer that model** over an unlabelled one in the same category — the label is telling you it is the best fit. Examples: `narration` → the best for a voice-over read; `cinematic` / `orchestral` → the best for that kind of score; `foley`, `ambient`, etc. → their named sound type. Read every candidate's labels against what the user asked for and route accordingly. When no label matches, ignore labels and choose on quality / price.
 - Some knobs live on a single model (seamless `loop` on SFX, `instrumental` on music). Find that model by the field it supports in the table + `references/models.md`, not by memory.

@@ -503,9 +503,9 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 
 ---
 
-## Server-routed — operation `"edit"` / `"extend"` (leave `model` UNSET)
+## Edit / extend — operation `"edit"` / `"extend"` (YOU pass `model`)
 
-The server picks the editor; you pass `sourceVideo` + `prompt`.
+Pass `sourceVideo` + `prompt` + `model`. Defaults: edit → `google/gemini-omni-flash/v1.2/edit`; extend → `google/gemini-omni-flash/v1.2/extend` (`blackforestlabs/flux-3/extend-video` for an extension over 10 s). Older Omni Flash versions (v1, 1.1): never, unless the user names them.
 
 ### Gemini Omni Flash — Video Edit — `google/gemini-omni-flash/edit`  *(operation `"edit"`)*
 | `video` param | Req? | Accepted values | Notes |

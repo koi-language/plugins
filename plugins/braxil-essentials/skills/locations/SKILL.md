@@ -35,6 +35,14 @@ via `scene.locationId` on the storyboard.
 `createdAt` / `updatedAt` are managed by the tool — on an UPDATE, read the
 existing doc and pass its fields back (including `id`) so you update in place.
 
+## Model — YOU pass it (the skill decides, not the server)
+
+Always set `model` explicitly; never rely on auto-selection. Always the NEWEST version of the family:
+- **With reference images** (photos of the place, or the views already made) → `openai/gpt-image-2.6/flare/edit`.
+- **Without references** → `openai/gpt-image-2.6/flare/text-to-image`.
+- Need maximum fidelity on intricate detail → the same with `sunburst` instead of `flare`.
+- Another model only when the user names it.
+
 ## Creation flow
 
 1. **Create** the location: `save_location` with `name` + a strong visual
