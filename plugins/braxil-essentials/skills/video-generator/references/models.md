@@ -454,6 +454,50 @@ Every card lists that model's **hard limits (from the fal schema)** — prompt c
 - **Ref binding — write `@ref1`, `@ref2`, … as usual.** This model's native dialect is `<IMAGE_REF_n>` / `<VIDEO_REF_n>`, which is **ZERO-indexed with a separate counter per modality** (2 images + 1 video ⇒ `@ref1 @ref2 @ref3` becomes `<IMAGE_REF_0> <IMAGE_REF_1> <VIDEO_REF_0>`). The engine does that translation for you AFTER applying the caps, so the indices always match what actually ships. Do NOT hand-write the tags — unlike v1, where you had to.
 - **Rejects**: startFrame, endFrame, seed, withAudio.
 
+### Gemini Omni Flash 1.2 — Text-to-Video — `google/gemini-omni-flash/v1.2/text-to-video`
+- text-only. Same as 1.1 but **up to 15 s** per clip.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (prompting technique, audio).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars | all cinematography/pacing/audio direction lives in the prose. |
+| aspectRatio | optional | `16:9·9:16` only | clamped to nearest orientation; omit → 16:9. |
+| duration | optional | 3–15 s (clamped) | omit → 8s. 1.1 stopped at 10 s. |
+| resolution | optional | `360p·720p·1080p·4k` | omit → 720p (field not sent). `2k` folds DOWN to 1080p. |
+
+- **Rejects**: startFrame, endFrame, referenceImages, referenceVideos, seed, withAudio.
+
+### Gemini Omni Flash 1.2 — Image-to-Video — `google/gemini-omni-flash/v1.2/image-to-video`
+- needs `startFrame` + `prompt`; optional `endFrame` (A→B interpolation).
+- 📖 **Usage guide → `references/usage/gemini-omni.md`**.
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars | how the first image animates (or interpolates into the end image). |
+| startFrame | required | image | literal first frame. |
+| endFrame | optional | image | with both frames set the model INTERPOLATES between them in order. **Caps the duration at 10 s.** |
+| aspectRatio | optional | `16:9·9:16` only | omit → 16:9. |
+| duration | optional | 3–15 s (clamped); **3–10 s with `endFrame`** | omit → 8s. |
+| resolution | optional | `360p·720p·1080p·4k` | omit → 720p. |
+
+- **Rejects**: referenceImages, referenceVideos, seed, withAudio.
+
+### Gemini Omni Flash 1.2 — Reference-to-Video — `google/gemini-omni-flash/v1.2/reference-to-video`
+- composes from `referenceImages` (≤10) and `referenceVideos` (≤3, **each ≤15 s**).
+- 📖 **Usage guide → `references/usage/gemini-omni.md`** — READ before composing the prompt (how refs bind, prompting technique, audio).
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| prompt | required | string ≤20000 chars; write `@refN` and the engine rewrites it | same ref binding as 1.1 (below). |
+| referenceImages | optional | up to 10 images | |
+| referenceVideos | optional | up to 3 clips, **each ≤15 s** | longer clips are rejected: trim first. |
+| aspectRatio | optional | `16:9·9:16` only | omit → 16:9. |
+| duration | optional | 3–15 s (clamped) | omit → 8s. |
+| resolution | optional | `360p·720p·1080p·4k` | omit → 720p. |
+
+- **Ref binding:** write `@ref1`, `@ref2`, … as usual; the engine turns them into `<IMAGE_REF_n>` / `<VIDEO_REF_n>` (zero-indexed, one counter per modality) after the caps. Do NOT hand-write the tags.
+- **Rejects**: startFrame, endFrame, seed, withAudio.
+
 ### Kling v3 Standard — Motion-Control — `fal-ai/kling-video/v3/standard/motion-control`
 - motion transfer. ⚠ **Requires a reference motion video + `characterOrientation`, which the `video` tool does NOT expose (no `referenceVideos`/`characterOrientation` params).** Effectively not usable through the standard MCP `video` tool right now — do not pick it unless a dedicated path provides those inputs.
 
@@ -481,6 +525,17 @@ The v1.1 editor: identical to the v1 one plus a `resolution` knob.
 | prompt | required | edit instruction ≤20000 chars | tip: append "Keep everything else the same." |
 | resolution | optional | `360p·720p·1080p·4k` | NEW in v1.1. Omit → 720p; `2k` folds down to 1080p. |
 - Length still follows the source; only the resolution is now yours to set. Unavailable in EEA/CH/UK.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`**.
+
+### Gemini Omni Flash 1.2 — Video Edit — `google/gemini-omni-flash/v1.2/edit`  *(operation `"edit"`)*
+Same as the 1.1 editor; the source clip may be **up to 15 s**.
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"edit"` | |
+| sourceVideo | required | path/@mention to the clip, **≤15 s** | longer sources are rejected: trim first. |
+| prompt | required | edit instruction ≤20000 chars | tip: append "Keep everything else the same." |
+| resolution | optional | `360p·720p·1080p·4k` | omit → 720p; `2k` folds down to 1080p. |
+- Length follows the source. Unavailable in EEA/CH/UK.
 - 📖 **Usage guide → `references/usage/gemini-omni.md`**.
 
 ### Kling o3 4K — Video-to-Video Reference / Edit — `fal-ai/kling-video/o3/4k/video-to-video/reference` · `…/edit`  *(operation `"edit"`)*
@@ -539,6 +594,34 @@ Change a clip's **aspect ratio**, outpainting the newly exposed areas.
 
 - **Limits (fal schema):** source MP4 <50 MB & <15 s. no `seed`. **Rejects**: startFrame, endFrame, referenceImages.
 - **Pricing (fal):** $0.41/s @720p, $0.53/s @1080p (pricier than the other Flux 3 endpoints).
+
+### Gemini Omni Flash 1.2 — Extend Video — `google/gemini-omni-flash/v1.2/extend`  *(operation `"extend"`)*
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"extend"` | |
+| sourceVideo | required | any length | the model conditions on the LAST 10 s and appends the continuation. |
+| prompt | required | how the clip continues, ≤20000 chars | |
+| duration | optional | 3–10 s (clamped) | the EXTENSION length, not the total. omit → 8s. |
+| resolution | optional | `360p·720p·1080p·4k` | omit → 720p. |
+- The saved file is always source + extension. **Rejects**: aspectRatio, startFrame, endFrame, referenceImages, seed, withAudio.
+- 📖 **Usage guide → `references/usage/gemini-omni.md`**.
+
+---
+
+## Upscale (`video_upscaling`) — via the SAME `video` tool
+
+Raise the resolution of an EXISTING video (same content, more pixels). **`operation:"upscale"`** + **`sourceVideo`** + **`resolution`** (the target; ask the user if they did not name it) + **`model`** = a `video_upscaling`-category slug. No prompt, no audio.
+
+### Gemini Omni Flash 1.2 — Upscale — `google/gemini-omni-flash/v1.2/upscale`
+
+| `video` param | Req? | Accepted values | Notes |
+|---|---|---|---|
+| operation | required | `"upscale"` | |
+| sourceVideo | required | path/@mention to the clip, **≤15 s** | fal field `video_url`. |
+| model | required | `google/gemini-omni-flash/v1.2/upscale` | agent-picked (the `video_upscaling` slug). |
+| resolution | required | `720p·1080p·4k` | MUST be above the source's resolution or fal rejects it. `360p`/`low` is raised to 720p. |
+
+- **Rejects**: prompt, aspectRatio, duration, referenceImages, seed, withAudio.
 
 ---
 
