@@ -41,9 +41,9 @@ update in place.
 ## Model — YOU pass it (the skill decides, not the server)
 
 Always set `model` explicitly; never rely on auto-selection. Always the NEWEST version of the family:
-- **With reference images** (photos of the object, or the views already made) → `openai/gpt-image-2.6/flare/edit`.
-- **Without references** → `openai/gpt-image-2.6/flare/text-to-image`.
-- Need maximum fidelity on intricate detail → the same with `sunburst` instead of `flare`.
+- **With reference images** (photos of the object, or the views already made) → `openai/gpt-image-2.6/sunburst/edit`.
+- **Without references** → `openai/gpt-image-2.6/sunburst/text-to-image`.
+- Sunburst = best quality, Flare = speed. **Quality first by default (Sunburst)**; `flare` instead of `sunburst` ONLY when the user asks for speed.
 - Another model only when the user names it.
 
 ## Creation flow

@@ -82,10 +82,11 @@ The `generate_image` `model` param covers **generation** and **editing** only. P
 
 **🔴 NEWEST VERSION WINS (user rule).** When a model family has several versions in the catalog (GPT Image 2 / 2.5 / 2.6, Seedream 4.5 / 5, Nano-Banana 2 / Pro, …), ALWAYS use the NEWEST version. An older version is only picked when the user names it explicitly, or when the operation is impossible on the newest one (check its card). This applies to every default named below: if a newer version of the default exists, use the newer one.
 
-**DEFAULT MODEL — always GPT Image 2.6 Flare unless a concrete reason below forces another.** It is the standard pick for both categories:
-- **Text-to-image** → `openai/gpt-image-2.6/flare/text-to-image`.
-- **Edit / image-to-image** → `openai/gpt-image-2.6/flare/edit`.
-- Need the maximum fidelity on intricate detail (and can afford a longer wait)? Same model, precision variant: `openai/gpt-image-2.6/sunburst/text-to-image` · `openai/gpt-image-2.6/sunburst/edit`.
+**🔴 BEST QUALITY WINS within the same version (user rule).** When the newest version comes in several variants (quality vs speed / cost: Sunburst vs Flare, Pro vs Lite / Standard / Turbo / Fast / Mini, Max vs base…), the DEFAULT is ALWAYS the highest-quality variant. Pick a faster or cheaper variant ONLY when the user explicitly asks for speed or low cost, or for a throwaway draft.
+
+**DEFAULT MODEL — always GPT Image 2.6 unless a concrete reason below forces another.** It has two variants: **Sunburst = best quality**, **Flare = speed**. 🔴 **QUALITY FIRST by default: use Sunburst.** Use Flare ONLY when the user explicitly asks for speed ("rápido", "quick draft", "a quick test") or for a throwaway preview.
+- **Text-to-image** → `openai/gpt-image-2.6/sunburst/text-to-image` (fast: `openai/gpt-image-2.6/flare/text-to-image`).
+- **Edit / image-to-image** → `openai/gpt-image-2.6/sunburst/edit` (fast: `openai/gpt-image-2.6/flare/edit`).
 - GPT Image 2 and 2.5 are OLDER versions: never pick them unless the user names them.
 
 Reach for GPT Image 2.6 first, every time. Do NOT switch to Nano-Banana, Seedream, Krea, Qwen, Bria or any other model just because it "might look better" or "is newer" — that is exactly the wrong reason. Only deviate when ONE of these is true:

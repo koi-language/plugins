@@ -129,6 +129,8 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 
 **🔴 NEWEST VERSION WINS (user rule).** When a model family has several versions in the catalog (Seedance 2.0 / 2.5, Gemini Omni Flash v1 / 1.1 / 1.2, Kling v3 / o3, …), ALWAYS use the NEWEST version. An older version is only picked when the user names it explicitly, or when the operation is impossible on the newest one (check its card).
 
+**🔴 BEST QUALITY WINS within the same version (user rule).** When the newest version comes in several variants (quality vs speed / cost: Sunburst vs Flare, Pro vs Lite / Standard / Turbo / Fast / Mini, Max vs base…), the DEFAULT is ALWAYS the highest-quality variant. Pick a faster or cheaper variant ONLY when the user explicitly asks for speed or low cost, or for a throwaway draft.
+
 Once the category and input shape are fixed, several models may qualify. **Choose deliberately from each model's strengths — do not just grab whatever's first, and do not fall back to WAN merely because a better model errored.** These are the generative (`operation:"new"`) models BRAXIL has enabled:
 
 | Model | Best at | Watch out for |

@@ -65,7 +65,7 @@ attaches them to the character.
 
 - **Model — YOU pass it, chosen by whether the character has reference photos**
   (always the NEWEST version of the family; another model only if the user asks):
-  - **WITH reference photos** (a real person) → `model: "openai/gpt-image-2.6/flare/edit"`,
+  - **WITH reference photos** (a real person) → `model: "openai/gpt-image-2.6/sunburst/edit"` (quality first; `flare` only if the user asks for speed),
     which best matches the source.
   - **NO reference photos** (a **100% invented** character) →
     `model: "bytedance/seedream/v5/pro/text-to-image"` (Seedream: a synthesised
