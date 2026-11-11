@@ -4,7 +4,7 @@ Only models **enabled in the BRAXIL backend** are listed, and each table uses th
 
 `generate_image` parameters: `model` **(required),** `prompt`**,** `referenceImages`**,** `aspectRatio`**,** `resolution`**,** `width`**,** `height`**,** `quality`**,** `outputFormat`**,** `cameraAngles`**,** `n`**,** `seed` (+ `saveTo`, `summary`, `metadata`). `seed` is honoured only by models whose card lists it; the rest accept and ignore it. `width`+`height` (both together) request an **exact pixel canvas** instead of the semantic `resolution` label — honoured ONLY by models that accept explicit dimensions (the **Seedream family** and **Qwen-Image-Edit**); every other model ignores them and falls back to `aspectRatio`/`resolution`. Mind each model's **area cap** (a per-model total-pixel ceiling — e.g. Seedream v5 Pro/Lite edit top out at 2048×2048 ≈ 4.2 MP, so an exact canvas must stay within it; true 4K is not reachable on those edit endpoints). There is NO `maskImage`, `safetyTolerance`, `loras` on this tool.
 
-Background-removal, outpaint and upscale are **separate tools** with **no** `model` **pick** (auto-routed) — see the last section.
+Background-removal, outpaint and upscale are **separate tools**; you still pass their `model` (see the last section).
 
 ---
 
@@ -300,7 +300,7 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 - **Limits (fal schema):** `prompt` **3–50000 chars**; `n` 1–4.
 - **Rejects**: cameraAngles, quality. `safetyTolerance` is not a tool param. `**seed` — honoured** (reproducibility).
 
-### ~~Nan~~o Banana Pro — Edit — `fal-ai/nano-banana-pro/edit`  *(image-to-image / upscaling-capable)*
+### Nano Banana Pro — Edit — `fal-ai/nano-banana-pro/edit`  *(image-to-image; NOT for upscaling: see the SKILL's "More pixels / 4K" rule)*
 
 - edit · **needs** `referenceImages`.
 
@@ -399,13 +399,13 @@ Background-removal, outpaint and upscale are **separate tools** with **no** `mod
 
 ---
 
-## Image operations handled by DEDICATED tools (no `model` pick — auto-routed)
+## Image operations handled by DEDICATED tools (pass `model` anyway)
 
-These do NOT go through `generate_image`; you don't choose a model.
+These do NOT go through `generate_image`, but ALWAYS pass `model` (the top of the SKILL's QUALITY RANKING) so the chat banner shows it.
 
-- **Remove background** → `background_removal({ image })` → serves `fal-ai/bria/background/remove`. Returns a transparent PNG. No other params.
-- **Outpaint / extend the canvas** → `outpaint_image({ image, padTop?, padBottom?, padLeft?, padRight?, prompt? })` → serves `fal-ai/flux-2-pro/outpaint`. `prompt` describes only the NEW margins; per-side pad in pixels, **each side 0–2048** (fal schema max).
-- **Upscale** → `upscale_image({ image, upscaleFactor 1–4 (default 2), prompt?, creativity 0–1?, faceEnhancement?, outputFormat png/webp/jpeg })`. `prompt`/`creativity` only affect generative upscalers.
+- **Remove background** → `background_removal({ image, model: "fal-ai/bria/background/remove" })`. Returns a transparent PNG. No other params.
+- **Outpaint / extend the canvas** → `outpaint_image({ image, model: "fal-ai/flux-2-pro/outpaint", padTop?, padBottom?, padLeft?, padRight?, prompt? })`. `prompt` describes only the NEW margins; per-side pad in pixels, **each side 0–2048** (fal schema max).
+- **Upscale** → `upscale_image({ image, model: "fal-ai/topaz/upscale/image", upscaleFactor 1–4 (default 2), prompt?, creativity 0–1?, faceEnhancement?, outputFormat png/webp/jpeg })`. `prompt`/`creativity` only affect generative upscalers.
 
 ---
 

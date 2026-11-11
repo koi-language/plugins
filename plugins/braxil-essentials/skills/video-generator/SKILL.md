@@ -127,6 +127,14 @@ Every model carries one or more Koi categories (in the tool's Catalog table). Pi
 
 ## Choosing within a category — pick on merit
 
+**🔴 HIGHEST QUALITY WINS, across ALL models (user rule).** The DEFAULT for every operation is ALWAYS the highest-quality model that can do it, per the **QUALITY RANKING** below. Go down the ranking ONLY when: the higher model cannot do the operation / input shape (check its card), the user names another model, or the user explicitly asks for speed, low cost or a throwaway draft. When a model is added to the catalog, PLACE IT IN THE RANKING in the same change (and say its rank on its card in `references/models.md`).
+
+**QUALITY RANKING (best first):**
+- New clip (text / image / reference to video): **1. Seedance 2.5** (`/us/` slugs, user decision) · 2. Veo 3.1 (max photoreal; image-to-video only) · 3. Kling v3 Pro (image-to-video) · 4. Luma Ray v3.2 · 5. Gemini Omni Flash 1.2 (fast and cheap) · 6. WAN 2.7 (last resort).
+- Edit an existing clip: **1. Gemini Omni Flash 1.2 edit** · then Luma (only for a full restyle or a reframe, see "Editing an existing clip").
+- Extend: **1. Gemini Omni Flash 1.2 extend** (3 to 10 s) · Flux 3 extend only when the extension must be longer than 10 s.
+- Upscale: **1. Gemini Omni Flash 1.2 upscale**.
+
 **🔴 NEWEST VERSION WINS (user rule).** When a model family has several versions in the catalog (Seedance 2.0 / 2.5, Gemini Omni Flash v1 / 1.1 / 1.2, Kling v3 / o3, …), ALWAYS use the NEWEST version. An older version is only picked when the user names it explicitly, or when the operation is impossible on the newest one (check its card).
 
 **🔴 BEST QUALITY WINS within the same version (user rule).** When the newest version comes in several variants (quality vs speed / cost: Sunburst vs Flare, Pro vs Lite / Standard / Turbo / Fast / Mini, Max vs base…), the DEFAULT is ALWAYS the highest-quality variant. Pick a faster or cheaper variant ONLY when the user explicitly asks for speed or low cost, or for a throwaway draft.

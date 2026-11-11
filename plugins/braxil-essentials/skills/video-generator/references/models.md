@@ -676,11 +676,11 @@ Raise the resolution of an EXISTING video (same content, more pixels). **`operat
 
 ---
 
-## Lip-sync — dedicated tool (no `model` pick)
+## Lip-sync — dedicated tool (pass `model` anyway)
 
 Re-voicing / dubbing an EXISTING video goes through its own tool, **`lipsync_video`** (not the avatar tool, and not `video`):
 
-- **`lipsync_video({ video, audioFile })`** → serves `fal-ai/veed/lipsync/v2`. `video` = the source clip whose on-screen mouth is re-articulated; `audioFile` = the new audio track to sync to. Everything else in the source (framing, motion, background, dimensions, length) is preserved — only the lips change. Produces a NEW video.
+- **`lipsync_video({ video, audioFile, model: "fal-ai/veed/lipsync/v2" })`**: ALWAYS pass `model` so the chat banner shows it. `video` = the source clip whose on-screen mouth is re-articulated; `audioFile` = the new audio track to sync to. Everything else in the source (framing, motion, background, dimensions, length) is preserved — only the lips change. Produces a NEW video.
 
 | `lipsync_video` param | Req? | Notes |
 |---|---|---|
